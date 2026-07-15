@@ -1,0 +1,16 @@
+/** Barrel export — import any model as `import { TripModel, UserModel } from "@/lib/db/models"`. */
+export * from "./trip.model";
+export * from "./destination.model";
+export * from "./theme.model";
+export * from "./announcement.model";
+export * from "./homepage.model";
+export * from "./testimonial.model";
+export * from "./media.model";
+export * from "./booking.model";
+export * from "./user.model";
+export * from "./site-settings.model";
+export * from "./coupon.model";
+export * from "./refund.model";
+export * from "./invoice.model";
+export * from "./payment-event.model";
+export * from "./counter.model";

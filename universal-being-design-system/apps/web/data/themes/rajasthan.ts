@@ -1,0 +1,55 @@
+import type { ThemeConfig } from "@/types/theme";
+
+/** Rajasthan — desert warmth: camel silhouettes, Hawa Mahal lattice, gold-dust particles, sand texture. */
+export const rajasthanTheme: ThemeConfig = {
+  key: "rajasthan",
+  name: "Rajasthan",
+  palette: {
+    primary: "#c9812f",
+    secondary: "#8e3d3a",
+    accent: "#e8b559",
+    background: "#fbf1de",
+    surface: "#fffaf0",
+    foreground: "#3a2410",
+    gradients: {
+      hero: { angle: 135, stops: [{ color: "#f6d9a0", stop: 0 }, { color: "#d98c3d", stop: 55 }, { color: "#8e3d3a", stop: 100 }] },
+      section: { angle: 180, stops: [{ color: "#fffaf0", stop: 0 }, { color: "#fbf1de", stop: 100 }] },
+      cta: { angle: 120, stops: [{ color: "#e8b559", stop: 0 }, { color: "#c9812f", stop: 100 }] },
+    },
+  },
+  typographyMood: "warm",
+  border: { style: "ornate", radius: "0.5rem" },
+  shadow: { style: "soft" },
+  glass: { intensity: 0.18 },
+  button: { style: "solid" },
+  card: { style: "elevated" },
+  section: { background: "surface" },
+  hero: { background: "gradient" },
+  particle: { type: "gold-dust", density: 42, speed: 14, color: "#e8b559" },
+  overlay: { fog: false, waves: false, frost: false },
+  motifs: {
+    illustrationSet: "camel",
+    placements: [
+      { asset: "camel", x: "8%", y: "78%", size: 140, opacity: 0.16 },
+      { asset: "hawa-mahal-arch", x: "88%", y: "6%", size: 180, opacity: 0.12, rotate: 0 },
+      { asset: "sun", x: "74%", y: "12%", size: 90, opacity: 0.2 },
+    ],
+    decorativePattern: "hawa-mahal-lattice",
+    patternOpacity: 0.06,
+  },
+  divider: { shape: "desert" },
+  animation: { preset: "warm-drift" },
+  navigation: { style: "transparent" },
+  footer: { style: "illustrated" },
+  cta: { style: "gradient" },
+  icon: { style: "duotone" },
+  imageOverlay: { style: "gradient-bottom" },
+  darkMode: {
+    mode: "dedicated",
+    background: "#241305",
+    surface: "#33200c",
+    primary: "#e8b559",
+    secondary: "#c76b57",
+    particleColor: "#f6d9a0",
+  },
+};

@@ -1,0 +1,57 @@
+import type { ThemeConfig } from "@/types/theme";
+
+/** Manali — Step 7.5D. Pine-forest mountain town: snowfall, cloud drift,
+ * cold morning fog, softer/greener blue than Spiti's night sky. */
+export const manaliTheme: ThemeConfig = {
+  key: "manali",
+  name: "Manali",
+  palette: {
+    primary: "#4a7a6b",
+    secondary: "#5a6b8c",
+    accent: "#cfe0d8",
+    background: "#eef4f1",
+    surface: "#ffffff",
+    foreground: "#111b17",
+    gradients: {
+      hero: { angle: 160, stops: [{ color: "#dcebe5", stop: 0 }, { color: "#8fb4a8", stop: 50 }, { color: "#3f5f80", stop: 100 }] },
+      section: { angle: 180, stops: [{ color: "#ffffff", stop: 0 }, { color: "#eef4f1", stop: 100 }] },
+      cta: { angle: 120, stops: [{ color: "#5a6b8c", stop: 0 }, { color: "#4a7a6b", stop: 100 }] },
+    },
+  },
+  typographyMood: "cool",
+  border: { style: "soft", radius: "0.5rem" },
+  shadow: { style: "soft" },
+  glass: { intensity: 0.22 },
+  button: { style: "outline" },
+  card: { style: "elevated" },
+  section: { background: "surface" },
+  hero: { background: "gradient" },
+  particle: { type: "snow", density: 44, speed: 12, color: "#ffffff" },
+  overlay: { fog: true, waves: false, frost: false },
+  motifs: {
+    illustrationSet: "pine",
+    placements: [
+      { asset: "pine", x: "5%", y: "68%", size: 160, opacity: 0.2 },
+      { asset: "pine", x: "16%", y: "80%", size: 110, opacity: 0.16 },
+      { asset: "cloud", x: "74%", y: "10%", size: 130, opacity: 0.2 },
+      { asset: "mountain", x: "0%", y: "72%", size: 220, opacity: 0.12 },
+    ],
+    decorativePattern: "cloud-drift",
+    patternOpacity: 0.05,
+  },
+  animation: { preset: "cold-drift" },
+  divider: { shape: "mountains" },
+  navigation: { style: "transparent" },
+  footer: { style: "illustrated" },
+  cta: { style: "gradient" },
+  icon: { style: "line" },
+  imageOverlay: { style: "color-wash" },
+  darkMode: {
+    mode: "dedicated",
+    background: "#0c1614",
+    surface: "#16221f",
+    primary: "#8fb4a8",
+    secondary: "#5a6b8c",
+    particleColor: "#e6f0f8",
+  },
+};

@@ -1,0 +1,61 @@
+import { buildTrip } from "./_builder";
+
+/** PLACEHOLDER CONTENT — see manali.ts header note; same applies here. */
+export const choptaTrip = buildTrip({
+  slug: "chopta-tungnath-trek",
+  title: "Chopta Tungnath Trek",
+  destinationSlug: "chopta",
+  destinationName: "Chopta",
+  themeKey: "mountain",
+  shortDescription: "A 3-day weekend trek to Tungnath, the world's highest Shiva temple, and Chandrashila summit.",
+  fullDescription:
+    "Chopta Tungnath Trek is a short, high-reward trek through rhododendron forest and open meadows to Tungnath temple, with an optional summit push to Chandrashila for a full Himalayan panorama. Built as a weekend-friendly small-group trip from Delhi.",
+  durationDays: 3,
+  durationNights: 2,
+  difficulty: "moderate",
+  bestSeason: ["March", "April", "May", "June", "September", "October", "November"],
+  groupSize: { min: 10, max: 18 },
+  pickup: "Delhi (overnight bus pickup point)",
+  drop: "Delhi (overnight bus drop point)",
+  priceBase: 6999,
+  priceDiscounted: 5999,
+  bookingAmount: 1500,
+  totalSeats: 18,
+  availableSeats: 11,
+  batchStartDates: ["2026-09-18", "2026-09-25", "2026-10-09", "2026-10-23"],
+  inclusions: [
+    "1 night stay at Chopta base + 1 night camping (as per itinerary)",
+    "Breakfast and dinner during the trek",
+    "Delhi to Chopta to Delhi travel by shared vehicle",
+    "Trek guide and forest permits",
+    "Bonfire evening at base camp",
+  ],
+  exclusions: [
+    "Lunch on all days",
+    "Personal trekking gear rental",
+    "Porter/mule charges (available on request, paid separately)",
+    "Anything not mentioned in inclusions",
+  ],
+  highlights: [
+    "Tungnath — the highest Shiva temple in the world",
+    "Optional sunrise summit at Chandrashila",
+    "Rhododendron forest trail",
+    "Panoramic views of the Kedarnath and Chaukhamba range",
+    "Bonfire and stargazing at base camp",
+  ],
+  itinerary: [
+    { day: 1, title: "Delhi to Chopta", description: "Overnight travel from Delhi towards Chopta base.", activities: ["Overnight shared-vehicle journey"], meals: [] },
+    { day: 2, title: "Arrival, trek to Tungnath & Chandrashila", description: "Arrive at Chopta base, rest briefly, then trek up to Tungnath temple and (for those continuing) Chandrashila summit for sunset.", activities: ["Trek to Tungnath temple", "Optional Chandrashila summit push", "Return to base camp"], meals: ["breakfast", "dinner"], stay: "Guesthouse/camp at Chopta" },
+    { day: 3, title: "Chopta to Delhi", description: "Morning at leisure, then begin the return journey to Delhi, arriving late night.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
+  ],
+  faqs: [
+    { id: "chopta-faq-1", question: "How difficult is the Tungnath trek?", answer: "It's a moderate 3.5 km climb one-way; doable for most people with basic fitness, but does involve steady uphill walking." },
+    { id: "chopta-faq-2", question: "Is Chandrashila summit compulsory?", answer: "No, it's optional and weather-dependent. Tungnath temple itself is the fixed part of the itinerary." },
+    { id: "chopta-faq-3", question: "What should I carry?", answer: "Warm layers, a good pair of trekking shoes, a torch/headlamp, and a personal water bottle." },
+  ],
+  mapQuery: "Chopta, Uttarakhand, India",
+  rating: 4.6,
+  reviewCount: 63,
+  featured: false,
+  galleryCount: 6,
+});

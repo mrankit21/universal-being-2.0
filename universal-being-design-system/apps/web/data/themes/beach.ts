@@ -1,0 +1,55 @@
+import type { ThemeConfig } from "@/types/theme";
+
+/** Beach — ocean waves, palm-leaf silhouettes, floating clouds, sunlight reflections. */
+export const beachTheme: ThemeConfig = {
+  key: "beach",
+  name: "Beach",
+  palette: {
+    primary: "#1e8fa3",
+    secondary: "#e8935f",
+    accent: "#7fd4c9",
+    background: "#eefaf8",
+    surface: "#ffffff",
+    foreground: "#0d2d30",
+    gradients: {
+      hero: { angle: 145, stops: [{ color: "#bdeff0", stop: 0 }, { color: "#3fb8c4", stop: 55 }, { color: "#1e6f8a", stop: 100 }] },
+      section: { angle: 180, stops: [{ color: "#ffffff", stop: 0 }, { color: "#eefaf8", stop: 100 }] },
+      cta: { angle: 120, stops: [{ color: "#e8935f", stop: 0 }, { color: "#d9713a", stop: 100 }] },
+    },
+  },
+  typographyMood: "airy",
+  border: { style: "pill", radius: "1.25rem" },
+  shadow: { style: "soft" },
+  glass: { intensity: 0.2 },
+  button: { style: "pill" },
+  card: { style: "elevated" },
+  section: { background: "surface" },
+  hero: { background: "gradient" },
+  particle: { type: "none", density: 0, speed: 0, color: "#ffffff" },
+  overlay: { fog: false, waves: true, frost: false },
+  motifs: {
+    illustrationSet: "palm",
+    placements: [
+      { asset: "palm", x: "4%", y: "62%", size: 190, opacity: 0.18, rotate: -6 },
+      { asset: "cloud", x: "72%", y: "10%", size: 130, opacity: 0.24 },
+      { asset: "sun", x: "86%", y: "8%", size: 80, opacity: 0.26 },
+    ],
+    decorativePattern: "wave-lines",
+    patternOpacity: 0.06,
+  },
+  divider: { shape: "ocean" },
+  animation: { preset: "wave-motion" },
+  navigation: { style: "transparent" },
+  footer: { style: "illustrated" },
+  cta: { style: "gradient" },
+  icon: { style: "filled" },
+  imageOverlay: { style: "gradient-full" },
+  darkMode: {
+    mode: "dedicated",
+    background: "#062226",
+    surface: "#0d3236",
+    primary: "#3fb8c4",
+    secondary: "#e8935f",
+    particleColor: "#bdeff0",
+  },
+};

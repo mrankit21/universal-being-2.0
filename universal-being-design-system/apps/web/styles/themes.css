@@ -1,0 +1,434 @@
+/* ==========================================================================
+   UNIVERSAL BEING — THEME ENGINE STYLESHEET (Phase 3)
+
+   Additive to app/globals.css — nothing here is edited into that file.
+   Each [data-theme="..."] block redefines the SAME semantic variables
+   globals.css already defines at :root (--primary, --secondary,
+   --background, --ring, --ub-shadow-*, --radius). Because every shadcn
+   primitive (Button, Card, Badge, Input, ...) already reads those
+   variables, switching data-theme re-skins the entire component library
+   with ZERO component edits.
+
+   `--ub-theme-*` variables are a second, theme-engine-specific namespace
+   consumed directly by components/theme/* (gradients, particle color,
+   pattern opacity, etc.) that have no shadcn equivalent to piggyback on.
+   These are generated to mirror data/themes/*.ts — theme-engine.ts is the
+   runtime source of truth; this file lets the same values paint the very
+   first server-rendered frame before any JS runs (hydration-safe, no FOUC).
+
+   Selector specificity note: `html[data-theme="x"]` (0,1,1) intentionally
+   beats `:root` (0,1,0) in globals.css regardless of file import order.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------- */
+/* Brand (default) — falls back to the Phase 2 tokens as-is, no overrides */
+/* other than the --ub-theme-* mirror needed by theme/ components.        */
+/* ---------------------------------------------------------------------- */
+html[data-theme="brand"] {
+  --ub-theme-primary: #b0873f;
+  --ub-theme-secondary: #2b5c56;
+  --ub-theme-accent: #c9a15a;
+  --ub-theme-background: #f7f6f3;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(135deg, #f7f6f3 0%, #eeece5 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #f7f6f3 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #b0873f 0%, #8e6b2e 100%);
+  --ub-theme-glass-intensity: 0.12;
+  --ub-theme-particle-color: #c9a15a;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Rajasthan — warm desert gold                                          */
+/* ---------------------------------------------------------------------- */
+html[data-theme="rajasthan"] {
+  --primary: #c9812f;
+  --secondary: #8e3d3a;
+  --ring: #c9812f;
+  --radius: 0.5rem;
+  --ub-shadow-sm: 0 1px 2px 0 rgb(58 36 16 / 0.10);
+  --ub-shadow-md: 0 4px 12px -2px rgb(58 36 16 / 0.16);
+  --ub-shadow-lg: 0 12px 24px -6px rgb(58 36 16 / 0.20);
+  --ub-shadow-xl: 0 24px 48px -12px rgb(58 36 16 / 0.26);
+
+  --ub-theme-primary: #c9812f;
+  --ub-theme-secondary: #8e3d3a;
+  --ub-theme-accent: #e8b559;
+  --ub-theme-background: #fbf1de;
+  --ub-theme-surface: #fffaf0;
+  --ub-theme-gradient-hero: linear-gradient(135deg, #f6d9a0 0%, #d98c3d 55%, #8e3d3a 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #fffaf0 0%, #fbf1de 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #e8b559 0%, #c9812f 100%);
+  --ub-theme-glass-intensity: 0.18;
+  --ub-theme-particle-color: #e8b559;
+}
+html[data-theme="rajasthan"].dark {
+  --background: #241305;
+  --primary: #e8b559;
+  --secondary: #c76b57;
+  --ub-theme-background: #241305;
+  --ub-theme-surface: #33200c;
+  --ub-theme-primary: #e8b559;
+  --ub-theme-secondary: #c76b57;
+  --ub-theme-particle-color: #f6d9a0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Winter — cold blue, frost                                             */
+/* ---------------------------------------------------------------------- */
+html[data-theme="winter"] {
+  --primary: #3f6fa8;
+  --secondary: #5b8ba3;
+  --ring: #3f6fa8;
+  --radius: 0.375rem;
+  --ub-shadow-sm: 0 1px 2px 0 rgb(19 28 38 / 0.08);
+  --ub-shadow-md: 0 4px 12px -2px rgb(19 28 38 / 0.14);
+  --ub-shadow-lg: 0 12px 24px -6px rgb(19 28 38 / 0.18);
+  --ub-shadow-xl: 0 24px 48px -12px rgb(19 28 38 / 0.24);
+
+  --ub-theme-primary: #3f6fa8;
+  --ub-theme-secondary: #5b8ba3;
+  --ub-theme-accent: #cfe3f0;
+  --ub-theme-background: #eef4f9;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(160deg, #dcebf5 0%, #8fb4d1 55%, #3f5f80 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #eef4f9 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #5b8ba3 0%, #3f6fa8 100%);
+  --ub-theme-glass-intensity: 0.3;
+  --ub-theme-particle-color: #ffffff;
+}
+html[data-theme="winter"].dark {
+  --background: #0c1420;
+  --primary: #8fb4d1;
+  --secondary: #5b8ba3;
+  --ub-theme-background: #0c1420;
+  --ub-theme-surface: #16202e;
+  --ub-theme-primary: #8fb4d1;
+  --ub-theme-secondary: #5b8ba3;
+  --ub-theme-particle-color: #e6f0f8;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Monsoon — muted green-grey, rain                                      */
+/* ---------------------------------------------------------------------- */
+html[data-theme="monsoon"] {
+  --primary: #4b6b63;
+  --secondary: #6f7d8c;
+  --ring: #4b6b63;
+  --radius: 0.75rem;
+  --ub-theme-primary: #4b6b63;
+  --ub-theme-secondary: #6f7d8c;
+  --ub-theme-accent: #8fae9f;
+  --ub-theme-background: #eef1ee;
+  --ub-theme-surface: #f6f8f6;
+  --ub-theme-gradient-hero: linear-gradient(170deg, #c7d1cb 0%, #7c8f87 55%, #3f4d47 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #f6f8f6 0%, #eef1ee 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #6f7d8c 0%, #4b6b63 100%);
+  --ub-theme-glass-intensity: 0.24;
+  --ub-theme-particle-color: #c7d1cb;
+}
+html[data-theme="monsoon"].dark {
+  --background: #10140f;
+  --primary: #8fae9f;
+  --secondary: #6f7d8c;
+  --ub-theme-background: #10140f;
+  --ub-theme-surface: #1a201a;
+  --ub-theme-primary: #8fae9f;
+  --ub-theme-particle-color: #a9b6b0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Beach — bright teal + sun                                             */
+/* ---------------------------------------------------------------------- */
+html[data-theme="beach"] {
+  --primary: #1e8fa3;
+  --secondary: #e8935f;
+  --ring: #1e8fa3;
+  --radius: 1.25rem;
+  --ub-theme-primary: #1e8fa3;
+  --ub-theme-secondary: #e8935f;
+  --ub-theme-accent: #7fd4c9;
+  --ub-theme-background: #eefaf8;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(145deg, #bdeff0 0%, #3fb8c4 55%, #1e6f8a 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #eefaf8 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #e8935f 0%, #d9713a 100%);
+  --ub-theme-glass-intensity: 0.2;
+  --ub-theme-particle-color: #ffffff;
+}
+html[data-theme="beach"].dark {
+  --background: #062226;
+  --primary: #3fb8c4;
+  --secondary: #e8935f;
+  --ub-theme-background: #062226;
+  --ub-theme-surface: #0d3236;
+  --ub-theme-primary: #3fb8c4;
+  --ub-theme-particle-color: #bdeff0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Mountain — cool slate, mist                                           */
+/* ---------------------------------------------------------------------- */
+html[data-theme="mountain"] {
+  --primary: #5a6b8c;
+  --secondary: #8c7256;
+  --ring: #5a6b8c;
+  --radius: 0.5rem;
+  --ub-theme-primary: #5a6b8c;
+  --ub-theme-secondary: #8c7256;
+  --ub-theme-accent: #a9b8cf;
+  --ub-theme-background: #f0f1f5;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(165deg, #dfe4ee 0%, #9aa8c2 55%, #4b5670 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #f0f1f5 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #8c7256 0%, #6b5640 100%);
+  --ub-theme-glass-intensity: 0.16;
+  --ub-theme-particle-color: #dfe4ee;
+}
+html[data-theme="mountain"].dark {
+  --background: #12141c;
+  --primary: #9aa8c2;
+  --secondary: #8c7256;
+  --ub-theme-background: #12141c;
+  --ub-theme-surface: #1c1f2b;
+  --ub-theme-primary: #9aa8c2;
+  --ub-theme-particle-color: #dfe4ee;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Forest — deep green, earthy                                           */
+/* ---------------------------------------------------------------------- */
+html[data-theme="forest"] {
+  --primary: #3d7a4c;
+  --secondary: #8a6a3d;
+  --ring: #3d7a4c;
+  --radius: 0.625rem;
+  --ub-theme-primary: #3d7a4c;
+  --ub-theme-secondary: #8a6a3d;
+  --ub-theme-accent: #9fc98a;
+  --ub-theme-background: #f1f5ee;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(150deg, #cfe3c2 0%, #6ba374 55%, #2f5c3a 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #f1f5ee 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #8a6a3d 0%, #6b4f28 100%);
+  --ub-theme-glass-intensity: 0.14;
+  --ub-theme-particle-color: #9fc98a;
+}
+html[data-theme="forest"].dark {
+  --background: #0e160f;
+  --primary: #6ba374;
+  --secondary: #8a6a3d;
+  --ub-theme-background: #0e160f;
+  --ub-theme-surface: #182419;
+  --ub-theme-primary: #6ba374;
+  --ub-theme-particle-color: #cfe3c2;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Udaipur — Rajasthan variant, lake-evening amber                       */
+/* ---------------------------------------------------------------------- */
+html[data-theme="udaipur"] {
+  --primary: #c9812f;
+  --secondary: #7a3b4f;
+  --ring: #c9812f;
+  --radius: 0.5rem;
+  --ub-theme-primary: #c9812f;
+  --ub-theme-secondary: #7a3b4f;
+  --ub-theme-accent: #f0c26a;
+  --ub-theme-background: #fbeede;
+  --ub-theme-surface: #fff8ec;
+  --ub-theme-gradient-hero: linear-gradient(140deg, #f6d9a0 0%, #c97a4a 50%, #5c2f42 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #fff8ec 0%, #fbeede 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #f0c26a 0%, #c9812f 100%);
+  --ub-theme-glass-intensity: 0.2;
+  --ub-theme-particle-color: #f0c26a;
+}
+html[data-theme="udaipur"].dark {
+  --background: #26130a;
+  --primary: #f0c26a;
+  --secondary: #a8607a;
+  --ub-theme-background: #26130a;
+  --ub-theme-surface: #361c10;
+  --ub-theme-primary: #f0c26a;
+  --ub-theme-particle-color: #f6d9a0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Spiti — high-altitude night, deep blue + stars                        */
+/* ---------------------------------------------------------------------- */
+html[data-theme="spiti"] {
+  --primary: #2d4f7c;
+  --secondary: #6b7ea3;
+  --ring: #2d4f7c;
+  --radius: 0.375rem;
+  --ub-theme-primary: #2d4f7c;
+  --ub-theme-secondary: #6b7ea3;
+  --ub-theme-accent: #b7c9e6;
+  --ub-theme-background: #e7ecf5;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(170deg, #101a33 0%, #2d4f7c 55%, #6b7ea3 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #e7ecf5 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #6b7ea3 0%, #2d4f7c 100%);
+  --ub-theme-glass-intensity: 0.32;
+  --ub-theme-particle-color: #e6f0ff;
+}
+html[data-theme="spiti"].dark {
+  --background: #070b14;
+  --primary: #b7c9e6;
+  --secondary: #6b7ea3;
+  --ub-theme-background: #070b14;
+  --ub-theme-surface: #101a2c;
+  --ub-theme-primary: #b7c9e6;
+  --ub-theme-particle-color: #e6f0ff;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Manali — pine mountain town, cold morning fog                         */
+/* ---------------------------------------------------------------------- */
+html[data-theme="manali"] {
+  --primary: #4a7a6b;
+  --secondary: #5a6b8c;
+  --ring: #4a7a6b;
+  --radius: 0.5rem;
+  --ub-theme-primary: #4a7a6b;
+  --ub-theme-secondary: #5a6b8c;
+  --ub-theme-accent: #cfe0d8;
+  --ub-theme-background: #eef4f1;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(160deg, #dcebe5 0%, #8fb4a8 50%, #3f5f80 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #eef4f1 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #5a6b8c 0%, #4a7a6b 100%);
+  --ub-theme-glass-intensity: 0.22;
+  --ub-theme-particle-color: #ffffff;
+}
+html[data-theme="manali"].dark {
+  --background: #0c1614;
+  --primary: #8fb4a8;
+  --secondary: #5a6b8c;
+  --ub-theme-background: #0c1614;
+  --ub-theme-surface: #16221f;
+  --ub-theme-primary: #8fb4a8;
+  --ub-theme-particle-color: #e6f0f8;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Goa — sunset ocean, warm coastal orange                               */
+/* ---------------------------------------------------------------------- */
+html[data-theme="goa"] {
+  --primary: #e0703f;
+  --secondary: #1e8fa3;
+  --ring: #e0703f;
+  --radius: 1.25rem;
+  --ub-theme-primary: #e0703f;
+  --ub-theme-secondary: #1e8fa3;
+  --ub-theme-accent: #ffd08a;
+  --ub-theme-background: #fff3e8;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(150deg, #ffd6a0 0%, #f0824a 55%, #7a3a5c 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #fff3e8 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #e0703f 0%, #c2542a 100%);
+  --ub-theme-glass-intensity: 0.2;
+  --ub-theme-particle-color: #3a2418;
+}
+html[data-theme="goa"].dark {
+  --background: #241108;
+  --primary: #f0824a;
+  --secondary: #1e8fa3;
+  --ub-theme-background: #241108;
+  --ub-theme-surface: #341a0d;
+  --ub-theme-primary: #f0824a;
+  --ub-theme-particle-color: #ffd6a0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Jibhi — misty forest, soft green                                      */
+/* ---------------------------------------------------------------------- */
+html[data-theme="jibhi"] {
+  --primary: #4c8a5a;
+  --secondary: #7a8f6a;
+  --ring: #4c8a5a;
+  --radius: 0.625rem;
+  --ub-theme-primary: #4c8a5a;
+  --ub-theme-secondary: #7a8f6a;
+  --ub-theme-accent: #b9d6a8;
+  --ub-theme-background: #f0f5ec;
+  --ub-theme-surface: #ffffff;
+  --ub-theme-gradient-hero: linear-gradient(155deg, #d8e8cc 0%, #7fb088 55%, #345c3f 100%);
+  --ub-theme-gradient-section: linear-gradient(180deg, #ffffff 0%, #f0f5ec 100%);
+  --ub-theme-gradient-cta: linear-gradient(120deg, #7a8f6a 0%, #4c8a5a 100%);
+  --ub-theme-glass-intensity: 0.18;
+  --ub-theme-particle-color: #b9d6a8;
+}
+html[data-theme="jibhi"].dark {
+  --background: #0c150d;
+  --primary: #7fb088;
+  --secondary: #7a8f6a;
+  --ub-theme-background: #0c150d;
+  --ub-theme-surface: #162117;
+  --ub-theme-primary: #7fb088;
+  --ub-theme-particle-color: #d8e8cc;
+}
+
+/* ==========================================================================
+   Glassmorphism helper — intensity comes from the theme, never hardcoded.
+   ========================================================================== */
+.ub-glass {
+  background-color: color-mix(in srgb, var(--ub-theme-surface) calc(100% - var(--ub-theme-glass-intensity) * 100%), transparent);
+  backdrop-filter: blur(calc(var(--ub-theme-glass-intensity) * 40px));
+  -webkit-backdrop-filter: blur(calc(var(--ub-theme-glass-intensity) * 40px));
+}
+
+/* ==========================================================================
+   Particle + overlay keyframes — transform/opacity only (GPU-composited),
+   never layout properties. Respect prefers-reduced-motion globally (also
+   enforced per-component via useReducedMotion / mounted gating in JS).
+   ========================================================================== */
+@keyframes ub-particle-fall {
+  0%   { transform: translate3d(0, -10%, 0) translateX(0) scale(var(--ub-particle-scale, 1)); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate3d(0, 110vh, 0) translateX(var(--ub-particle-drift, 0px)) scale(var(--ub-particle-scale, 1)); opacity: 0; }
+}
+
+@keyframes ub-particle-rain {
+  0%   { transform: translate3d(0, -10%, 0) translateY(0); opacity: 0; }
+  8%   { opacity: 0.8; }
+  100% { transform: translate3d(0, 110vh, 0) translateX(var(--ub-particle-drift, 0px)); opacity: 0; }
+}
+
+@keyframes ub-particle-drift {
+  0%   { transform: translate3d(0, -10%, 0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate3d(var(--ub-particle-drift, 0px), 110vh, 0) rotate(180deg); opacity: 0; }
+}
+
+@keyframes ub-particle-glide {
+  0%   { transform: translate3d(-5vw, 0, 0); opacity: 0; }
+  15%  { opacity: 0.9; }
+  85%  { opacity: 0.9; }
+  100% { transform: translate3d(105vw, var(--ub-particle-drift, 0px), 0); opacity: 0; }
+}
+
+@keyframes ub-particle-rise {
+  0%   { transform: translate3d(0, 10%, 0) translateX(0) scale(0.7); opacity: 0; }
+  15%  { opacity: 0.9; }
+  85%  { opacity: 0.7; }
+  100% { transform: translate3d(var(--ub-particle-drift, 0px), -110vh, 0) scale(1); opacity: 0; }
+}
+
+@keyframes ub-fog-drift {
+  0%, 100% { transform: translate3d(-4%, 0, 0); }
+  50%      { transform: translate3d(4%, 0, 0); }
+}
+
+@keyframes ub-wave-bob {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -6%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ub-glass,
+  [class*="animate-[ub-"] {
+    animation: none !important;
+  }
+}

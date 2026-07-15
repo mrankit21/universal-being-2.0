@@ -1,0 +1,62 @@
+import { buildTrip } from "./_builder";
+
+/** PLACEHOLDER CONTENT — see manali.ts header note; same applies here. */
+export const dharamshalaTrip = buildTrip({
+  slug: "dharamshala-mcleodganj-escape",
+  title: "Dharamshala McLeod Ganj Escape",
+  destinationSlug: "dharamshala",
+  destinationName: "Dharamshala",
+  themeKey: "forest",
+  shortDescription: "A 4-day escape through McLeod Ganj's monasteries, cafés and the Triund ridge.",
+  fullDescription:
+    "Dharamshala McLeod Ganj Escape mixes Tibetan-quarter culture with a short ridge trek — monastery visits, café-hopping through McLeod Ganj, and a day hike up to Triund for wide Dhauladhar views, run as a small group with a fixed trip leader.",
+  durationDays: 4,
+  durationNights: 3,
+  difficulty: "easy",
+  bestSeason: ["March", "April", "May", "September", "October", "November"],
+  groupSize: { min: 10, max: 16 },
+  pickup: "Delhi (overnight bus pickup point)",
+  drop: "Delhi (overnight bus drop point)",
+  priceBase: 8499,
+  priceDiscounted: 7499,
+  bookingAmount: 1500,
+  totalSeats: 16,
+  availableSeats: 10,
+  batchStartDates: ["2026-09-11", "2026-09-25", "2026-10-16", "2026-10-30"],
+  inclusions: [
+    "3 nights stay in McLeod Ganj",
+    "Daily breakfast and dinner",
+    "Delhi to Dharamshala to Delhi shared vehicle travel",
+    "Guided Triund day hike",
+    "Local monastery and market walks",
+  ],
+  exclusions: [
+    "Lunch on all days",
+    "Café bills and personal shopping",
+    "Triund camping gear (if opting to stay overnight at Triund)",
+    "Anything not mentioned in inclusions",
+  ],
+  highlights: [
+    "Triund ridge day hike with Dhauladhar views",
+    "Namgyal Monastery and Tsuglagkhang complex",
+    "Bhagsu waterfall walk",
+    "McLeod Ganj café and market evenings",
+    "Small-group pace with a fixed trip leader",
+  ],
+  itinerary: [
+    { day: 1, title: "Delhi to Dharamshala", description: "Overnight journey from Delhi towards McLeod Ganj.", activities: ["Overnight shared-vehicle journey"], meals: [] },
+    { day: 2, title: "Arrival, McLeod Ganj monasteries", description: "Check in, then explore Namgyal Monastery, the Tsuglagkhang complex and McLeod Ganj market.", activities: ["Namgyal Monastery visit", "Market walk"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
+    { day: 3, title: "Triund day hike", description: "Full-day hike up to Triund for Dhauladhar views, returning to McLeod Ganj by evening.", activities: ["Triund ridge trek", "Bhagsu waterfall (time permitting)"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
+    { day: 4, title: "Dharamshala to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
+  ],
+  faqs: [
+    { id: "dharamshala-faq-1", question: "How hard is the Triund hike?", answer: "It's an easy-to-moderate 9 km round trip; manageable for most people with basic fitness and comfortable shoes." },
+    { id: "dharamshala-faq-2", question: "Can I stay overnight at Triund?", answer: "The standard itinerary returns same-day; overnight camping at Triund can be arranged separately on request, subject to availability." },
+    { id: "dharamshala-faq-3", question: "Is this trip vegetarian-friendly?", answer: "Yes, all included meals have a vegetarian option; non-vegetarian options are usually available too, subject to the property." },
+  ],
+  mapQuery: "McLeod Ganj, Dharamshala, Himachal Pradesh, India",
+  rating: 4.7,
+  reviewCount: 58,
+  featured: false,
+  galleryCount: 6,
+});

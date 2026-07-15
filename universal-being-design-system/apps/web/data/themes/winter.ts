@@ -1,0 +1,55 @@
+import type { ThemeConfig } from "@/types/theme";
+
+/** Winter — snowfall, pine silhouettes, frost overlay, cold blue lighting. */
+export const winterTheme: ThemeConfig = {
+  key: "winter",
+  name: "Winter",
+  palette: {
+    primary: "#3f6fa8",
+    secondary: "#5b8ba3",
+    accent: "#cfe3f0",
+    background: "#eef4f9",
+    surface: "#ffffff",
+    foreground: "#131c26",
+    gradients: {
+      hero: { angle: 160, stops: [{ color: "#dcebf5", stop: 0 }, { color: "#8fb4d1", stop: 55 }, { color: "#3f5f80", stop: 100 }] },
+      section: { angle: 180, stops: [{ color: "#ffffff", stop: 0 }, { color: "#eef4f9", stop: 100 }] },
+      cta: { angle: 120, stops: [{ color: "#5b8ba3", stop: 0 }, { color: "#3f6fa8", stop: 100 }] },
+    },
+  },
+  typographyMood: "cool",
+  border: { style: "sharp", radius: "0.375rem" },
+  shadow: { style: "crisp" },
+  glass: { intensity: 0.3 },
+  button: { style: "outline" },
+  card: { style: "glass" },
+  section: { background: "surface" },
+  hero: { background: "gradient" },
+  particle: { type: "snow", density: 60, speed: 10, color: "#ffffff" },
+  overlay: { fog: false, waves: false, frost: true },
+  motifs: {
+    illustrationSet: "pine",
+    placements: [
+      { asset: "pine", x: "6%", y: "70%", size: 150, opacity: 0.18 },
+      { asset: "pine", x: "18%", y: "82%", size: 100, opacity: 0.14 },
+      { asset: "snowflake", x: "84%", y: "14%", size: 70, opacity: 0.22 },
+    ],
+    decorativePattern: "frost-lattice",
+    patternOpacity: 0.05,
+  },
+  divider: { shape: "mountains" },
+  animation: { preset: "cold-drift" },
+  navigation: { style: "glass" },
+  footer: { style: "minimal" },
+  cta: { style: "glass" },
+  icon: { style: "line" },
+  imageOverlay: { style: "color-wash" },
+  darkMode: {
+    mode: "dedicated",
+    background: "#0c1420",
+    surface: "#16202e",
+    primary: "#8fb4d1",
+    secondary: "#5b8ba3",
+    particleColor: "#e6f0f8",
+  },
+};

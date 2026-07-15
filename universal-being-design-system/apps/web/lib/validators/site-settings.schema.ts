@@ -1,0 +1,37 @@
+import { z } from "zod";
+import { imageAssetSchema } from "./shared.schema";
+
+export const siteSettingsSchema = z.object({
+  brandName: z.string().min(1),
+  tagline: z.string().default(""),
+  brandStory: z.string().default(""),
+  contact: z.object({
+    phone: z.string().default(""),
+    whatsapp: z.string().default(""),
+    email: z.string().default(""),
+    address: z.string().default(""),
+  }),
+  socialLinks: z
+    .array(z.object({ platform: z.string(), href: z.string(), label: z.string() }))
+    .default([]),
+  seoDefaults: z.object({
+    title: z.string().default(""),
+    description: z.string().default(""),
+    ogImageUrl: z.string().optional(),
+  }),
+  logo: imageAssetSchema.optional(),
+  logoDark: imageAssetSchema.optional(),
+  favicon: imageAssetSchema.optional(),
+  ogImage: imageAssetSchema.optional(),
+  appleTouchIcon: imageAssetSchema.optional(),
+  googleMapsEmbedUrl: z.string().optional(),
+  footer: z.object({
+    columns: z
+      .array(z.object({ title: z.string(), links: z.array(z.object({ label: z.string(), href: z.string() })) }))
+      .default([]),
+    copyrightHolder: z.string().default(""),
+  }),
+});
+
+export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;
+export const siteSettingsUpdateSchema = siteSettingsSchema.partial();

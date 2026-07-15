@@ -1,0 +1,61 @@
+import { buildTrip } from "./_builder";
+
+/** PLACEHOLDER CONTENT — see manali.ts header note; same applies here. */
+export const udaipurTrip = buildTrip({
+  slug: "udaipur-heritage-walk",
+  title: "Udaipur Heritage Walk",
+  destinationSlug: "udaipur",
+  destinationName: "Udaipur",
+  themeKey: "rajasthan",
+  shortDescription: "A 3-day city-and-lakes trip through Udaipur's palaces, ghats and old-city lanes.",
+  fullDescription:
+    "Udaipur Heritage Walk covers the City Palace, Lake Pichola, and Udaipur's old-city lanes at an easy, social pace — built for a long weekend group trip rather than a rushed sightseeing tour. Evenings are kept open for rooftop cafés and the lake view.",
+  durationDays: 3,
+  durationNights: 2,
+  difficulty: "easy",
+  bestSeason: ["October", "November", "December", "January", "February", "March"],
+  groupSize: { min: 12, max: 18 },
+  pickup: "Udaipur Railway Station / Airport",
+  drop: "Udaipur Railway Station / Airport",
+  priceBase: 9999,
+  priceDiscounted: 8999,
+  bookingAmount: 1500,
+  totalSeats: 18,
+  availableSeats: 12,
+  batchStartDates: ["2026-11-13", "2026-11-27", "2026-12-11", "2026-12-25"],
+  inclusions: [
+    "2 nights stay in Udaipur",
+    "Daily breakfast and dinner",
+    "City Palace and boat ride on Lake Pichola",
+    "All local transfers by shared vehicle",
+    "Trip leader for the full stay",
+  ],
+  exclusions: [
+    "Travel to/from Udaipur",
+    "Lunch on all days",
+    "Camera fees at monuments (if applicable)",
+    "Anything not mentioned in inclusions",
+  ],
+  highlights: [
+    "City Palace guided walkthrough",
+    "Sunset boat ride on Lake Pichola",
+    "Jagdish Temple and old-city lanes",
+    "Rooftop café evening overlooking the lake",
+    "Saheliyon ki Bari gardens",
+  ],
+  itinerary: [
+    { day: 1, title: "Arrival, Lake Pichola", description: "Arrive in Udaipur, check in, then an evening boat ride on Lake Pichola followed by a rooftop dinner.", activities: ["Hotel check-in", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
+    { day: 2, title: "City Palace & old city", description: "Full day covering the City Palace, Jagdish Temple, and the old-city lanes, with time for local shopping.", activities: ["City Palace guided walk", "Jagdish Temple", "Old-city lane walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
+    { day: 3, title: "Saheliyon ki Bari, departure", description: "Morning visit to Saheliyon ki Bari gardens, then checkout and drop.", activities: ["Saheliyon ki Bari gardens", "Checkout and drop"], meals: ["breakfast"] },
+  ],
+  faqs: [
+    { id: "udaipur-faq-1", question: "Is this trip family-friendly?", answer: "It's primarily run as a mixed-group trip for solo/young travellers; families are welcome to check with the team before booking." },
+    { id: "udaipur-faq-2", question: "Is the boat ride weather-dependent?", answer: "Yes, boat rides on Lake Pichola can be suspended in high winds or heavy rain; an alternative activity is arranged if that happens." },
+    { id: "udaipur-faq-3", question: "What's the best time to visit Udaipur?", answer: "October to March is the most comfortable weather window; summers (April–June) are quite hot." },
+  ],
+  mapQuery: "Udaipur, Rajasthan, India",
+  rating: 4.7,
+  reviewCount: 97,
+  featured: true,
+  galleryCount: 6,
+});

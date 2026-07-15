@@ -1,0 +1,62 @@
+import { buildTrip } from "./_builder";
+
+/** PLACEHOLDER CONTENT — see manali.ts header note; same applies here. */
+export const jibhiTrip = buildTrip({
+  slug: "jibhi-valley-retreat",
+  title: "Jibhi Valley Retreat",
+  destinationSlug: "jibhi",
+  destinationName: "Jibhi",
+  themeKey: "forest",
+  shortDescription: "A slow 4-day forest-and-waterfall retreat in the quiet Tirthan valley.",
+  fullDescription:
+    "Jibhi Valley Retreat trades sightseeing checklists for slow mornings, pine forest walks, and time by the Jibhi and Tirthan rivers. Built for travellers who want a quieter, café-and-nature kind of group trip rather than a packed itinerary.",
+  durationDays: 4,
+  durationNights: 3,
+  difficulty: "easy",
+  bestSeason: ["March", "April", "May", "June", "September", "October", "November", "December"],
+  groupSize: { min: 8, max: 14 },
+  pickup: "Delhi (overnight bus pickup point)",
+  drop: "Delhi (overnight bus drop point)",
+  priceBase: 8999,
+  priceDiscounted: 7999,
+  bookingAmount: 1500,
+  totalSeats: 14,
+  availableSeats: 8,
+  batchStartDates: ["2026-10-02", "2026-10-16", "2026-11-06", "2026-11-20"],
+  inclusions: [
+    "3 nights stay in Jibhi (cottage/homestay)",
+    "Daily breakfast and dinner",
+    "Delhi to Jibhi to Delhi shared vehicle travel",
+    "Guided waterfall and forest walks",
+    "Local sightseeing by shared vehicle",
+  ],
+  exclusions: [
+    "Lunch on all days",
+    "Café bills and personal shopping",
+    "Fishing permit at Tirthan (if opted)",
+    "Anything not mentioned in inclusions",
+  ],
+  highlights: [
+    "Jibhi waterfall and Chehni Kothi tower walk",
+    "Tirthan river-side café time",
+    "Serolsar Lake day hike (optional)",
+    "Great Himalayan National Park buffer zone views",
+    "Slow, low-itinerary pace built for rest",
+  ],
+  itinerary: [
+    { day: 1, title: "Delhi to Jibhi", description: "Overnight journey from Delhi towards Jibhi.", activities: ["Overnight shared-vehicle journey"], meals: [] },
+    { day: 2, title: "Arrival, Jibhi waterfall & Chehni Kothi", description: "Check in, then a gentle walk to Jibhi waterfall and the ancient Chehni Kothi tower.", activities: ["Jibhi waterfall walk", "Chehni Kothi tower visit"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 3, title: "Serolsar Lake or Tirthan riverside day", description: "Choice of an optional day hike to Serolsar Lake, or a relaxed day by the Tirthan river and local cafés.", activities: ["Optional Serolsar Lake hike", "Tirthan riverside time"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 4, title: "Jibhi to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
+  ],
+  faqs: [
+    { id: "jibhi-faq-1", question: "Is this trip good for a first solo trip?", answer: "Yes — the pace is easy and social, which makes it a common first pick for solo travellers." },
+    { id: "jibhi-faq-2", question: "Is the Serolsar Lake hike mandatory?", answer: "No, it's an optional day activity; those who'd rather stay back can spend the day around Jibhi and Tirthan instead." },
+    { id: "jibhi-faq-3", question: "What's the connectivity like?", answer: "Basic network is available in Jibhi; expect it to be patchy compared to cities." },
+  ],
+  mapQuery: "Jibhi, Himachal Pradesh, India",
+  rating: 4.8,
+  reviewCount: 41,
+  featured: false,
+  galleryCount: 6,
+});

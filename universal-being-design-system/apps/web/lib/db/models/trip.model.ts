@@ -1,0 +1,234 @@
+/**
+ * Trip Mongoose model — the persisted mirror of `types/trip.ts`'s `Trip`
+ * interface (Architecture §3). Field-for-field identical to the TS type so
+ * `lib/api/trips.ts` can hand a `.lean<Trip>()` result straight to components
+ * with no mapping layer, exactly as the "ONE Trip type" comment in
+ * `types/trip.ts` anticipates.
+ */
+import { Schema, model, models, type Model, type Document } from "mongoose";
+import { ImageAssetSchema, SeoSchema } from "./shared.schemas";
+
+const DayPlanSchema = new Schema(
+  {
+    day: { type: Number, required: true },
+    title: { type: String, required: true },
+    description: { type: String, required: true, default: "" },
+    activities: { type: [String], default: [] },
+    meals: { type: [String], enum: ["breakfast", "lunch", "dinner"], default: [] },
+    stay: { type: String },
+    images: { type: [ImageAssetSchema], default: [] },
+  },
+  { _id: false }
+);
+
+const DepartureDateSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    startDate: { type: String, required: true },
+    endDate: { type: String, required: true },
+    seatsTotal: { type: Number, required: true, default: 0 },
+    seatsAvailable: { type: Number, required: true, default: 0 },
+    priceOverride: { type: Number },
+    status: {
+      type: String,
+      enum: ["open", "filling-fast", "sold-out", "closed"],
+      default: "open",
+    },
+    isPublished: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
+const FaqSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    question: { type: String, required: true },
+    answer: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const AccommodationEntrySchema = new Schema(
+  {
+    id: { type: String, required: true },
+    hotelName: { type: String, required: true, default: "" },
+    roomType: { type: String, required: true, default: "" },
+    roomSharing: { type: String },
+    amenities: { type: [String], default: [] },
+    location: { type: String },
+    notes: { type: String },
+    images: { type: [ImageAssetSchema], default: [] },
+  },
+  { _id: false }
+);
+
+const MealPlanSchema = new Schema(
+  {
+    breakfast: { type: Boolean, default: false },
+    lunch: { type: Boolean, default: false },
+    dinner: { type: Boolean, default: false },
+    snacks: { type: Boolean, default: false },
+    description: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const TripReviewSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    customerName: { type: String, required: true, default: "" },
+    customerPhoto: { type: ImageAssetSchema, required: true },
+    rating: { type: Number, required: true, default: 5, min: 1, max: 5 },
+    reviewText: { type: String, required: true, default: "" },
+    reviewDate: { type: String },
+  },
+  { _id: false }
+);
+
+export interface TripDocument extends Document {
+  slug: string;
+  title: string;
+  destinationSlug: string;
+  destinationName: string;
+  themeKey: string;
+  shortDescription: string;
+  fullDescription: string;
+  heroImage: unknown;
+  coverImage: unknown;
+  thumbnail: unknown;
+  homepageHeroImage: unknown;
+  gallery: unknown[];
+  duration: { days: number; nights: number; label: string };
+  difficulty: "easy" | "moderate" | "challenging";
+  bestSeason: string[];
+  bestTimeToVisit?: string;
+  altitude?: string;
+  groupSize: { min: number; max: number };
+  pickup: string;
+  drop: string;
+  startingCity?: string;
+  endingCity?: string;
+  vehicle: string;
+  travelNotes?: string;
+  accommodation: unknown[];
+  mealPlan: unknown;
+  price: { base: number; discounted?: number; bookingAmount: number; currency: string };
+  totalSeats: number;
+  availableSeats: number;
+  departureDates: unknown[];
+  inclusions: string[];
+  exclusions: string[];
+  highlights: string[];
+  itinerary: unknown[];
+  faqs: unknown[];
+  reviews: unknown[];
+  reviewIds: string[];
+  termsAndConditions: string[];
+  cancellationPolicy: string;
+  mapEmbedUrl?: string;
+  mapQuery: string;
+  rating: number;
+  reviewCount: number;
+  featured: boolean;
+  status: "draft" | "published" | "archived";
+  seo: unknown;
+  isPlaceholderContent: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const TripSchema = new Schema<TripDocument>(
+  {
+    slug: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+    title: { type: String, required: true, trim: true },
+
+    destinationSlug: { type: String, required: true, index: true },
+    destinationName: { type: String, required: true },
+
+    themeKey: {
+      type: String,
+      required: true,
+      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest"],
+    },
+
+    shortDescription: { type: String, required: true, default: "" },
+    fullDescription: { type: String, required: true, default: "" },
+
+    heroImage: { type: ImageAssetSchema, required: true },
+    coverImage: { type: ImageAssetSchema, required: true },
+    thumbnail: { type: ImageAssetSchema, required: true },
+    homepageHeroImage: { type: ImageAssetSchema, required: true },
+    gallery: { type: [ImageAssetSchema], default: [] },
+
+    duration: {
+      days: { type: Number, required: true, default: 1 },
+      nights: { type: Number, required: true, default: 0 },
+      label: { type: String, required: true, default: "" },
+    },
+    difficulty: { type: String, enum: ["easy", "moderate", "challenging"], default: "easy" },
+    bestSeason: { type: [String], default: [] },
+    bestTimeToVisit: { type: String },
+    altitude: { type: String },
+    groupSize: {
+      min: { type: Number, required: true, default: 2 },
+      max: { type: Number, required: true, default: 12 },
+    },
+    pickup: { type: String, default: "" },
+    drop: { type: String, default: "" },
+    startingCity: { type: String },
+    endingCity: { type: String },
+    vehicle: { type: String, default: "" },
+    travelNotes: { type: String },
+
+    accommodation: { type: [AccommodationEntrySchema], default: [] },
+    mealPlan: {
+      type: MealPlanSchema,
+      required: true,
+      default: () => ({ breakfast: false, lunch: false, dinner: false, snacks: false, description: "" }),
+    },
+
+    price: {
+      base: { type: Number, required: true, default: 0 },
+      discounted: { type: Number },
+      bookingAmount: { type: Number, required: true, default: 0 },
+      currency: { type: String, required: true, default: "INR" },
+    },
+
+    totalSeats: { type: Number, required: true, default: 0 },
+    availableSeats: { type: Number, required: true, default: 0 },
+    departureDates: { type: [DepartureDateSchema], default: [] },
+
+    inclusions: { type: [String], default: [] },
+    exclusions: { type: [String], default: [] },
+    highlights: { type: [String], default: [] },
+    itinerary: { type: [DayPlanSchema], default: [] },
+    faqs: { type: [FaqSchema], default: [] },
+    reviews: { type: [TripReviewSchema], default: [] },
+    reviewIds: { type: [String], default: [] },
+    termsAndConditions: { type: [String], default: [] },
+    cancellationPolicy: { type: String, default: "" },
+
+    mapEmbedUrl: { type: String },
+    mapQuery: { type: String, default: "" },
+
+    rating: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
+
+    featured: { type: Boolean, default: false, index: true },
+    status: { type: String, enum: ["draft", "published", "archived"], default: "draft", index: true },
+
+    seo: { type: SeoSchema, required: true },
+
+    isPlaceholderContent: { type: Boolean, default: false },
+
+    createdBy: { type: String },
+    updatedBy: { type: String },
+  },
+  { timestamps: true }
+);
+
+TripSchema.index({ title: "text", shortDescription: "text", destinationName: "text" });
+
+export const TripModel: Model<TripDocument> = models.Trip || model<TripDocument>("Trip", TripSchema);

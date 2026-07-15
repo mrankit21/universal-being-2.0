@@ -1,0 +1,55 @@
+import type { ThemeConfig } from "@/types/theme";
+
+/** Forest — falling leaves, birds, deep nature-green gradients. */
+export const forestTheme: ThemeConfig = {
+  key: "forest",
+  name: "Forest",
+  palette: {
+    primary: "#3d7a4c",
+    secondary: "#8a6a3d",
+    accent: "#9fc98a",
+    background: "#f1f5ee",
+    surface: "#ffffff",
+    foreground: "#141f16",
+    gradients: {
+      hero: { angle: 150, stops: [{ color: "#cfe3c2", stop: 0 }, { color: "#6ba374", stop: 55 }, { color: "#2f5c3a", stop: 100 }] },
+      section: { angle: 180, stops: [{ color: "#ffffff", stop: 0 }, { color: "#f1f5ee", stop: 100 }] },
+      cta: { angle: 120, stops: [{ color: "#8a6a3d", stop: 0 }, { color: "#6b4f28", stop: 100 }] },
+    },
+  },
+  typographyMood: "earthy",
+  border: { style: "soft", radius: "0.625rem" },
+  shadow: { style: "soft" },
+  glass: { intensity: 0.14 },
+  button: { style: "solid" },
+  card: { style: "elevated" },
+  section: { background: "surface" },
+  hero: { background: "gradient" },
+  particle: { type: "leaves", density: 34, speed: 12, color: "#9fc98a" },
+  overlay: { fog: false, waves: false, frost: false },
+  motifs: {
+    illustrationSet: "forest",
+    placements: [
+      { asset: "leaf", x: "8%", y: "20%", size: 60, opacity: 0.2, rotate: 18 },
+      { asset: "bird", x: "78%", y: "16%", size: 50, opacity: 0.22 },
+      { asset: "bird", x: "84%", y: "24%", size: 36, opacity: 0.18 },
+    ],
+    decorativePattern: "leaf-scatter",
+    patternOpacity: 0.06,
+  },
+  divider: { shape: "forest" },
+  animation: { preset: "leaf-fall" },
+  navigation: { style: "transparent" },
+  footer: { style: "illustrated" },
+  cta: { style: "gradient" },
+  icon: { style: "duotone" },
+  imageOverlay: { style: "gradient-bottom" },
+  darkMode: {
+    mode: "dedicated",
+    background: "#0e160f",
+    surface: "#182419",
+    primary: "#6ba374",
+    secondary: "#8a6a3d",
+    particleColor: "#cfe3c2",
+  },
+};
