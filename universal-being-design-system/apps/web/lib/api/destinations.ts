@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Destination } from "@/types/destination";
 import type { Trip } from "@/types/trip";
 import { destinationRegistry, destinationSlugs } from "@/data/destinations";
@@ -47,7 +48,9 @@ export async function getHomepageVisibleDestinations(): Promise<Destination[]> {
   return destinations.filter((d) => d.homepageVisible !== false);
 }
 
-export async function getDestinationBySlug(slug: string): Promise<Destination | null> {
+export const getDestinationBySlug = cache(async function getDestinationBySlug(
+  slug: string
+): Promise<Destination | null> {
   if (isDatabaseConfigured()) {
     try {
       await connectToDatabase();
@@ -61,7 +64,7 @@ export async function getDestinationBySlug(slug: string): Promise<Destination | 
   const destination = destinationRegistry[slug];
   if (!destination || destination.status !== "published") return null;
   return withThumbnailFallback(destination);
-}
+});
 
 export async function getDestinationSlugs(): Promise<string[]> {
   if (isDatabaseConfigured()) {

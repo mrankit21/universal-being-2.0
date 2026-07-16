@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { DestinationModel, TripModel } from "@/lib/db/models";
 import { destinationUpdateSchema } from "@/lib/validators/destination.schema";
@@ -6,6 +7,16 @@ import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
 
 type Params = { params: Promise<{ id: string }> };
+
+/** Revalidates every public surface a Destination can appear on: its own
+ * detail page, the Destinations listing, and the homepage (Destination
+ * content can appear in homepage widgets via getHomepageVisibleDestinations).
+ * Mirrors revalidateTripSurfaces in lib/api-helpers/revalidate.ts. */
+function revalidateDestinationSurfaces(destination: { slug: string }): void {
+  revalidatePath(`/destinations/${destination.slug}`);
+  revalidatePath("/destinations");
+  revalidatePath("/");
+}
 
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
@@ -32,11 +43,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (clash) return fail(`A destination with slug "${parsed.slug}" already exists`, 409);
     }
 
+    const before = await DestinationModel.findById(id).select("slug").lean();
+
     const destination = await DestinationModel.findByIdAndUpdate(id, parsed, {
       new: true,
       runValidators: true,
     });
     if (!destination) return fail("Destination not found", 404);
+
+    revalidateDestinationSurfaces(destination);
+    // Slug reassignment: also clear the old path so the destination doesn't
+    // keep serving a stale page at its previous address.
+    if (before && before.slug !== destination.slug) {
+      revalidateDestinationSurfaces(before);
+    }
+
     return ok(destination);
   } catch (err) {
     return handleApiError(err);
@@ -61,6 +82,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     await destination.deleteOne();
+    revalidateDestinationSurfaces(destination);
     return ok({ deleted: true });
   } catch (err) {
     return handleApiError(err);
