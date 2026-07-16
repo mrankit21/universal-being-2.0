@@ -7,7 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:trips": "tsx scripts/seed-trips.ts",
+    "seed:destinations": "tsx scripts/seed-destinations.ts",
+    "seed:testimonials": "tsx scripts/seed-testimonials.ts",
+    "seed:announcements": "tsx scripts/seed-announcements.ts",
+    "seed:homepage": "tsx scripts/seed-homepage.ts",
+    "seed:all": "npm run seed:trips && npm run seed:destinations && npm run seed:testimonials && npm run seed:announcements && npm run seed:homepage"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -63,6 +69,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0",
     "tw-animate-css": "^1.1.3",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }

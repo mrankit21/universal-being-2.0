@@ -23,20 +23,29 @@ function withThumbnailFallback(destination: Destination): Destination {
   return { ...destination, thumbnail: destination.coverImage };
 }
 
+function staticDestinations(): Destination[] {
+  return destinationSlugs
+    .map((slug) => destinationRegistry[slug])
+    .filter((d) => d.status === "published")
+    .map(withThumbnailFallback);
+}
+
 export async function getAllDestinations(): Promise<Destination[]> {
   if (isDatabaseConfigured()) {
     try {
       await connectToDatabase();
       const docs = await DestinationModel.find({ status: "published" }).sort({ name: 1 }).lean();
+      // Temporary safety net (Phase 4): DB reachable but Destinations
+      // collection not seeded yet -- show static data instead of an empty
+      // page. Once `npm run seed:destinations` has run this branch stops
+      // being hit and the DB becomes the sole source.
+      if (docs.length === 0) return staticDestinations();
       return docs.map((doc) => withThumbnailFallback(toEntity(doc) as unknown as Destination));
     } catch (err) {
       console.error("[getAllDestinations] MongoDB unreachable, falling back to static destination registry:", err);
     }
   }
-  return destinationSlugs
-    .map((slug) => destinationRegistry[slug])
-    .filter((d) => d.status === "published")
-    .map(withThumbnailFallback);
+  return staticDestinations();
 }
 
 /** Destinations eligible for homepage-facing widgets (e.g. Theme Explorer)
@@ -55,8 +64,12 @@ export const getDestinationBySlug = cache(async function getDestinationBySlug(
     try {
       await connectToDatabase();
       const doc = await DestinationModel.findOne({ slug, status: "published" }).lean();
-      if (!doc) return null;
-      return withThumbnailFallback(toEntity(doc) as unknown as Destination);
+      if (doc) return withThumbnailFallback(toEntity(doc) as unknown as Destination);
+      // Not found by slug -- before returning 404, check whether the
+      // collection is empty (unseeded) rather than this slug genuinely
+      // not existing. Same temporary safety net as getAllDestinations().
+      const anyPublished = await DestinationModel.exists({ status: "published" });
+      if (anyPublished) return null; // collection has data, this slug truly doesn't exist
     } catch (err) {
       console.error("[getDestinationBySlug] MongoDB unreachable, falling back to static destination registry:", err);
     }
@@ -71,6 +84,7 @@ export async function getDestinationSlugs(): Promise<string[]> {
     try {
       await connectToDatabase();
       const docs = await DestinationModel.find({ status: "published" }).select("slug").lean();
+      if (docs.length === 0) return destinationSlugs;
       return docs.map((d) => d.slug);
     } catch (err) {
       console.error("[getDestinationSlugs] MongoDB unreachable, falling back to static destination registry:", err);

@@ -80,15 +80,25 @@ async function getAllTripsFromDb(): Promise<Trip[]> {
   return docs.map((doc) => normalizeTrip(toEntity(doc) as unknown as Trip));
 }
 
+function staticTrips(): Trip[] {
+  return tripSlugs.map((slug) => tripRegistry[slug]).filter(isPublished);
+}
+
 export async function getAllTrips(): Promise<Trip[]> {
   if (isDatabaseConfigured()) {
     try {
-      return await getAllTripsFromDb();
+      const dbTrips = await getAllTripsFromDb();
+      // Temporary safety net (Phase 4): DB is reachable but the Trips
+      // collection hasn't been seeded yet -- show static data instead of an
+      // empty page. Once `npm run seed:trips` has run, dbTrips.length > 0
+      // and this branch stops being hit; the DB becomes the sole source.
+      if (dbTrips.length === 0) return staticTrips();
+      return dbTrips;
     } catch (err) {
       console.error("[getAllTrips] MongoDB unreachable, falling back to static trip registry:", err);
     }
   }
-  return tripSlugs.map((slug) => tripRegistry[slug]).filter(isPublished);
+  return staticTrips();
 }
 
 export const getTripBySlug = cache(async function getTripBySlug(slug: string): Promise<Trip | null> {
@@ -96,8 +106,12 @@ export const getTripBySlug = cache(async function getTripBySlug(slug: string): P
     try {
       await connectToDatabase();
       const doc = await TripModel.findOne({ slug, status: "published" }).lean();
-      if (!doc) return null;
-      return normalizeTrip(toEntity(doc) as unknown as Trip);
+      if (doc) return normalizeTrip(toEntity(doc) as unknown as Trip);
+      // Not found by slug -- before returning 404, check whether the
+      // collection is empty (unseeded) rather than this slug genuinely
+      // not existing. Same temporary safety net as getAllTrips().
+      const anyPublished = await TripModel.exists({ status: "published" });
+      if (anyPublished) return null; // collection has data, this slug truly doesn't exist
     } catch (err) {
       console.error("[getTripBySlug] MongoDB unreachable, falling back to static trip registry:", err);
     }
@@ -112,6 +126,7 @@ export async function getTripSlugs(): Promise<string[]> {
     try {
       await connectToDatabase();
       const docs = await TripModel.find({ status: "published" }).select("slug").lean();
+      if (docs.length === 0) return tripSlugs;
       return docs.map((d) => d.slug);
     } catch (err) {
       console.error("[getTripSlugs] MongoDB unreachable, falling back to static trip registry:", err);
