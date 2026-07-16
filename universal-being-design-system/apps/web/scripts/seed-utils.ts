@@ -58,3 +58,28 @@ export async function disconnect(): Promise<void> {
   await mongoose.disconnect();
   console.log("[seed] Disconnected.");
 }
+
+/** Alias — some seed scripts import `connectForSeed`/`disconnectForSeed`
+ * instead of `connect`/`disconnect`. Both names do exactly the same thing;
+ * kept so every seed script works regardless of which name it was written
+ * against. */
+export const connectForSeed = connect;
+export const disconnectForSeed = disconnect;
+
+/** Flexible summary logger — different seed scripts call this with different
+ * shapes (a plain string, or a `{created, updated, total}`-style object, or
+ * multiple args). Accepts anything and just prints it readably, so no seed
+ * script fails on this call regardless of how it invokes it. */
+export function printSummary(...args: unknown[]): void {
+  if (args.length === 1 && typeof args[0] === "string") {
+    console.log(`\n${args[0]}`);
+    return;
+  }
+  if (args.length === 1 && typeof args[0] === "object" && args[0] !== null) {
+    const obj = args[0] as Record<string, unknown>;
+    const parts = Object.entries(obj).map(([k, v]) => `${k}: ${v}`);
+    console.log(`\n[seed] Summary — ${parts.join(", ")}`);
+    return;
+  }
+  console.log("\n[seed] Summary —", ...args);
+}
