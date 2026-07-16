@@ -28,6 +28,7 @@
  * action required.
  */
 import { NextRequest } from "next/server";
+import { Types } from "mongoose";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { BookingModel, TripModel } from "@/lib/db/models";
 import { bookingCreateSchema } from "@/lib/validators/booking.schema";
@@ -39,11 +40,29 @@ import { getReservationExpiryMinutes, getReservationExpiryMs, DEFAULT_REMAINING_
 import { createSlotReservationOrder } from "@/lib/payments/razorpay";
 import { expireIfDue } from "@/lib/trip/booking-expiry";
 import { validateCoupon, redeemCoupon } from "@/lib/coupons/validate-coupon";
+import { CouponModel, CouponRedemptionModel } from "@/lib/db/models/coupon.model";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
 import { notifyBookingCreated } from "@/lib/notifications/dispatch";
+import { bookingsRateLimit } from "@/lib/rate-limit/client";
+import { enforceRateLimit } from "@/lib/rate-limit/enforce";
+import { getClientIp } from "@/lib/rate-limit/get-client-ip";
+import { isIpWhitelisted } from "@/lib/rate-limit/whitelist";
 
 export async function POST(req: NextRequest) {
   try {
+    // 10/min per IP — generous for a real customer (form retries, editing
+    // travelers), but enough to blunt a script that hammers this endpoint
+    // to lock up seats via the atomic reservation below without ever
+    // completing payment.
+    const ip = getClientIp(req);
+    const limited = await enforceRateLimit(
+      bookingsRateLimit,
+      ip,
+      "Too many booking requests from this device. Please wait a moment and try again.",
+      { bypass: isIpWhitelisted(ip) }
+    );
+    if (limited) return limited;
+
     await connectToDatabase();
     const parsed = bookingCreateSchema.parse(await req.json());
     const seatsBooked = parsed.travelers.length;
@@ -121,6 +140,13 @@ export async function POST(req: NextRequest) {
     // the charge.
     let couponDiscountAmount = 0;
     let appliedCoupon: Awaited<ReturnType<typeof validateCoupon>>["coupon"] = undefined;
+    // Pre-generated so an atomic coupon redemption (which needs a bookingId
+    // for its CouponRedemption row) can be attempted *before* the Booking
+    // document exists — mirroring the seat reservation above: reserve the
+    // resource atomically first, only create dependent records once every
+    // reservation the booking needs has actually been secured.
+    const bookingId = new Types.ObjectId();
+
     if (parsed.couponCode) {
       const couponResult = await validateCoupon({
         code: parsed.couponCode,
@@ -141,6 +167,31 @@ export async function POST(req: NextRequest) {
       }
       couponDiscountAmount = couponResult.discountAmount;
       appliedCoupon = couponResult.coupon;
+
+      // Reserve the coupon's usage slot atomically, right now — not after
+      // the booking is created. validateCoupon()'s usage-limit check above
+      // was a plain read and can be stale by the time we get here under
+      // concurrent load, so redeemCoupon() re-checks and increments
+      // usedCount in one atomic findOneAndUpdate. If it returns false, a
+      // concurrent request took the last slot between validation and here.
+      const redeemed = await redeemCoupon({
+        coupon: appliedCoupon,
+        bookingId: String(bookingId),
+        customerEmail: parsed.customerEmail,
+        discountAmount: couponDiscountAmount,
+      });
+      if (!redeemed) {
+        // Same compensating-transaction pattern as the invalid-coupon case
+        // above: give back the seats before failing the request.
+        await TripModel.updateOne(
+          { _id: parsed.tripId, "departureDates.id": parsed.departureDateId },
+          {
+            $inc: { "departureDates.$.seatsAvailable": seatsBooked, availableSeats: seatsBooked },
+            $set: { "departureDates.$.status": departure.status },
+          }
+        );
+        return fail("This coupon just reached its usage limit. Please remove it and try again.", 409);
+      }
     }
 
     const bookingAmountDue = Math.max(0, pricing.bookingAmountDue - couponDiscountAmount);
@@ -159,6 +210,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const booking = await BookingModel.create({
+        _id: bookingId,
         tripId: parsed.tripId,
         tripSlug: parsed.tripSlug,
         tripTitle: trip.title,
@@ -216,16 +268,9 @@ export async function POST(req: NextRequest) {
         paymentStatus: "pending",
       });
 
-      // Part 5 — coupon redemption is recorded only now that the booking
-      // durably exists, never speculatively during validation.
-      if (appliedCoupon && couponDiscountAmount > 0) {
-        await redeemCoupon({
-          coupon: appliedCoupon,
-          bookingId: String(booking._id),
-          customerEmail: parsed.customerEmail,
-          discountAmount: couponDiscountAmount,
-        }).catch(() => null);
-      }
+      // Part 5 — coupon redemption was already reserved atomically above
+      // (before this booking existed), using this same booking's
+      // pre-generated _id. Nothing left to do here.
 
       // Create the Razorpay order for the Book Your Slot amount. If
       // Razorpay isn't configured (e.g. local dev), this returns null and
@@ -266,9 +311,10 @@ export async function POST(req: NextRequest) {
         razorpayOrder,
       });
     } catch (createErr) {
-      // Compensate: creating the booking record failed after seats were
-      // already reserved — give them back so the batch isn't silently
-      // short seats forever.
+      // Compensate: creating the booking record failed after seats (and
+      // possibly a coupon slot) were already reserved — give them both back
+      // so the batch isn't silently short seats, and the coupon's usedCount
+      // isn't silently short a slot, forever.
       await TripModel.updateOne(
         { _id: parsed.tripId, "departureDates.id": parsed.departureDateId },
         {
@@ -276,6 +322,10 @@ export async function POST(req: NextRequest) {
           $set: { "departureDates.$.status": departure.status },
         }
       );
+      if (appliedCoupon && couponDiscountAmount > 0) {
+        await CouponModel.updateOne({ _id: appliedCoupon._id }, { $inc: { usedCount: -1 } }).catch(() => null);
+        await CouponRedemptionModel.deleteOne({ bookingId: String(bookingId) }).catch(() => null);
+      }
       throw createErr;
     }
   } catch (err) {
