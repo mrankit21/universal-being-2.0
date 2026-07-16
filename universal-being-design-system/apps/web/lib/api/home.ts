@@ -157,81 +157,88 @@ function staticHomepage(): ResolvedHomepage {
 export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
   if (!isDatabaseConfigured()) return staticHomepage();
 
-  await connectToDatabase();
-  const doc = (await HomepageModel.findOne().lean()) as (HomepageDocument & { _id: unknown }) | null;
+  try {
+    await connectToDatabase();
+    const doc = (await HomepageModel.findOne().lean()) as (HomepageDocument & { _id: unknown }) | null;
 
-  if (!doc) return staticHomepage();
+    if (!doc) return staticHomepage();
 
-  // Hero slides — DB slides (enabled only, in `order`) or static fallback.
-  const dbSlides = (doc.heroSlides ?? [])
-    .filter((s) => s.enabled)
-    .sort((a, b) => a.order - b.order)
-    .map((s): ResolvedHeroSlide => {
-      const img = s.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
-      return {
-        themeKey: (s.themeKey || "brand") as ThemeKey,
-        eyebrow: s.destinationLabel,
-        heading: s.heading,
-        subtitle: s.subtitle,
-        href: s.ctaHref,
-        ctaLabel: s.ctaLabel,
-        badges: [],
-        overlayOpacity: s.overlayOpacity ?? 0.45,
-        image: img?.url && !img.isPlaceholder ? { url: img.url, alt: img.alt ?? "", isPlaceholder: false } : undefined,
-      };
-    });
-  const heroSlides = dbSlides.length > 0 ? dbSlides : staticHeroSlidesResolved();
+    // Hero slides — DB slides (enabled only, in `order`) or static fallback.
+    const dbSlides = (doc.heroSlides ?? [])
+      .filter((s) => s.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((s): ResolvedHeroSlide => {
+        const img = s.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+        return {
+          themeKey: (s.themeKey || "brand") as ThemeKey,
+          eyebrow: s.destinationLabel,
+          heading: s.heading,
+          subtitle: s.subtitle,
+          href: s.ctaHref,
+          ctaLabel: s.ctaLabel,
+          badges: [],
+          overlayOpacity: s.overlayOpacity ?? 0.45,
+          image: img?.url && !img.isPlaceholder ? { url: img.url, alt: img.alt ?? "", isPlaceholder: false } : undefined,
+        };
+      });
+    const heroSlides = dbSlides.length > 0 ? dbSlides : staticHeroSlidesResolved();
 
-  // Featured trips — resolve chosen (enabled) slugs against the real Trip
-  // collection, preserving admin-chosen order; static fallback if empty.
-  const chosenSlugs = (doc.featuredTrips ?? []).filter((f) => f.enabled).map((f) => f.tripSlug);
-  let featuredTrips: HomeTripSummary[] = [];
-  if (chosenSlugs.length > 0) {
-    const resolved = await Promise.all(chosenSlugs.map((slug) => getTripBySlug(slug)));
-    featuredTrips = resolved.filter((t): t is Trip => Boolean(t)).map(tripToHomeSummary);
+    // Featured trips — resolve chosen (enabled) slugs against the real Trip
+    // collection, preserving admin-chosen order; static fallback if empty.
+    const chosenSlugs = (doc.featuredTrips ?? []).filter((f) => f.enabled).map((f) => f.tripSlug);
+    let featuredTrips: HomeTripSummary[] = [];
+    if (chosenSlugs.length > 0) {
+      const resolved = await Promise.all(chosenSlugs.map((slug) => getTripBySlug(slug)));
+      featuredTrips = resolved.filter((t): t is Trip => Boolean(t)).map(tripToHomeSummary);
+    }
+    if (featuredTrips.length === 0) {
+      // Nothing chosen in the Admin Panel yet — fall back to whichever real
+      // trips are marked `featured: true`, then static seed data as a last resort.
+      const dbFeatured = await getStaticFeaturedFallback();
+      featuredTrips = dbFeatured.length > 0 ? dbFeatured.map(tripToHomeSummary) : staticFeaturedTrips;
+    }
+
+    // Testimonials — resolve chosen IDs against the real Testimonial
+    // collection, preserving order; static fallback if empty.
+    const chosenIds = doc.testimonialIds ?? [];
+    let testimonials: Testimonial[] = [];
+    if (chosenIds.length > 0) {
+      const docs = await TestimonialModel.find({ _id: { $in: chosenIds }, published: true }).lean();
+      const byId = new Map(docs.map((d) => [String(d._id), d]));
+      testimonials = chosenIds.map((id) => byId.get(id)).filter(Boolean).map((d) => testimonialDocToEntity(d!));
+    }
+    if (testimonials.length === 0) testimonials = staticTestimonials;
+
+    const promoBannerImg = doc.promoBanner?.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const ctaImg = doc.ctaSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+
+    return {
+      heroSlides,
+      featuredTrips,
+      testimonials,
+      promoBanner: {
+        enabled: Boolean(doc.promoBanner?.enabled),
+        heading: doc.promoBanner?.heading ?? "",
+        body: doc.promoBanner?.body ?? "",
+        ctaLabel: doc.promoBanner?.ctaLabel,
+        ctaHref: doc.promoBanner?.ctaHref,
+        image: promoBannerImg?.url && !promoBannerImg.isPlaceholder ? { url: promoBannerImg.url, alt: promoBannerImg.alt ?? "", isPlaceholder: false } : undefined,
+      },
+      ctaSection: {
+        heading: doc.ctaSection?.heading || DEFAULT_CTA_SECTION.heading,
+        body: doc.ctaSection?.body || DEFAULT_CTA_SECTION.body,
+        ctaLabel: doc.ctaSection?.ctaLabel || DEFAULT_CTA_SECTION.ctaLabel,
+        ctaHref: doc.ctaSection?.ctaHref || DEFAULT_CTA_SECTION.ctaHref,
+        backgroundImage: ctaImg?.url && !ctaImg.isPlaceholder ? { url: ctaImg.url, alt: ctaImg.alt ?? "", isPlaceholder: false } : undefined,
+      },
+      sectionOrder: doc.sectionOrder?.length ? doc.sectionOrder : DEFAULT_SECTION_ORDER,
+      sectionVisibility: { ...DEFAULT_SECTION_VISIBILITY, ...(doc.sectionVisibility ?? {}) },
+      source: "database",
+    };
+  } catch (err) {
+    // A configured-but-unreachable MONGODB_URI must never take down the
+    // homepage -- fall back to the static seed content instead.
+    console.error("[getResolvedHomepage] MongoDB unreachable, falling back to static homepage:", err);
+    return staticHomepage();
   }
-  if (featuredTrips.length === 0) {
-    // Nothing chosen in the Admin Panel yet — fall back to whichever real
-    // trips are marked `featured: true`, then static seed data as a last resort.
-    const dbFeatured = await getStaticFeaturedFallback();
-    featuredTrips = dbFeatured.length > 0 ? dbFeatured.map(tripToHomeSummary) : staticFeaturedTrips;
-  }
-
-  // Testimonials — resolve chosen IDs against the real Testimonial
-  // collection, preserving order; static fallback if empty.
-  const chosenIds = doc.testimonialIds ?? [];
-  let testimonials: Testimonial[] = [];
-  if (chosenIds.length > 0) {
-    const docs = await TestimonialModel.find({ _id: { $in: chosenIds }, published: true }).lean();
-    const byId = new Map(docs.map((d) => [String(d._id), d]));
-    testimonials = chosenIds.map((id) => byId.get(id)).filter(Boolean).map((d) => testimonialDocToEntity(d!));
-  }
-  if (testimonials.length === 0) testimonials = staticTestimonials;
-
-  const promoBannerImg = doc.promoBanner?.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
-  const ctaImg = doc.ctaSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
-
-  return {
-    heroSlides,
-    featuredTrips,
-    testimonials,
-    promoBanner: {
-      enabled: Boolean(doc.promoBanner?.enabled),
-      heading: doc.promoBanner?.heading ?? "",
-      body: doc.promoBanner?.body ?? "",
-      ctaLabel: doc.promoBanner?.ctaLabel,
-      ctaHref: doc.promoBanner?.ctaHref,
-      image: promoBannerImg?.url && !promoBannerImg.isPlaceholder ? { url: promoBannerImg.url, alt: promoBannerImg.alt ?? "", isPlaceholder: false } : undefined,
-    },
-    ctaSection: {
-      heading: doc.ctaSection?.heading || DEFAULT_CTA_SECTION.heading,
-      body: doc.ctaSection?.body || DEFAULT_CTA_SECTION.body,
-      ctaLabel: doc.ctaSection?.ctaLabel || DEFAULT_CTA_SECTION.ctaLabel,
-      ctaHref: doc.ctaSection?.ctaHref || DEFAULT_CTA_SECTION.ctaHref,
-      backgroundImage: ctaImg?.url && !ctaImg.isPlaceholder ? { url: ctaImg.url, alt: ctaImg.alt ?? "", isPlaceholder: false } : undefined,
-    },
-    sectionOrder: doc.sectionOrder?.length ? doc.sectionOrder : DEFAULT_SECTION_ORDER,
-    sectionVisibility: { ...DEFAULT_SECTION_VISIBILITY, ...(doc.sectionVisibility ?? {}) },
-    source: "database",
-  };
 }

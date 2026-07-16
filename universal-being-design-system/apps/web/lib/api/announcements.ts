@@ -47,14 +47,21 @@ function docToConfig(doc: {
 export async function getActiveAnnouncement(): Promise<AnnouncementConfig | null> {
   if (!isDatabaseConfigured()) return staticActiveAnnouncement;
 
-  await connectToDatabase();
-  const now = new Date().toISOString();
-  const doc = (await AnnouncementModel.findOne({
-    enabled: true,
-    $or: [{ expiresAt: { $exists: false } }, { expiresAt: "" }, { expiresAt: { $gt: now } }],
-  })
-    .sort({ updatedAt: -1 })
-    .lean()) as (AnnouncementDocument & { _id: unknown }) | null;
+  try {
+    await connectToDatabase();
+    const now = new Date().toISOString();
+    const doc = (await AnnouncementModel.findOne({
+      enabled: true,
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: "" }, { expiresAt: { $gt: now } }],
+    })
+      .sort({ updatedAt: -1 })
+      .lean()) as (AnnouncementDocument & { _id: unknown }) | null;
 
-  return doc ? docToConfig(doc) : null;
+    return doc ? docToConfig(doc) : null;
+  } catch (err) {
+    // A configured-but-unreachable MONGODB_URI must never take down every
+    // page on the site -- this runs inside the root layout on every request.
+    console.error("[getActiveAnnouncement] MongoDB unreachable, falling back to static announcement:", err);
+    return staticActiveAnnouncement;
+  }
 }

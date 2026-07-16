@@ -57,16 +57,21 @@ function normalizeTrip(trip: Trip): Trip {
  * regardless via `TripReviews`. */
 export async function getTripReviewTestimonials(trip: Trip): Promise<Testimonial[]> {
   if (!isDatabaseConfigured() || !trip.reviewIds?.length) return [];
-  await connectToDatabase();
-  const { TestimonialModel } = await import("@/lib/db/models");
-  const { testimonialDocToEntity } = await import("@/lib/api/home");
-  const docs = await TestimonialModel.find({ _id: { $in: trip.reviewIds }, published: true }).lean();
-  const byId = new Map(docs.map((d) => [String(d._id), d]));
-  // Preserve admin-chosen order; drop ids that no longer resolve (deleted/unpublished).
-  return trip.reviewIds
-    .map((id) => byId.get(id))
-    .filter((d): d is NonNullable<typeof d> => Boolean(d))
-    .map(testimonialDocToEntity);
+  try {
+    await connectToDatabase();
+    const { TestimonialModel } = await import("@/lib/db/models");
+    const { testimonialDocToEntity } = await import("@/lib/api/home");
+    const docs = await TestimonialModel.find({ _id: { $in: trip.reviewIds }, published: true }).lean();
+    const byId = new Map(docs.map((d) => [String(d._id), d]));
+    // Preserve admin-chosen order; drop ids that no longer resolve (deleted/unpublished).
+    return trip.reviewIds
+      .map((id) => byId.get(id))
+      .filter((d): d is NonNullable<typeof d> => Boolean(d))
+      .map(testimonialDocToEntity);
+  } catch (err) {
+    console.error("[getTripReviewTestimonials] MongoDB unreachable, returning no reviews:", err);
+    return [];
+  }
 }
 
 async function getAllTripsFromDb(): Promise<Trip[]> {
@@ -76,16 +81,26 @@ async function getAllTripsFromDb(): Promise<Trip[]> {
 }
 
 export async function getAllTrips(): Promise<Trip[]> {
-  if (isDatabaseConfigured()) return getAllTripsFromDb();
+  if (isDatabaseConfigured()) {
+    try {
+      return await getAllTripsFromDb();
+    } catch (err) {
+      console.error("[getAllTrips] MongoDB unreachable, falling back to static trip registry:", err);
+    }
+  }
   return tripSlugs.map((slug) => tripRegistry[slug]).filter(isPublished);
 }
 
 export const getTripBySlug = cache(async function getTripBySlug(slug: string): Promise<Trip | null> {
   if (isDatabaseConfigured()) {
-    await connectToDatabase();
-    const doc = await TripModel.findOne({ slug, status: "published" }).lean();
-    if (!doc) return null;
-    return normalizeTrip(toEntity(doc) as unknown as Trip);
+    try {
+      await connectToDatabase();
+      const doc = await TripModel.findOne({ slug, status: "published" }).lean();
+      if (!doc) return null;
+      return normalizeTrip(toEntity(doc) as unknown as Trip);
+    } catch (err) {
+      console.error("[getTripBySlug] MongoDB unreachable, falling back to static trip registry:", err);
+    }
   }
   const trip = tripRegistry[slug];
   if (!trip || !isPublished(trip)) return null;
@@ -94,9 +109,13 @@ export const getTripBySlug = cache(async function getTripBySlug(slug: string): P
 
 export async function getTripSlugs(): Promise<string[]> {
   if (isDatabaseConfigured()) {
-    await connectToDatabase();
-    const docs = await TripModel.find({ status: "published" }).select("slug").lean();
-    return docs.map((d) => d.slug);
+    try {
+      await connectToDatabase();
+      const docs = await TripModel.find({ status: "published" }).select("slug").lean();
+      return docs.map((d) => d.slug);
+    } catch (err) {
+      console.error("[getTripSlugs] MongoDB unreachable, falling back to static trip registry:", err);
+    }
   }
   return tripSlugs;
 }

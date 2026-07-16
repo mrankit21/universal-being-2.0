@@ -44,15 +44,23 @@ function isRealAsset(asset: unknown): asset is ImageAsset {
 export async function getSiteBrand(): Promise<SiteBrand> {
   if (!isDatabaseConfigured()) return emptyBrand;
 
-  await connectToDatabase();
-  const doc = (await SiteSettingsModel.findOne().lean()) as (SiteSettingsDocument & { _id: unknown }) | null;
+  try {
+    await connectToDatabase();
+    const doc = (await SiteSettingsModel.findOne().lean()) as (SiteSettingsDocument & { _id: unknown }) | null;
 
-  if (!doc) return emptyBrand;
+    if (!doc) return emptyBrand;
 
-  return {
-    brandName: doc.brandName || staticSiteConfig.brandName,
-    tagline: doc.tagline || staticSiteConfig.tagline,
-    logo: isRealAsset(doc.logo) ? (doc.logo as ImageAsset) : null,
-    logoDark: isRealAsset(doc.logoDark) ? (doc.logoDark as ImageAsset) : null,
-  };
+    return {
+      brandName: doc.brandName || staticSiteConfig.brandName,
+      tagline: doc.tagline || staticSiteConfig.tagline,
+      logo: isRealAsset(doc.logo) ? (doc.logo as ImageAsset) : null,
+      logoDark: isRealAsset(doc.logoDark) ? (doc.logoDark as ImageAsset) : null,
+    };
+  } catch (err) {
+    // A configured-but-unreachable MONGODB_URI (bad credentials, placeholder
+    // left unedited, cluster down, etc.) must never take down every page on
+    // the site — this runs inside the root layout on every request.
+    console.error("[getSiteBrand] MongoDB unreachable, falling back to static brand:", err);
+    return emptyBrand;
+  }
 }

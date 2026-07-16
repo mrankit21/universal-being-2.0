@@ -24,9 +24,13 @@ function withThumbnailFallback(destination: Destination): Destination {
 
 export async function getAllDestinations(): Promise<Destination[]> {
   if (isDatabaseConfigured()) {
-    await connectToDatabase();
-    const docs = await DestinationModel.find({ status: "published" }).sort({ name: 1 }).lean();
-    return docs.map((doc) => withThumbnailFallback(toEntity(doc) as unknown as Destination));
+    try {
+      await connectToDatabase();
+      const docs = await DestinationModel.find({ status: "published" }).sort({ name: 1 }).lean();
+      return docs.map((doc) => withThumbnailFallback(toEntity(doc) as unknown as Destination));
+    } catch (err) {
+      console.error("[getAllDestinations] MongoDB unreachable, falling back to static destination registry:", err);
+    }
   }
   return destinationSlugs
     .map((slug) => destinationRegistry[slug])
@@ -45,10 +49,14 @@ export async function getHomepageVisibleDestinations(): Promise<Destination[]> {
 
 export async function getDestinationBySlug(slug: string): Promise<Destination | null> {
   if (isDatabaseConfigured()) {
-    await connectToDatabase();
-    const doc = await DestinationModel.findOne({ slug, status: "published" }).lean();
-    if (!doc) return null;
-    return withThumbnailFallback(toEntity(doc) as unknown as Destination);
+    try {
+      await connectToDatabase();
+      const doc = await DestinationModel.findOne({ slug, status: "published" }).lean();
+      if (!doc) return null;
+      return withThumbnailFallback(toEntity(doc) as unknown as Destination);
+    } catch (err) {
+      console.error("[getDestinationBySlug] MongoDB unreachable, falling back to static destination registry:", err);
+    }
   }
   const destination = destinationRegistry[slug];
   if (!destination || destination.status !== "published") return null;
@@ -57,9 +65,13 @@ export async function getDestinationBySlug(slug: string): Promise<Destination | 
 
 export async function getDestinationSlugs(): Promise<string[]> {
   if (isDatabaseConfigured()) {
-    await connectToDatabase();
-    const docs = await DestinationModel.find({ status: "published" }).select("slug").lean();
-    return docs.map((d) => d.slug);
+    try {
+      await connectToDatabase();
+      const docs = await DestinationModel.find({ status: "published" }).select("slug").lean();
+      return docs.map((d) => d.slug);
+    } catch (err) {
+      console.error("[getDestinationSlugs] MongoDB unreachable, falling back to static destination registry:", err);
+    }
   }
   return destinationSlugs;
 }
