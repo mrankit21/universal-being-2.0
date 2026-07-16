@@ -168,6 +168,28 @@ export async function POST(req: NextRequest) {
       couponDiscountAmount = couponResult.discountAmount;
       appliedCoupon = couponResult.coupon;
 
+      if (!appliedCoupon) {
+        // Defensive, not just cosmetic: `CouponValidationResult.coupon` is
+        // typed as optional independently of `valid` (see
+        // lib/coupons/validate-coupon.ts), so `valid: true` doesn't
+        // guarantee `coupon` is set at the type level even though it
+        // always is in practice. This is a real narrowing check (not a
+        // cast) — it's what lets `appliedCoupon` be passed to
+        // `redeemCoupon()` below typed as a plain `CouponDocument`, and it
+        // also means a future change to `validateCoupon` that violates
+        // that invariant fails the booking cleanly instead of crashing
+        // inside `redeemCoupon()`. Same compensating-transaction pattern
+        // as the invalid-coupon case: give back the seats before failing.
+        await TripModel.updateOne(
+          { _id: parsed.tripId, "departureDates.id": parsed.departureDateId },
+          {
+            $inc: { "departureDates.$.seatsAvailable": seatsBooked, availableSeats: seatsBooked },
+            $set: { "departureDates.$.status": departure.status },
+          }
+        );
+        return fail("Invalid coupon code.", 400);
+      }
+
       // Reserve the coupon's usage slot atomically, right now — not after
       // the booking is created. validateCoupon()'s usage-limit check above
       // was a plain read and can be stale by the time we get here under

@@ -26,7 +26,11 @@ export function handleApiError(err: unknown) {
     if (err.message === "UNAUTHENTICATED") return fail("Authentication required", 401);
     if (err.message === "FORBIDDEN") return fail("You do not have permission to do this", 403);
     if (err.message === "NOT_FOUND") return fail("Not found", 404);
-    if (err.message.startsWith("MONGODB_URI") || err.message.startsWith("SESSION_SECRET")) {
+    if (
+      err.message.startsWith("MONGODB_URI") ||
+      err.message.startsWith("SESSION_SECRET") ||
+      err.message.startsWith("CRON_SECRET")
+    ) {
       return fail(err.message, 503);
     }
     return fail(err.message, 500);

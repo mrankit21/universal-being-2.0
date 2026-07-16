@@ -16,7 +16,16 @@ import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // no secret configured — allow (dev convenience); set CRON_SECRET in prod
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      // Fail closed in prod — an unset secret must never mean "open to anyone".
+      throw new Error(
+        "CRON_SECRET is not set. Set CRON_SECRET in your production environment " +
+          "to enable the booking-expiry cron endpoint. See .env.example."
+      );
+    }
+    return true; // no secret configured — allow (dev convenience); set CRON_SECRET in prod
+  }
   const header = req.headers.get("authorization");
   const query = req.nextUrl.searchParams.get("secret");
   return header === `Bearer ${secret}` || query === secret;
