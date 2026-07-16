@@ -295,6 +295,8 @@ const BookingSchema = new Schema<BookingDocument>(
 );
 
 BookingSchema.index({ createdAt: -1 });
+BookingSchema.index({ tripId: 1, status: 1 });
+BookingSchema.index({ status: 1, reservationExpiresAt: 1 });
 
 export const BookingModel: Model<BookingDocument> =
   models.Booking || model<BookingDocument>("Booking", BookingSchema);
