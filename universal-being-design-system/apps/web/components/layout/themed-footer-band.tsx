@@ -1,8 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { ThemeBackground } from "@/components/theme/theme-background";
-import { SiteFooter } from "@/components/layout/site-footer";
 
 /**
  * ThemedFooterBand — Step 7.5B footer enhancement. `SiteFooter` itself stays
@@ -12,12 +12,22 @@ import { SiteFooter } from "@/components/layout/site-footer";
  * active theme's gradient, motifs (mountains/clouds/leaves/etc. per
  * destination mood), and particles automatically — with zero change to
  * `SiteFooter`'s own markup or content.
+ *
+ * Takes `<SiteFooter />` as `children` rather than importing it directly:
+ * `SiteFooter` is an async Server Component (it reads Site Settings from
+ * MongoDB via `lib/api/site-settings.ts`), and a Client Component ("use
+ * client", needed here for `useTheme()`) can never import and render a
+ * Server Component's module directly -- Next.js would try to bundle the
+ * whole server-only chain (mongoose/mongodb) for the browser and fail
+ * ("Can't resolve 'net'"). Passing it as `children` from the Server
+ * Component that renders `<ThemedFooterBand>` (RootShell) keeps the
+ * Server/Client boundary correct.
  */
-export function ThemedFooterBand() {
+export function ThemedFooterBand({ children }: { children: ReactNode }) {
   const { theme } = useTheme();
   return (
     <ThemeBackground theme={theme} area="section" className="border-t border-border">
-      <SiteFooter />
+      {children}
     </ThemeBackground>
   );
 }

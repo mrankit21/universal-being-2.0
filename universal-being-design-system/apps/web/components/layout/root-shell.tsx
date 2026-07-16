@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { AnnouncementConfig } from "@/types/layout";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { ThemedFooterBand } from "@/components/layout/themed-footer-band";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { StickyCtaBar } from "@/components/layout/sticky-cta-bar";
@@ -56,7 +57,9 @@ export function RootShell({
           {children}
         </main>
 
-        <ThemedFooterBand />
+        <ThemedFooterBand>
+          <SiteFooter />
+        </ThemedFooterBand>
         <BottomNav />
         <StickyCtaBar />
         <GlobalSearchModal />
