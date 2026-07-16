@@ -10,6 +10,7 @@ import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { PromoBannerSection } from "@/components/home/promo-banner-section";
 import { CtaSection } from "@/components/home/cta-section";
 import { PageFadeIn } from "@/components/animation/page-fade-in";
+import { HomeJsonLd } from "@/components/home/home-json-ld";
 import type { HomepageSectionKey } from "@/lib/db/models";
 
 export const metadata: Metadata = {
@@ -65,6 +66,7 @@ export default async function HomePage() {
 
   return (
     <PageFadeIn>
+      <HomeJsonLd />
       {homepage.sectionOrder.map((key) => sectionRenderers[key] ?? null)}
     </PageFadeIn>
   );

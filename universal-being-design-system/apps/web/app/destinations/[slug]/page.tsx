@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { getDestinationBySlug, getDestinationSlugs, getOrderedDestinationTrips } from "@/lib/api/destinations";
+import { absoluteUrl } from "@/lib/seo/site-url";
 import { DestinationHero } from "@/components/destination/destination-hero";
 import { DestinationGallery } from "@/components/destination/destination-gallery";
+import { DestinationJsonLd } from "@/components/destination/destination-json-ld";
 import { TripCard } from "@/components/trip/trip-card";
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { EmptyState } from "@/components/primitives/empty-state";
@@ -27,9 +29,11 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
   const { slug } = await params;
   const destination = await getDestinationBySlug(slug);
   if (!destination) return {};
+  const canonical = absoluteUrl(`/destinations/${destination.slug}`);
   return {
     title: destination.seo.title,
     description: destination.seo.description,
+    alternates: { canonical },
   };
 }
 
@@ -50,6 +54,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
 
   return (
     <div>
+      <DestinationJsonLd destination={destination} />
       <DestinationHero destination={destination} />
       <SectionDivider shape={theme.divider.shape} position="top" />
 
