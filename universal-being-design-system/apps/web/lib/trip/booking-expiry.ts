@@ -16,6 +16,7 @@
  */
 import { BookingModel, TripModel } from "@/lib/db/models";
 import type { BookingDocument, BookingStatus } from "@/lib/db/models/booking.model";
+import { releaseCouponRedemption } from "@/lib/coupons/validate-coupon";
 
 /** Statuses that still hold a seat and are subject to expiry. Once a
  * booking leaves this set (paid, cancelled, expired, completed, ...) its
@@ -70,6 +71,13 @@ export async function releaseExpiredBooking(bookingId: string): Promise<boolean>
     { _id: booking.tripId, "departureDates.id": booking.departureDateId, "departureDates.status": "sold-out" },
     { $set: { "departureDates.$.status": "open" } }
   );
+
+  // Give back the coupon slot too, if one was reserved for this booking —
+  // it never turned into a paid booking, so it shouldn't permanently count
+  // against the coupon's usageLimit/perUserLimit. No-ops if no coupon was
+  // applied. See releaseCouponRedemption's docstring for why this is safe
+  // to call from both the lazy-expiry and cron-sweep paths.
+  await releaseCouponRedemption(String(booking._id)).catch(() => null);
 
   return true;
 }

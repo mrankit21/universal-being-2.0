@@ -5,6 +5,7 @@ import { bookingUpdateSchema } from "@/lib/validators/booking.schema";
 import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
 import { expireIfDue } from "@/lib/trip/booking-expiry";
+import { releaseCouponRedemption } from "@/lib/coupons/validate-coupon";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -52,6 +53,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         { _id: booking.tripId, "departureDates.id": booking.departureDateId, "departureDates.status": "sold-out" },
         { $set: { "departureDates.$.status": "open" } }
       );
+
+      // Same coupon give-back as automatic expiry (`releaseExpiredBooking`)
+      // — but only when the booking never actually completed a payment.
+      // A booking that was `paid` (or `paid` then `refunded`) legitimately
+      // used its coupon on a real transaction, so admin-cancelling it later
+      // must NOT hand the coupon slot back; only a booking that's being
+      // cancelled/expired before ever paying should release it.
+      if (booking.paymentStatus !== "paid" && booking.paymentStatus !== "refunded") {
+        await releaseCouponRedemption(String(booking._id)).catch(() => null);
+      }
     }
 
     // Booking Status Timeline (Part 8) — every status transition is

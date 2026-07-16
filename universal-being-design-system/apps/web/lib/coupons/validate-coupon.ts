@@ -136,3 +136,28 @@ export async function redeemCoupon(params: {
   });
   return true;
 }
+
+/**
+ * Reverses a redemption made by `redeemCoupon()` for a booking that never
+ * completed payment (expired reservation, or admin cancellation before
+ * payment). Mirrors the compensating-transaction pattern already used for
+ * seats in `app/api/bookings/route.ts`'s `catch (createErr)` block —
+ * anything reserved atomically on the assumption a booking would succeed
+ * must be given back if it doesn't.
+ *
+ * No-ops (returns `false`) if the booking never actually had a coupon
+ * applied, or if this has already been released — callers don't need to
+ * guard the call themselves, and it's safe to call more than once for the
+ * same booking (lazy expiry, cron sweep, admin cancel can all race) without
+ * double-decrementing `usedCount`: the `findOneAndDelete` only ever
+ * succeeds once per `bookingId`, and the `usedCount` decrement only runs
+ * when that delete actually removed a row.
+ */
+export async function releaseCouponRedemption(bookingId: string): Promise<boolean> {
+  const redemption = await CouponRedemptionModel.findOneAndDelete({ bookingId });
+  if (!redemption) return false; // no coupon was applied, or already released
+
+  await CouponModel.updateOne({ _id: redemption.couponId }, { $inc: { usedCount: -1 } }).catch(() => null);
+
+  return true;
+}

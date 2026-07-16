@@ -8,10 +8,10 @@
  * Payments are now wired up (`lib/payments/razorpay.ts`): a booking is
  * created as `slot-reserved` with `paymentStatus: "pending"`, a
  * `reservationExpiresAt` deadline, and (when Razorpay is configured) an
- * order for the Book Your Slot amount. `couponCode` / `discountAmount`
- * remain a forward-looking placeholder for a future Coupons/Promo Codes
- * phase — unused today beyond the price-breakdown discount already
- * computed from the trip's own price.
+ * order for the Book Your Slot amount. `couponCode` is the applied
+ * coupon's code (Part 5, `lib/coupons/validate-coupon.ts`); `discountAmount`
+ * is the trip-price discount from the trip's own price, kept separate from
+ * `couponDiscountAmount` (below) so reporting can distinguish the two.
  */
 import { Schema, model, models, type Model, type Document } from "mongoose";
 import {
@@ -295,8 +295,6 @@ const BookingSchema = new Schema<BookingDocument>(
 );
 
 BookingSchema.index({ createdAt: -1 });
-BookingSchema.index({ tripId: 1, status: 1 });
-BookingSchema.index({ status: 1, reservationExpiresAt: 1 });
 
 export const BookingModel: Model<BookingDocument> =
   models.Booking || model<BookingDocument>("Booking", BookingSchema);
