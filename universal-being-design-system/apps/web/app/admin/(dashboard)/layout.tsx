@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen bg-muted/20">
       <AdminSidebar permissions={permissions} />
       <div className="flex flex-1 flex-col">
-        <AdminHeader userName={user.name || user.email} role={user.role} />
+        <AdminHeader userName={user.name || user.email} role={user.role} permissions={permissions} />
         <main className="flex-1 p-6">{children}</main>
       </div>
       <Toaster />

@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 
 import type { AnnouncementConfig } from "@/types/layout";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
@@ -18,15 +21,10 @@ import { GlobalSearchModal } from "@/components/layout/global-search-modal";
  * global search — with zero per-page wiring, per the Phase 4 rule "future
  * pages must automatically inherit this layout."
  *
- * Only two providers are needed at this level (search, sticky CTA); the
- * destination ThemeProvider stays exactly where Phase 3 put it (wrapping
- * this whole shell in app/layout.tsx) since it is unrelated to navigation
- * state and Architecture §4 already assigns it to the root layout.
- *
- * Server component: nothing here holds state itself, so nothing forces a
- * "use client" boundary at this level — every interactive piece
- * (scroll-aware header chrome, drawers, dismiss/search state) is isolated
- * inside its own leaf component instead.
+ * `/admin/**` keeps the public header/announcement/bottom-nav/sticky-CTA
+ * (useful for jumping over to the live site while working in admin) but
+ * skips the public footer — it's public-site marketing chrome (nav links,
+ * socials, newsletter) with no purpose inside the admin panel.
  *
  * Step 7.6C-B Part 2: `announcement` is now a prop instead of a direct
  * `data/layout/announcement.ts` import — `app/layout.tsx` resolves it once
@@ -41,6 +39,9 @@ export function RootShell({
   children: ReactNode;
   announcement: AnnouncementConfig | null;
 }) {
+  const pathname = usePathname();
+  const isAdminRoute = pathname?.startsWith("/admin") ?? false;
+
   return (
     <GlobalSearchProvider>
       <StickyCtaProvider>
@@ -57,9 +58,11 @@ export function RootShell({
           {children}
         </main>
 
-        <ThemedFooterBand>
-          <SiteFooter />
-        </ThemedFooterBand>
+        {!isAdminRoute && (
+          <ThemedFooterBand>
+            <SiteFooter />
+          </ThemedFooterBand>
+        )}
         <BottomNav />
         <StickyCtaBar />
         <GlobalSearchModal />
