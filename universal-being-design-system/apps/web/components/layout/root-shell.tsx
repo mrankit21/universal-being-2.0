@@ -1,7 +1,4 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { usePathname } from "next/navigation";
 
 import type { AnnouncementConfig } from "@/types/layout";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
@@ -13,6 +10,7 @@ import { StickyCtaBar } from "@/components/layout/sticky-cta-bar";
 import { StickyCtaProvider } from "@/components/layout/sticky-cta-context";
 import { GlobalSearchProvider } from "@/components/layout/search-context";
 import { GlobalSearchModal } from "@/components/layout/global-search-modal";
+import { HideOnAdmin } from "@/components/layout/admin-route-gate";
 
 /**
  * RootShell — the complete Global Layout (Phase 4). Every page rendered
@@ -24,7 +22,19 @@ import { GlobalSearchModal } from "@/components/layout/global-search-modal";
  * `/admin/**` keeps the public header/announcement/bottom-nav/sticky-CTA
  * (useful for jumping over to the live site while working in admin) but
  * skips the public footer — it's public-site marketing chrome (nav links,
- * socials, newsletter) with no purpose inside the admin panel.
+ * socials, newsletter) with no purpose inside the admin panel. That check
+ * needs `usePathname`, which only works in a Client Component — so it's
+ * isolated in `<HideOnAdmin>` rather than making this whole file a client
+ * component. SiteFooter fetches from MongoDB via mongoose; if this file
+ * itself became "use client" and still imported SiteFooter directly,
+ * webpack would try to bundle mongoose for the browser and crash with
+ * "Module not found: Can't resolve 'net'" — keep RootShell a Server
+ * Component for exactly that reason.
+ *
+ * Server component: nothing here holds state itself, so nothing forces a
+ * "use client" boundary at this level — every interactive piece
+ * (scroll-aware header chrome, drawers, dismiss/search state) is isolated
+ * inside its own leaf component instead.
  *
  * Step 7.6C-B Part 2: `announcement` is now a prop instead of a direct
  * `data/layout/announcement.ts` import — `app/layout.tsx` resolves it once
@@ -39,9 +49,6 @@ export function RootShell({
   children: ReactNode;
   announcement: AnnouncementConfig | null;
 }) {
-  const pathname = usePathname();
-  const isAdminRoute = pathname?.startsWith("/admin") ?? false;
-
   return (
     <GlobalSearchProvider>
       <StickyCtaProvider>
@@ -58,11 +65,11 @@ export function RootShell({
           {children}
         </main>
 
-        {!isAdminRoute && (
+        <HideOnAdmin>
           <ThemedFooterBand>
             <SiteFooter />
           </ThemedFooterBand>
-        )}
+        </HideOnAdmin>
         <BottomNav />
         <StickyCtaBar />
         <GlobalSearchModal />
