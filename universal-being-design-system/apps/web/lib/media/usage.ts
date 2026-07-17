@@ -18,6 +18,7 @@ interface UsageImageRef {
 }
 
 interface TripUsageProjection {
+  _id: unknown;
   slug: string;
   title?: string;
   heroImage?: UsageImageRef;
@@ -31,6 +32,7 @@ interface TripUsageProjection {
 }
 
 interface DestinationUsageProjection {
+  _id: unknown;
   slug: string;
   name?: string;
   heroImage?: UsageImageRef;
@@ -125,7 +127,7 @@ export async function findUsageForAssets(
 
   for (const trip of trips as TripUsageProjection[]) {
     const label = trip.title || trip.slug;
-    const href = `/admin/trips/${trip.slug}`;
+    const href = `/admin/trips/${trip._id}`;
     if (trip.heroImage?.url && urls.includes(trip.heroImage.url)) {
       push(trip.heroImage.url, { model: "Trip", id: trip.slug, label, field: "heroImage", href });
     }
@@ -172,7 +174,7 @@ export async function findUsageForAssets(
 
   for (const dest of destinations as DestinationUsageProjection[]) {
     const label = dest.name || dest.slug;
-    const href = `/admin/destinations/${dest.slug}`;
+    const href = `/admin/destinations/${dest._id}`;
     if (dest.heroImage?.url && urls.includes(dest.heroImage.url)) {
       push(dest.heroImage.url, { model: "Destination", id: dest.slug, label, field: "heroImage", href });
     }

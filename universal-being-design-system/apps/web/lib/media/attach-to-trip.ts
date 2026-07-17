@@ -35,6 +35,23 @@ export interface AttachableMediaAsset {
   relatedTripSlug?: string;
   usage?: string;
   galleryPosition?: number;
+  /**
+   * NOTE — schema mismatch, not yet resolved: the Media Library wizard
+   * (SmartMediaUpload) lets an admin pick "Hero Slide" 1–6 for a
+   * `homepage-hero-image` upload, implying a Trip can have multiple
+   * homepage hero slides. But `TripDocument.homepageHeroImage` (see
+   * trip.model.ts) is a single required `ImageAsset`, not an array. So
+   * today, picking Slide 1 vs Slide 4 for the same Trip has *no*
+   * observable difference — both just overwrite the one field, and
+   * whichever upload happens last wins. This field is accepted and
+   * stored on the Media record for now, but intentionally NOT used to
+   * pick a write target below. Fixing this for real needs a product
+   * decision (turn `homepageHeroImage` into an array of slides — a
+   * schema change touching every already-seeded Trip document — or
+   * drop the "Hero Slide" step from the wizard since only one image is
+   * ever actually used). Don't silently pick one without confirming.
+   */
+  heroSlideNumber?: number;
   url: string;
   publicId?: string;
   provider: string;

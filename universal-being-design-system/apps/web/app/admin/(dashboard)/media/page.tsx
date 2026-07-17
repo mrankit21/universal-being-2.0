@@ -172,6 +172,23 @@ export default function MediaLibraryPage() {
   const [trips, setTrips] = useState<TripOption[]>([]);
   const [destinations, setDestinations] = useState<DestinationOption[]>([]);
 
+  // Live ImageKit config status (see /api/admin/media/config) — replaces
+  // the old static "Requires IMAGEKIT_..." text, which showed unconditionally
+  // regardless of whether the env vars were actually set. `null` = still
+  // checking; only used to decide what to show, direct upload is always
+  // attempted (the sign endpoint is the real source of truth) so this can
+  // never block a working upload even if the probe itself fails.
+  const [imagekitReady, setImagekitReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/media/config")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setImagekitReady(Boolean(json.data.imagekitConfigured));
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch("/api/admin/trips?limit=1000")
       .then((r) => r.json())
@@ -275,9 +292,16 @@ export default function MediaLibraryPage() {
     setUploading(true);
     try {
       const signRes = await fetch("/api/admin/media/sign", { method: "POST" });
-      const signJson = await signRes.json();
-      if (!signJson.success) {
-        toast.error(signJson.error ?? "Direct upload isn't configured yet. Use 'Add by URL' instead.");
+      const signJson = await signRes.json().catch(() => null);
+      if (!signRes.ok || !signJson?.success) {
+        // Include the HTTP status in the toast itself — on mobile there's
+        // no DevTools console to check, so the toast has to carry enough
+        // detail on its own (401/403 = session/permission problem, 503 =
+        // ImageKit env vars missing, anything else = an actual server bug).
+        console.error("[media] sign request failed:", signRes.status, signJson);
+        toast.error(
+          `Couldn't start upload (${signRes.status}): ${signJson?.error ?? "Direct upload isn't configured yet. Use 'Add by URL' instead."}`
+        );
         return;
       }
       const { token, expire, signature, publicKey } = signJson.data;
@@ -295,9 +319,10 @@ export default function MediaLibraryPage() {
         method: "POST",
         body: formData,
       });
-      const uploadJson = await uploadRes.json();
+      const uploadJson = await uploadRes.json().catch(() => null);
       if (!uploadRes.ok) {
-        toast.error(uploadJson.message ?? "Upload to ImageKit failed.");
+        console.error("[media] ImageKit upload failed:", uploadRes.status, uploadJson);
+        toast.error(`Upload to ImageKit failed (${uploadRes.status}): ${uploadJson?.message ?? "Unknown error"}`);
         return;
       }
 
@@ -319,14 +344,17 @@ export default function MediaLibraryPage() {
           ...uploadMeta,
         }),
       });
-      const registerJson = await registerRes.json();
-      if (!registerJson.success) {
-        toast.error(registerJson.error);
+      const registerJson = await registerRes.json().catch(() => null);
+      if (!registerJson?.success) {
+        console.error("[media] register-in-library failed:", registerRes.status, registerJson);
+        toast.error(`Uploaded to ImageKit but saving it failed (${registerRes.status}): ${registerJson?.error ?? "Unknown error"}`);
         return;
       }
       toast.success(`${file.name} uploaded`);
-    } catch {
-      toast.error("Upload failed. Check your connection and try again.");
+      if (registerJson.data?.note) toast.message(registerJson.data.note);
+    } catch (err) {
+      console.error("[media] upload threw:", err);
+      toast.error(`Upload failed: ${err instanceof Error ? err.message : "check your connection and try again."}`);
     } finally {
       setUploading(false);
     }
@@ -515,10 +543,14 @@ export default function MediaLibraryPage() {
               {uploading ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
               {uploading ? "Uploading…" : "Choose Image(s)"}
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Requires IMAGEKIT_PUBLIC_KEY / IMAGEKIT_PRIVATE_KEY / IMAGEKIT_URL_ENDPOINT in .env.local. Not set yet?
-              Use &ldquo;Add Image by URL&rdquo; below instead.
-            </p>
+            {imagekitReady === false ? (
+              <p className="text-xs text-warning">
+                ImageKit isn&rsquo;t configured yet (IMAGEKIT_PUBLIC_KEY / IMAGEKIT_PRIVATE_KEY / IMAGEKIT_URL_ENDPOINT
+                missing in .env.local) — direct upload will fail. Use &ldquo;Add Image by URL&rdquo; below instead.
+              </p>
+            ) : imagekitReady === true ? (
+              <p className="text-xs text-muted-foreground">ImageKit is configured — direct upload is ready.</p>
+            ) : null}
           </div>
 
           <details className="rounded-lg border border-border p-4">

@@ -127,21 +127,40 @@ export async function POST(req: NextRequest) {
     // write it straight onto the selected Trip document too, so the public
     // site and Homepage pick it up without a separate "paste the URL into
     // the Trip Editor" step.
-    await attachMediaAssetToTrip({
-      assetType: parsed.assetType,
-      relatedTripSlug: parsed.relatedTripSlug,
-      usage: parsed.usage,
-      galleryPosition: parsed.galleryPosition,
-      url: asset.url,
-      publicId: asset.publicId,
-      provider: asset.provider,
-      alt: asset.alt,
-      width: asset.width,
-      height: asset.height,
-      blurHash: asset.blurHash,
-    });
+    //
+    // This is deliberately isolated in its own try/catch: the Media record
+    // above has already been created and committed by this point, so if
+    // attaching it to the Trip fails (bad slug, a Trip validation error,
+    // etc.) that should NOT make the whole upload look like it failed —
+    // that was the previous behavior (an uncaught throw here fell through
+    // to handleApiError and returned success:false even though the asset
+    // was already sitting in the Media Library). Now the asset registration
+    // always succeeds if it got this far, and a Trip-attach problem is
+    // reported back as a non-fatal `note` instead of eating the upload.
+    let attachNote: string | undefined;
+    try {
+      await attachMediaAssetToTrip({
+        assetType: parsed.assetType,
+        relatedTripSlug: parsed.relatedTripSlug,
+        usage: parsed.usage,
+        galleryPosition: parsed.galleryPosition,
+        heroSlideNumber: parsed.heroSlideNumber,
+        url: asset.url,
+        publicId: asset.publicId,
+        provider: asset.provider,
+        alt: asset.alt,
+        width: asset.width,
+        height: asset.height,
+        blurHash: asset.blurHash,
+      });
+    } catch (attachErr) {
+      console.error("[media] uploaded but failed to attach to trip:", attachErr);
+      attachNote =
+        "Saved to the Media Library, but attaching it to the selected Trip failed. " +
+        "You can attach it manually from the Trip Editor.";
+    }
 
-    return created({ ...asset.toObject(), usageReferences: [] });
+    return created({ ...asset.toObject(), usageReferences: [], ...(attachNote ? { note: attachNote } : {}) });
   } catch (err) {
     return handleApiError(err);
   }
