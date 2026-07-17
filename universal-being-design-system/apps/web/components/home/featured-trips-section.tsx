@@ -5,19 +5,18 @@ import { ArrowRight } from "lucide-react";
 
 import type { HomeTripSummary } from "@/data/home/featured-trips";
 import { SectionHeading } from "@/components/primitives/section-heading";
-import { CarouselBase } from "@/components/animation/carousel-base";
+import { MarqueeCarousel } from "@/components/animation/marquee-carousel";
 import { HomeTripCard } from "@/components/home/home-trip-card";
-import { Reveal } from "@/components/animation/reveal";
 import { MotionCta } from "@/components/animation/motion-cta";
 import { Button } from "@/components/ui/button";
 
-const cardVariants = ["up", "scale", "up"] as const;
-
 /**
- * FeaturedTripsSection — wraps `HomeTripCard`s in the same `CarouselBase`
- * engine DESIGN_SYSTEM.md earmarked for TripGallery/testimonials, rather
- * than hand-rolling a new scroller. Each slide is sized to show ~1.1 cards
- * on mobile and settle into a comfortable card width on desktop.
+ * FeaturedTripsSection — wraps `HomeTripCard`s in `MarqueeCarousel`, the
+ * continuously-scrolling strip engine (not a step-and-pause slider): cards
+ * drift left in one unbroken, looping motion and pause on hover/touch.
+ * Every card gets a fixed footprint width so it lines up with
+ * `ThemeExplorerSection`'s destination cards below it on the page — same
+ * box size, deliberately different content/look.
  *
  * Step 7.6C-B Part 1: `trips` is now resolved server-side by
  * `getResolvedHomepage()` (real Trip documents the admin chose in Homepage
@@ -47,21 +46,13 @@ export function FeaturedTripsSection({ trips: featuredTrips }: { trips: HomeTrip
         className="mb-8"
       />
 
-      <CarouselBase label="Featured trips" showDots={false} className="sm:hidden">
+      <MarqueeCarousel label="Featured trips" durationSeconds={Math.max(12, featuredTrips.length * 4.7)}>
         {featuredTrips.map((trip) => (
-          <div key={trip.slug} className="pr-4">
+          <div key={trip.slug} className="w-64 shrink-0 sm:w-72">
             <HomeTripCard trip={trip} />
           </div>
         ))}
-      </CarouselBase>
-
-      <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-        {featuredTrips.map((trip, i) => (
-          <Reveal key={trip.slug} variant={cardVariants[i % cardVariants.length]} delay={(i % 3) * 0.06}>
-            <HomeTripCard trip={trip} />
-          </Reveal>
-        ))}
-      </div>
+      </MarqueeCarousel>
     </section>
   );
 }

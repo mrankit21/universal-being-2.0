@@ -27,17 +27,15 @@ import { FormField } from "@/components/admin/form-field";
 import { cn } from "@/lib/utils";
 
 /**
- * REVISION 2 — Trip-First CMS Architecture. Universal Being books Trips,
- * not Destinations, so the Media Library no longer offers standalone
- * "Homepage Hero", "Destination", "Gallery", or "CTA" asset types — every
- * one of those images now belongs to a Trip (Homepage Hero and Gallery are
- * Image Type choices *within* the Trip case below). Old records tagged
- * with the retired values keep loading and filtering fine (the model enum
- * and detail-panel fallback logic aren't touched), this list only controls
- * what the *upload wizard* offers going forward.
+ * Destination is its own Asset Type again (Choose Destination → Image Type,
+ * same shape as Trip) — homepage destination cards (`ThemeExplorerSection`)
+ * need real cover photos uploaded somewhere, and folding them into Trip
+ * left no way to do that from the wizard. Homepage Hero stays folded into
+ * Trip's Image Type list (below) rather than becoming its own Asset Type.
  */
 export const ASSET_TYPES: { value: string; label: string }[] = [
   { value: "trip", label: "Trip" },
+  { value: "destination", label: "Destination" },
   { value: "logo", label: "Logo" },
   { value: "announcement", label: "Announcement" },
   { value: "review", label: "Review" },
@@ -96,6 +94,17 @@ export const ASSET_TYPE_CONFIG: Record<string, AssetTypeConfig> = {
     usageOptions: [
       { value: "homepage-hero-image", label: "Homepage Hero" },
       { value: "trip-hero-image", label: "Trip Hero" },
+      { value: "cover-image", label: "Cover Image" },
+      { value: "thumbnail", label: "Thumbnail" },
+      { value: "gallery-image", label: "Gallery" },
+    ],
+  },
+  destination: {
+    needsTrip: false,
+    needsDestination: true,
+    usageStepLabel: "Image Type",
+    usageOptions: [
+      { value: "destination-hero", label: "Destination Hero" },
       { value: "cover-image", label: "Cover Image" },
       { value: "thumbnail", label: "Thumbnail" },
       { value: "gallery-image", label: "Gallery" },

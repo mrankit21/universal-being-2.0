@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { MotionCta } from "@/components/animation/motion-cta";
 import { cn } from "@/lib/utils";
 
-const SLIDE_DURATION_MS = 6500;
+const SLIDE_DURATION_MS = 2000;
 
 /**
  * HeroSection — Step 7.5A's cinematic homepage opener, made database-first
