@@ -29,7 +29,7 @@ export function TripCard({ trip, className }: TripCardProps) {
 
   return (
     <Card className={className}>
-      <div className="relative">
+      <Link href={`/trips/${trip.slug}`} className="relative block" aria-label={trip.title}>
         <TripImage asset={trip.coverImage} theme={theme} variant="cover" containerClassName="rounded-t-lg rounded-b-none" />
         <div className="absolute left-3 top-3 z-10 flex gap-2">
           <Tag tone="brass">{trip.destinationName}</Tag>
@@ -40,10 +40,14 @@ export function TripCard({ trip, className }: TripCardProps) {
             <Badge variant="destructive">Only {seatsLeft} seats left</Badge>
           </div>
         )}
-      </div>
+      </Link>
 
       <CardContent className="flex flex-col gap-2 pt-5">
-        <h3 className="font-display text-lg font-medium text-foreground">{trip.title}</h3>
+        <h3 className="font-display text-lg font-medium text-foreground">
+          <Link href={`/trips/${trip.slug}`} className="hover:underline">
+            {trip.title}
+          </Link>
+        </h3>
 
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
