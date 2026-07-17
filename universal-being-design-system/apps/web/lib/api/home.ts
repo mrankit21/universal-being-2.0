@@ -114,6 +114,7 @@ function tripToHomeSummary(trip: Trip): HomeTripSummary {
     price: trip.price.discounted ?? trip.price.base,
     originalPrice: trip.price.discounted ? trip.price.base : undefined,
     seatsLeft: trip.availableSeats,
+    image: trip.coverImage,
   };
 }
 

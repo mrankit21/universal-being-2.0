@@ -23,6 +23,12 @@ export interface HomeTripSummary {
   /** Seats left on the next departure — homepage urgency badge only, not a
    * booking-system value. Omit to hide the badge (e.g. plenty of availability). */
   seatsLeft?: number;
+  /** The Trip's `coverImage`, once real photography exists (Admin Panel →
+   * Media Library → attach to a Trip's Cover Image). `HomeTripCard` renders
+   * this through `TripImage`, which already falls back to the themed
+   * placeholder panel when `isPlaceholder` is true — so this is safe to omit
+   * for the static seed data below, which has no real photos. */
+  image?: { url: string; alt: string; isPlaceholder: boolean };
 }
 
 /**

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { themeRegistry } from "@/data/themes";
 import type { HomeTripSummary } from "@/data/home/featured-trips";
 import { ThemeBackground } from "@/components/theme/theme-background";
+import { TripImage } from "@/components/trip/trip-image";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Tag } from "@/components/primitives/tag";
 import { Rating } from "@/components/primitives/rating";
@@ -42,7 +43,11 @@ export function HomeTripCard({ trip }: HomeTripCardProps) {
         <Card className="group flex h-full flex-col overflow-hidden transition-shadow duration-ub-slow hover:shadow-ub-lg">
           <div className="relative overflow-hidden">
             <motion.div whileHover={{ scale: 1.06 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}>
-              <ThemeBackground theme={theme} area="section" className="aspect-[4/3]" />
+              {trip.image ? (
+                <TripImage asset={trip.image} theme={theme} variant="cover" containerClassName="aspect-[4/3]" />
+              ) : (
+                <ThemeBackground theme={theme} area="section" className="aspect-[4/3]" />
+              )}
             </motion.div>
 
             {/* Warm gradient wash that fades in on hover, over the theme panel */}
