@@ -2,7 +2,7 @@ import type { ThemeKey } from "@/types/theme";
 import type { Trip } from "@/types/trip";
 import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { HomepageModel, TestimonialModel, type HomepageSectionKey, type HomepageDocument } from "@/lib/db/models";
-import { getTripBySlug, getFeaturedTrips as getStaticFeaturedFallback } from "@/lib/api/trips";
+import { getTripBySlug, getAllTrips, getFeaturedTrips as getStaticFeaturedFallback } from "@/lib/api/trips";
 import { heroSlides as staticHeroSlides } from "@/data/home/hero-slides";
 import { featuredTrips as staticFeaturedTrips, type HomeTripSummary } from "@/data/home/featured-trips";
 import { testimonials as staticTestimonials, type Testimonial } from "@/data/home/testimonials";
@@ -28,8 +28,7 @@ export interface ResolvedHeroSlide {
   href: string;
   ctaLabel: string;
   badges: string[];
-  image?: { url: string; alt: string; isPlaceholder: boolean };
-  overlayOpacity: number;
+  image?: { url: string; alt: string; isPlaceholder: boolean; width: number; height: number };
 }
 
 export interface ResolvedPromoBanner {
@@ -101,6 +100,35 @@ function staticHeroSlidesResolved(): ResolvedHeroSlide[] {
   }));
 }
 
+/**
+ * "Homepage hero slides follow the Trips, automatically" — every Hero slide
+ * is now derived straight from the real Trip collection: any trip whose
+ * `homepageHeroImage` has a real (non-placeholder) photo uploaded on its
+ * admin edit page shows up here, no separate curation step. Upload one and
+ * the slide appears; leave it empty and the trip is silently skipped — this
+ * is deliberate, since a growing trip catalog can't all live in the Hero at
+ * once. `getAllTrips()` is already DB-first with a static-registry fallback,
+ * so this reads correctly with or without MongoDB configured.
+ */
+async function tripHeroSlides(): Promise<ResolvedHeroSlide[]> {
+  const trips = await getAllTrips();
+  return trips
+    .filter((t) => t.homepageHeroImage?.url && !t.homepageHeroImage.isPlaceholder)
+    .map(
+      (t): ResolvedHeroSlide => ({
+        themeKey: t.themeKey,
+        eyebrow: t.destinationName,
+        heading: t.title,
+        subtitle: t.shortDescription,
+        href: `/trips/${t.slug}`,
+        ctaLabel: `See ${t.title}`,
+        badges: [t.duration.label, `${t.groupSize.min}–${t.groupSize.max} people`, `${t.rating}★ (${t.reviewCount})`],
+        overlayOpacity: 0.45,
+        image: { url: t.homepageHeroImage.url, alt: t.homepageHeroImage.alt || t.title, isPlaceholder: false, width: t.homepageHeroImage.width, height: t.homepageHeroImage.height },
+      }),
+    );
+}
+
 function tripToHomeSummary(trip: Trip): HomeTripSummary {
   return {
     slug: trip.slug,
@@ -135,9 +163,10 @@ export function testimonialDocToEntity(doc: {
 }
 
 /** Full static fallback — used when the database isn't configured at all. */
-function staticHomepage(): ResolvedHomepage {
+async function staticHomepage(): Promise<ResolvedHomepage> {
+  const derivedSlides = await tripHeroSlides();
   return {
-    heroSlides: staticHeroSlidesResolved(),
+    heroSlides: derivedSlides.length > 0 ? derivedSlides : staticHeroSlidesResolved(),
     featuredTrips: staticFeaturedTrips,
     testimonials: staticTestimonials,
     promoBanner: { enabled: false, heading: "", body: "" },
@@ -156,20 +185,23 @@ function staticHomepage(): ResolvedHomepage {
  * fallback when a section's DB content is empty.
  */
 export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
-  if (!isDatabaseConfigured()) return staticHomepage();
+  if (!isDatabaseConfigured()) return await staticHomepage();
 
   try {
     await connectToDatabase();
     const doc = (await HomepageModel.findOne().lean()) as (HomepageDocument & { _id: unknown }) | null;
 
-    if (!doc) return staticHomepage();
+    if (!doc) return await staticHomepage();
 
-    // Hero slides — DB slides (enabled only, in `order`) or static fallback.
+    // Hero slides — trip-driven first (any trip with a real Homepage Hero
+    // Image uploaded), then the manually curated Homepage doc slides (for
+    // anyone still using the old Admin Panel → Homepage curation flow),
+    // then static seed data as the last resort.
     const dbSlides = (doc.heroSlides ?? [])
       .filter((s) => s.enabled)
       .sort((a, b) => a.order - b.order)
       .map((s): ResolvedHeroSlide => {
-        const img = s.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+        const img = s.image as { url?: string; alt?: string; isPlaceholder?: boolean; width?: number; height?: number } | undefined;
         return {
           themeKey: (s.themeKey || "brand") as ThemeKey,
           eyebrow: s.destinationLabel,
@@ -179,10 +211,14 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
           ctaLabel: s.ctaLabel,
           badges: [],
           overlayOpacity: s.overlayOpacity ?? 0.45,
-          image: img?.url && !img.isPlaceholder ? { url: img.url, alt: img.alt ?? "", isPlaceholder: false } : undefined,
+          image:
+            img?.url && !img.isPlaceholder
+              ? { url: img.url, alt: img.alt ?? "", isPlaceholder: false, width: img.width ?? 1920, height: img.height ?? 1080 }
+              : undefined,
         };
       });
-    const heroSlides = dbSlides.length > 0 ? dbSlides : staticHeroSlidesResolved();
+    const derivedSlides = await tripHeroSlides();
+    const heroSlides = derivedSlides.length > 0 ? derivedSlides : dbSlides.length > 0 ? dbSlides : staticHeroSlidesResolved();
 
     // Featured trips — resolve chosen (enabled) slugs against the real Trip
     // collection, preserving admin-chosen order; static fallback if empty.
@@ -240,6 +276,6 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
     // A configured-but-unreachable MONGODB_URI must never take down the
     // homepage -- fall back to the static seed content instead.
     console.error("[getResolvedHomepage] MongoDB unreachable, falling back to static homepage:", err);
-    return staticHomepage();
+    return await staticHomepage();
   }
 }

@@ -31,6 +31,17 @@ const SLIDE_DURATION_MS = 2000;
  * chosen overlay opacity. When it doesn't, the same `ThemeBackground`
  * Ken-Burns panel from before renders instead — so hero slides look
  * finished even before real photography is uploaded for every one.
+ *
+ * Mobile sizing: on phones the section's height matches the photo's own
+ * aspect ratio exactly (`--hero-ratio`, from the image's stored width ×
+ * height) instead of forcing a fixed full-screen height — a portrait phone
+ * viewport is a very different shape from almost any landscape photo, and
+ * forcing `object-cover` to fill a mismatched shape either crops hard or
+ * leaves letterbox gaps. From `sm` upward the section goes back to a fixed
+ * full-screen `h-[100svh]`, which is close enough to most photos' aspect
+ * ratio that `object-cover` there doesn't need this. Slides with no real
+ * image (the `ThemeBackground` placeholder case) always use the fixed
+ * full-screen height — there's no photo shape to match.
  */
 export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
   const prefersReducedMotion = useReducedMotion();
@@ -74,13 +85,23 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
 
   if (!slide) return null;
 
+  const heroStyle = {
+    ...buildThemeCssVars(theme),
+    ...(slide.image ? { "--hero-ratio": `${slide.image.width} / ${slide.image.height}` } : {}),
+  } as React.CSSProperties;
+
   return (
     <section
       ref={sectionRef}
-      className="relative isolate h-[100svh] min-h-[560px] w-full overflow-hidden"
+      className={cn(
+        "relative isolate w-full overflow-hidden",
+        slide.image
+          ? "aspect-[var(--hero-ratio)] sm:aspect-auto sm:h-[100svh] sm:min-h-[560px]"
+          : "h-[100svh] min-h-[560px]"
+      )}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      style={buildThemeCssVars(theme) as React.CSSProperties}
+      style={heroStyle}
       aria-roledescription="carousel"
       aria-label="Featured destinations"
     >

@@ -10,6 +10,8 @@
  *   4. Logo         → Logo Type (Header/Footer/Dark/Favicon/Apple Icon)
  *   5. Announcement → locked to Banner
  *   6. Review       → locked to Reviewer Image
+ *   7. Upload       → no type at all — pick files and go, for quick bulk
+ *                      drops that don't need to slot into the taxonomy yet
  *
  * Smart Filtering: each Asset Type only ever shows the Image Type options
  * that make sense for it (spec: "Do NOT show every Image Type for every
@@ -40,6 +42,7 @@ export const ASSET_TYPES: { value: string; label: string }[] = [
   { value: "announcement", label: "Announcement" },
   { value: "review", label: "Review" },
   { value: "general", label: "General" },
+  { value: "upload", label: "Upload" },
 ];
 
 /** Full usage taxonomy — used for the Smart Filters row and the Detail
@@ -84,6 +87,11 @@ interface AssetTypeConfig {
   /** Case 2 only: Homepage Hero skips the Image Type step and goes
    * straight to Hero Slide. */
   skipToHeroSlide?: boolean;
+  /** "Upload" (no-type bulk upload): unlike Announcement/Review/General,
+   * which still show a locked "Image Type: X (fixed)" field, Upload hides
+   * the Image Type step entirely — there's nothing to categorize, so
+   * nothing to show. */
+  hideUsageStep?: boolean;
 }
 
 export const ASSET_TYPE_CONFIG: Record<string, AssetTypeConfig> = {
@@ -142,6 +150,14 @@ export const ASSET_TYPE_CONFIG: Record<string, AssetTypeConfig> = {
     usageStepLabel: "Image Type",
     usageOptions: null,
     fixedUsage: "general",
+  },
+  upload: {
+    needsTrip: false,
+    needsDestination: false,
+    usageStepLabel: "Image Type",
+    usageOptions: null,
+    fixedUsage: "general",
+    hideUsageStep: true,
   },
 };
 
@@ -350,7 +366,7 @@ export function SmartMediaUpload({
               </SelectContent>
             </Select>
           </FormField>
-        ) : !config.skipToHeroSlide ? (
+        ) : !config.skipToHeroSlide && !config.hideUsageStep ? (
           <FormField label={`3. ${config.usageStepLabel}`}>
             <p className="flex h-9 items-center rounded-md border border-dashed border-border bg-muted/40 px-3 text-sm text-muted-foreground">
               {usageLabel(effectiveUsage)} (fixed)
