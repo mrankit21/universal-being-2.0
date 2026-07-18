@@ -9,9 +9,7 @@ import { DestinationJsonLd } from "@/components/destination/destination-json-ld"
 import { TripCard } from "@/components/trip/trip-card";
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { EmptyState } from "@/components/primitives/empty-state";
-import { SectionDivider } from "@/components/theme/section-divider";
 import { Tag } from "@/components/primitives/tag";
-import { resolveTheme } from "@/lib/theme/theme-resolver";
 import { Compass } from "lucide-react";
 
 interface DestinationPageProps {
@@ -50,13 +48,11 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
   if (!destination) notFound();
 
   const trips = await getOrderedDestinationTrips(destination);
-  const theme = resolveTheme(destination.themeKey);
 
   return (
     <div>
       <DestinationJsonLd destination={destination} />
       <DestinationHero destination={destination} />
-      <SectionDivider shape={theme.divider.shape} position="top" />
 
       <DestinationGallery destination={destination} />
 

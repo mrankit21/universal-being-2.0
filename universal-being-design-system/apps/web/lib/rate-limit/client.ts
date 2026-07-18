@@ -103,6 +103,38 @@ export const otpRequestRateLimit = makeLimiter(
   "otp-request"
 );
 
+/** POST /api/customer/auth/login — keyed by IP+email, same reasoning as
+ * the admin login limiter above. Default: 5 attempts / 15 min. Override
+ * with `CUSTOMER_LOGIN_RATE_LIMIT="<tokens>,<window>"`. */
+export const customerLoginRateLimit = makeLimiter(
+  process.env.CUSTOMER_LOGIN_RATE_LIMIT,
+  { tokens: 5, window: "15 m" },
+  "CUSTOMER_LOGIN_RATE_LIMIT",
+  "customer-login"
+);
+
+/** POST /api/customer/auth/signup — keyed by IP. Default: 5 / hour, loose
+ * enough for a real family signing up multiple accounts from one
+ * connection but tight enough to blunt scripted account creation.
+ * Override with `CUSTOMER_SIGNUP_RATE_LIMIT="<tokens>,<window>"`. */
+export const customerSignupRateLimit = makeLimiter(
+  process.env.CUSTOMER_SIGNUP_RATE_LIMIT,
+  { tokens: 5, window: "1 h" },
+  "CUSTOMER_SIGNUP_RATE_LIMIT",
+  "customer-signup"
+);
+
+/** POST /api/customer/auth/forgot-password — keyed by IP+email, same
+ * pattern as login. Each hit sends a real email, so this caps both abuse
+ * and cost. Default: 3 / 30 min. Override with
+ * `CUSTOMER_PASSWORD_RESET_RATE_LIMIT="<tokens>,<window>"`. */
+export const customerPasswordResetRateLimit = makeLimiter(
+  process.env.CUSTOMER_PASSWORD_RESET_RATE_LIMIT,
+  { tokens: 3, window: "30 m" },
+  "CUSTOMER_PASSWORD_RESET_RATE_LIMIT",
+  "customer-password-reset"
+);
+
 /** POST /api/bookings — keyed by IP. Default: 10 / min, generous enough
  * for a real customer retrying a form, enough to blunt a script hammering
  * the seat reservation endpoint. Override with

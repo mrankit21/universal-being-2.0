@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/data/layout/site-config";
 import { NavLink } from "@/components/layout/nav-link";
 import { ThemeModeToggle } from "@/components/layout/theme-mode-toggle";
+import { useCustomerAuth } from "@/components/layout/customer-auth-context";
 
 /**
  * MobileNavDrawer — swipe-to-dismiss bottom sheet (vaul, per ui/drawer.tsx's
@@ -25,6 +26,7 @@ import { ThemeModeToggle } from "@/components/layout/theme-mode-toggle";
  */
 export function MobileNavDrawer() {
   const [open, setOpen] = React.useState(false);
+  const { customer, isLoading, open: openAuth, logout } = useCustomerAuth();
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -47,6 +49,32 @@ export function MobileNavDrawer() {
           </div>
           <ThemeModeToggle />
         </DrawerHeader>
+
+        {!isLoading && (
+          <div className="px-5 pb-2">
+            {customer ? (
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <span className="text-sm text-foreground">
+                  Signed in as <span className="font-medium">{customer.name}</span>
+                </span>
+                <Button type="button" variant="ghost" size="sm" onClick={() => void logout()}>
+                  Log out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => {
+                  setOpen(false);
+                  openAuth("login");
+                }}
+              >
+                Login / Sign Up
+              </Button>
+            )}
+          </div>
+        )}
 
         <nav aria-label="Primary" className="flex flex-col gap-1 px-5 pb-6">
           {siteConfig.primaryNav.map((item) => (
