@@ -32,8 +32,15 @@ export interface HeroSlideDoc {
   image: unknown;
   heading: string;
   subtitle: string;
+  /** Badge chips under the CTAs, e.g. "3 days, 2 nights", "12–18 people",
+   * "4.7★ (97)". Fully admin-editable per slide — Step 7.6D. */
+  badges: string[];
   ctaLabel: string;
   ctaHref: string;
+  /** The Hero's secondary ("Explore all trips") button — previously
+   * hardcoded in `HeroSection`, now per-slide and admin-editable (7.6D). */
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
   overlayOpacity: number;
   order: number;
   enabled: boolean;
@@ -82,8 +89,11 @@ const HeroSlideSchema = new Schema<HeroSlideDoc>(
     image: { type: ImageAssetSchema },
     heading: { type: String, default: "" },
     subtitle: { type: String, default: "" },
+    badges: { type: [String], default: [] },
     ctaLabel: { type: String, default: "Explore" },
     ctaHref: { type: String, default: "/trips" },
+    secondaryCtaLabel: { type: String, default: "Explore all trips" },
+    secondaryCtaHref: { type: String, default: "/trips" },
     overlayOpacity: { type: Number, default: 0.45, min: 0, max: 1 },
     order: { type: Number, default: 0 },
     enabled: { type: Boolean, default: true },

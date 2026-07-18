@@ -156,9 +156,9 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
       />
 
       {/* Foreground content */}
-      <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col items-start justify-end gap-5 px-6 pb-24 sm:pb-28 md:justify-center md:pb-0">
+      <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col items-start justify-end gap-3 px-6 pb-6 sm:gap-5 sm:pb-28 md:justify-center md:pb-0">
         <AnimatePresence mode="wait">
-          <div key={`${slide.eyebrow}-${index}`} className="flex flex-col items-start gap-5">
+          <div key={`${slide.eyebrow}-${index}`} className="flex flex-col items-start gap-3 sm:gap-5">
             {slide.eyebrow ? (
               <motion.span
                 custom={0}
@@ -166,7 +166,7 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
                 initial="hidden"
                 animate="visible"
                 exit={{ opacity: 0 }}
-                className="rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-white backdrop-blur-sm"
+                className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-white backdrop-blur-sm sm:px-4 sm:py-1.5 sm:text-xs"
               >
                 {slide.eyebrow}
               </motion.span>
@@ -176,7 +176,7 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0 }}
-              className="max-w-2xl font-display text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl"
+              className="max-w-2xl font-display text-2xl font-medium leading-[1.1] tracking-tight text-white sm:text-6xl sm:leading-[1.05] md:text-7xl"
             >
               {slide.heading.split(" ").map((word, i) => (
                 <motion.span
@@ -197,7 +197,7 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0 }}
-              className="max-w-xl text-base text-white/85 sm:text-lg"
+              className="max-w-xl text-sm text-white/85 sm:text-lg"
             >
               {slide.subtitle}
             </motion.p>
@@ -208,10 +208,10 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0 }}
-              className="flex flex-wrap items-center gap-3 pt-1"
+              className="flex flex-wrap items-center gap-2 pt-1 sm:gap-3"
             >
               <MotionCta glow>
-                <Button asChild size="lg" className="shadow-lg shadow-black/20">
+                <Button asChild size="lg" className="h-9 px-4 text-sm shadow-lg shadow-black/20 sm:h-12 sm:px-6 sm:text-base">
                   <Link href={slide.href}>
                     {slide.ctaLabel}
                     <ArrowRight className="size-4" aria-hidden="true" />
@@ -223,9 +223,9 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="border-white/40 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15 hover:text-white"
+                  className="h-9 border-white/40 bg-white/5 px-4 text-sm text-white backdrop-blur-sm hover:bg-white/15 hover:text-white sm:h-12 sm:px-6 sm:text-base"
                 >
-                  <Link href="/trips">Explore all trips</Link>
+                  <Link href={slide.secondaryCtaHref || "/trips"}>{slide.secondaryCtaLabel || "Explore all trips"}</Link>
                 </Button>
               </MotionCta>
             </motion.div>
@@ -242,7 +242,7 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
                 {slide.badges.map((badge) => (
                   <span
                     key={badge}
-                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm"
+                    className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm sm:px-3 sm:py-1 sm:text-xs"
                   >
                     {badge}
                   </span>

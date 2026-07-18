@@ -8,6 +8,7 @@ import { HomepageModel } from "@/lib/db/models";
 import { homepageUpdateSchema } from "@/lib/validators/homepage.schema";
 import { ok, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
+import { getAllTrips } from "@/lib/api/trips";
 
 async function getOrCreateSingleton() {
   let doc = await HomepageModel.findOne();
@@ -23,8 +24,11 @@ async function getOrCreateSingleton() {
         image: doc.hero.backgroundImage,
         heading: doc.hero.heading,
         subtitle: doc.hero.subheading,
+        badges: [],
         ctaLabel: doc.hero.ctaLabel || "Explore Trips",
         ctaHref: doc.hero.ctaHref || "/trips",
+        secondaryCtaLabel: "Explore all trips",
+        secondaryCtaHref: "/trips",
         overlayOpacity: 0.45,
         order: 0,
         enabled: true,
@@ -32,6 +36,36 @@ async function getOrCreateSingleton() {
       },
     ];
     await doc.save();
+  }
+
+  // Step 7.6D: the Hero Slider is now the single source of truth for what
+  // renders on the live homepage (see lib/api/home.ts), so an admin opening
+  // this page for the first time must not land on an empty editor while
+  // trip-driven slides are actually what's live. Seed `heroSlides` once
+  // from every trip with a real Homepage Hero Image, in the exact shape
+  // currently shown on the site — heading, subtitle, badges, and both CTA
+  // buttons — so editing always starts from what the visitor sees today.
+  if (doc.heroSlides.length === 0) {
+    const trips = await getAllTrips();
+    const withHeroImage = trips.filter((t) => t.homepageHeroImage?.url && !t.homepageHeroImage.isPlaceholder);
+    if (withHeroImage.length > 0) {
+      doc.heroSlides = withHeroImage.slice(0, 6).map((t, i) => ({
+        destinationLabel: t.destinationName,
+        image: t.homepageHeroImage,
+        heading: t.title,
+        subtitle: t.shortDescription,
+        badges: [t.duration.label, `${t.groupSize.min}–${t.groupSize.max} people`, `${t.rating}★ (${t.reviewCount})`],
+        ctaLabel: `See ${t.title}`,
+        ctaHref: `/trips/${t.slug}`,
+        secondaryCtaLabel: "Explore all trips",
+        secondaryCtaHref: "/trips",
+        overlayOpacity: 0.45,
+        order: i,
+        enabled: true,
+        themeKey: t.themeKey,
+      }));
+      await doc.save();
+    }
   }
 
   return doc;

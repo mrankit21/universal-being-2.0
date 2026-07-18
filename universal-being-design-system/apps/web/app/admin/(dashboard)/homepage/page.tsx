@@ -19,6 +19,7 @@ import { FormField } from "@/components/admin/form-field";
 import { ImageAssetField } from "@/components/admin/image-asset-field";
 import { ArrayFieldEditor } from "@/components/admin/array-field-editor";
 import { TripPickerField } from "@/components/admin/trip-picker-field";
+import { HeroSlideFromTripPicker } from "@/components/admin/hero-slide-from-trip-picker";
 import { TestimonialPickerField } from "@/components/admin/testimonial-picker-field";
 import { ThemeBackground } from "@/components/theme/theme-background";
 import { themeRegistry } from "@/data/themes";
@@ -44,13 +45,29 @@ function emptyHeroSlide() {
     image: { ...BLANK_IMAGE },
     heading: "",
     subtitle: "",
+    badges: [],
     ctaLabel: "Explore",
     ctaHref: "/trips",
+    secondaryCtaLabel: "Explore all trips",
+    secondaryCtaHref: "/trips",
     overlayOpacity: 0.45,
     order: 0,
     enabled: true,
     themeKey: "brand",
   };
+}
+
+/** Badges are stored as a string[] but edited as one comma-separated field —
+ * simplest input for a small, ordered list of short chips like "3 days, 2
+ * nights", "12–18 people", "4.7★ (97)". */
+function badgesToText(badges: string[] | undefined): string {
+  return (badges ?? []).join(", ");
+}
+function textToBadges(text: string): string[] {
+  return text
+    .split(",")
+    .map((b) => b.trim())
+    .filter(Boolean);
 }
 
 export default function HomepagePage() {
@@ -136,12 +153,30 @@ export default function HomepagePage() {
             emptyMessage="No hero slides yet — add up to 6 below."
             renderItem={(slide, index, update) => (
               <div className="space-y-3 py-1">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Switch checked={slide.enabled} onCheckedChange={(v) => update({ enabled: v })} />
                     <span className="text-xs font-medium text-muted-foreground">
                       {slide.enabled ? "Enabled (published)" : "Disabled (hidden)"}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Slide #</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={heroSlides.length}
+                      value={index + 1}
+                      onChange={(e) => {
+                        const target = Math.min(heroSlides.length, Math.max(1, Number(e.target.value) || 1)) - 1;
+                        if (target === index) return;
+                        const next = heroSlides.slice();
+                        const [moved] = next.splice(index, 1);
+                        next.splice(target, 0, moved);
+                        set(["heroSlides"], next);
+                      }}
+                      className="h-8 w-16 text-center"
+                    />
                   </div>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setPreviewIndex(previewIndex === index ? null : index)}>
                     {previewIndex === index ? "Hide preview" : "Preview"}
@@ -171,11 +206,32 @@ export default function HomepagePage() {
                   <FormField label="Subtitle">
                     <Input value={slide.subtitle} onChange={(e) => update({ subtitle: e.target.value })} />
                   </FormField>
-                  <FormField label="CTA Text">
+                  <FormField label="Badges (comma-separated)" className="md:col-span-2">
+                    <Input
+                      value={badgesToText(slide.badges)}
+                      onChange={(e) => update({ badges: textToBadges(e.target.value) })}
+                      placeholder="e.g. 3 days, 2 nights, 12–18 people, 4.7★ (97)"
+                    />
+                  </FormField>
+                  <FormField label="Primary CTA Text">
                     <Input value={slide.ctaLabel} onChange={(e) => update({ ctaLabel: e.target.value })} />
                   </FormField>
-                  <FormField label="CTA Link">
+                  <FormField label="Primary CTA Link">
                     <Input value={slide.ctaHref} onChange={(e) => update({ ctaHref: e.target.value })} />
+                  </FormField>
+                  <FormField label="Secondary CTA Text">
+                    <Input
+                      value={slide.secondaryCtaLabel ?? "Explore all trips"}
+                      onChange={(e) => update({ secondaryCtaLabel: e.target.value })}
+                      placeholder="Explore all trips"
+                    />
+                  </FormField>
+                  <FormField label="Secondary CTA Link">
+                    <Input
+                      value={slide.secondaryCtaHref ?? "/trips"}
+                      onChange={(e) => update({ secondaryCtaHref: e.target.value })}
+                      placeholder="/trips"
+                    />
                   </FormField>
                   <FormField label="Overlay Opacity (0–1)">
                     <Input
@@ -199,17 +255,22 @@ export default function HomepagePage() {
               </div>
             )}
           />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            disabled={heroSlides.length >= MAX_HERO_SLIDES}
-            onClick={() => set(["heroSlides"], [...heroSlides, emptyHeroSlide()])}
-          >
-            Add Slide
-          </Button>
-          <p className="mt-2 text-xs text-muted-foreground">Drag slides by the handle to reorder. Maximum of 6 slides.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <HeroSlideFromTripPicker
+              disabled={heroSlides.length >= MAX_HERO_SLIDES}
+              onAdd={(slide) => set(["heroSlides"], [...heroSlides, slide])}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={heroSlides.length >= MAX_HERO_SLIDES}
+              onClick={() => set(["heroSlides"], [...heroSlides, emptyHeroSlide()])}
+            >
+              Add Blank Slide
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Drag slides by the handle to reorder, or type a number in "Slide #" to jump straight to a position. Maximum of 6 slides.</p>
         </CardContent>
       </Card>
 
@@ -338,6 +399,23 @@ function HeroSlidePreview({ slide }: { slide: any }) {
         ) : null}
         <p className="font-display text-lg font-medium text-white">{slide.heading || "Heading preview"}</p>
         <p className="text-xs text-white/80">{slide.subtitle || "Subtitle preview"}</p>
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-black">
+            {slide.ctaLabel || "Explore"}
+          </span>
+          <span className="rounded-full border border-white/40 px-2 py-0.5 text-[10px] font-medium text-white">
+            {slide.secondaryCtaLabel || "Explore all trips"}
+          </span>
+        </div>
+        {(slide.badges ?? []).length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            {(slide.badges as string[]).map((b: string, i: number) => (
+              <span key={`${b}-${i}`} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
+                {b}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -28,6 +28,14 @@ export interface ResolvedHeroSlide {
   href: string;
   ctaLabel: string;
   badges: string[];
+  /** The Hero's secondary ("Explore all trips") button — per-slide and
+   * admin-editable (Step 7.6D). Defaults to "Explore all trips" / "/trips". */
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  /** Pre-existing field, used everywhere this type is built but never
+   * declared here until now — surfaced by `tsc --noEmit` while adding the
+   * badges/secondaryCta fields above. */
+  overlayOpacity: number;
   image?: { url: string; alt: string; isPlaceholder: boolean; width: number; height: number };
 }
 
@@ -96,6 +104,8 @@ function staticHeroSlidesResolved(): ResolvedHeroSlide[] {
     href: s.href,
     ctaLabel: s.ctaLabel,
     badges: s.badges,
+    secondaryCtaLabel: "Explore all trips",
+    secondaryCtaHref: "/trips",
     overlayOpacity: 0.45,
   }));
 }
@@ -110,7 +120,7 @@ function staticHeroSlidesResolved(): ResolvedHeroSlide[] {
  * once. `getAllTrips()` is already DB-first with a static-registry fallback,
  * so this reads correctly with or without MongoDB configured.
  */
-async function tripHeroSlides(): Promise<ResolvedHeroSlide[]> {
+export async function tripHeroSlides(): Promise<ResolvedHeroSlide[]> {
   const trips = await getAllTrips();
   return trips
     .filter((t) => t.homepageHeroImage?.url && !t.homepageHeroImage.isPlaceholder)
@@ -123,6 +133,8 @@ async function tripHeroSlides(): Promise<ResolvedHeroSlide[]> {
         href: `/trips/${t.slug}`,
         ctaLabel: `See ${t.title}`,
         badges: [t.duration.label, `${t.groupSize.min}–${t.groupSize.max} people`, `${t.rating}★ (${t.reviewCount})`],
+        secondaryCtaLabel: "Explore all trips",
+        secondaryCtaHref: "/trips",
         overlayOpacity: 0.45,
         image: { url: t.homepageHeroImage.url, alt: t.homepageHeroImage.alt || t.title, isPlaceholder: false, width: t.homepageHeroImage.width, height: t.homepageHeroImage.height },
       }),
@@ -193,10 +205,16 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
 
     if (!doc) return await staticHomepage();
 
-    // Hero slides — trip-driven first (any trip with a real Homepage Hero
-    // Image uploaded), then the manually curated Homepage doc slides (for
-    // anyone still using the old Admin Panel → Homepage curation flow),
-    // then static seed data as the last resort.
+    // Hero slides — Step 7.6D: the Admin Panel's Homepage → Hero Slider
+    // editor is now the source of truth whenever it has content, since
+    // every field shown in the Hero (heading, subtitle, badges, both CTA
+    // buttons) needs to be admin-editable per slide. Trip-driven slides
+    // (any trip with a real Homepage Hero Image uploaded) are the
+    // fallback for a fresh install with nothing configured yet, and
+    // static seed data is the last resort. `getOrCreateSingleton()` in
+    // the admin API route seeds `doc.heroSlides` from the trip-driven
+    // slides the first time an admin opens Homepage Management, so
+    // editing always starts from what's currently live.
     const dbSlides = (doc.heroSlides ?? [])
       .filter((s) => s.enabled)
       .sort((a, b) => a.order - b.order)
@@ -209,7 +227,9 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
           subtitle: s.subtitle,
           href: s.ctaHref,
           ctaLabel: s.ctaLabel,
-          badges: [],
+          badges: s.badges ?? [],
+          secondaryCtaLabel: s.secondaryCtaLabel || "Explore all trips",
+          secondaryCtaHref: s.secondaryCtaHref || "/trips",
           overlayOpacity: s.overlayOpacity ?? 0.45,
           image:
             img?.url && !img.isPlaceholder
@@ -218,7 +238,7 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
         };
       });
     const derivedSlides = await tripHeroSlides();
-    const heroSlides = derivedSlides.length > 0 ? derivedSlides : dbSlides.length > 0 ? dbSlides : staticHeroSlidesResolved();
+    const heroSlides = dbSlides.length > 0 ? dbSlides : derivedSlides.length > 0 ? derivedSlides : staticHeroSlidesResolved();
 
     // Featured trips — resolve chosen (enabled) slugs against the real Trip
     // collection, preserving admin-chosen order; static fallback if empty.
