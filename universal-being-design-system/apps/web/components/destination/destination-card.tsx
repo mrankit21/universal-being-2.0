@@ -2,11 +2,13 @@ import Link from "next/link";
 import { MapPin, Compass } from "lucide-react";
 
 import type { Destination } from "@/types/destination";
+import { cn } from "@/lib/utils";
 import { themeRegistry } from "@/data/themes";
 import { TripImage } from "@/components/trip/trip-image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tag } from "@/components/primitives/tag";
 import { Button } from "@/components/ui/button";
+import { SaveButton } from "@/components/saved/save-button";
 
 export interface DestinationCardProps {
   destination: Destination & { tripCount?: number };
@@ -20,7 +22,7 @@ export function DestinationCard({ destination, className }: DestinationCardProps
   const theme = themeRegistry[destination.themeKey];
 
   return (
-    <Card className={className}>
+    <Card className={cn("relative", className)}>
       <Link href={`/destinations/${destination.slug}`} className="block" aria-label={destination.name}>
         <TripImage asset={destination.thumbnail ?? destination.coverImage} theme={theme} variant="cover" containerClassName="rounded-t-lg rounded-b-none">
           <div className="absolute left-3 top-3 z-10 flex gap-1.5">
@@ -29,6 +31,7 @@ export function DestinationCard({ destination, className }: DestinationCardProps
           </div>
         </TripImage>
       </Link>
+      <SaveButton itemType="destination" itemSlug={destination.slug} itemLabel={destination.name} className="absolute top-3 right-3" />
 
       <CardContent className="flex flex-col gap-2 pt-5">
         <h3 className="font-display text-lg font-medium text-foreground">

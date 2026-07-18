@@ -14,3 +14,4 @@ export * from "./refund.model";
 export * from "./invoice.model";
 export * from "./payment-event.model";
 export * from "./counter.model";
+export * from "./saved-item.model";

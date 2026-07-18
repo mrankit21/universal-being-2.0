@@ -13,6 +13,7 @@ import { GlobalSearchModal } from "@/components/layout/global-search-modal";
 import { HideOnAdmin } from "@/components/layout/admin-route-gate";
 import { CustomerAuthProvider } from "@/components/layout/customer-auth-context";
 import { CustomerAuthModal } from "@/components/layout/customer-auth-modal";
+import { SavedProvider } from "@/components/saved/saved-context";
 
 /**
  * RootShell — the complete Global Layout (Phase 4). Every page rendered
@@ -53,32 +54,34 @@ export function RootShell({
 }) {
   return (
     <CustomerAuthProvider>
-      <GlobalSearchProvider>
-        <StickyCtaProvider>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
-          >
-            Skip to content
-          </a>
-          <AnnouncementBar config={announcement} />
-          <SiteHeader />
+      <SavedProvider>
+        <GlobalSearchProvider>
+          <StickyCtaProvider>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+            >
+              Skip to content
+            </a>
+            <AnnouncementBar config={announcement} />
+            <SiteHeader />
 
-          <main id="main-content" className="min-h-[60vh]">
-            {children}
-          </main>
+            <main id="main-content" className="min-h-[60vh]">
+              {children}
+            </main>
 
-          <HideOnAdmin>
-            <ThemedFooterBand>
-              <SiteFooter />
-            </ThemedFooterBand>
-          </HideOnAdmin>
-          <BottomNav />
-          <StickyCtaBar />
-          <GlobalSearchModal />
-          <CustomerAuthModal />
-        </StickyCtaProvider>
-      </GlobalSearchProvider>
+            <HideOnAdmin>
+              <ThemedFooterBand>
+                <SiteFooter />
+              </ThemedFooterBand>
+            </HideOnAdmin>
+            <BottomNav />
+            <StickyCtaBar />
+            <GlobalSearchModal />
+            <CustomerAuthModal />
+          </StickyCtaProvider>
+        </GlobalSearchProvider>
+      </SavedProvider>
     </CustomerAuthProvider>
   );
 }

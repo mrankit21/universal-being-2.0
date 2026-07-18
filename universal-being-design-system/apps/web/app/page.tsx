@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 
 import { getResolvedHomepage } from "@/lib/api/home";
 import { getHomepageVisibleDestinations } from "@/lib/api/destinations";
 import { HeroSection } from "@/components/home/hero-section";
+import { PackageIncludesStrip } from "@/components/home/package-includes-strip";
 import { ThemeExplorerSection } from "@/components/home/theme-explorer-section";
 import { FeaturedTripsSection } from "@/components/home/featured-trips-section";
 import { ValuePropsSection } from "@/components/home/value-props-section";
@@ -49,7 +51,12 @@ export default async function HomePage() {
   ]);
 
   const sectionRenderers: Partial<Record<HomepageSectionKey, React.ReactNode>> = {
-    hero: homepage.sectionVisibility.hero ? <HeroSection key="hero" slides={homepage.heroSlides} /> : null,
+    hero: homepage.sectionVisibility.hero ? (
+      <Fragment key="hero">
+        <HeroSection slides={homepage.heroSlides} />
+        <PackageIncludesStrip />
+      </Fragment>
+    ) : null,
     featuredTrips: homepage.sectionVisibility.featuredTrips ? (
       <FeaturedTripsSection key="featuredTrips" trips={homepage.featuredTrips} />
     ) : null,

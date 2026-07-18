@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin, Clock, Users } from "lucide-react";
 
 import type { Trip } from "@/types/trip";
+import { cn } from "@/lib/utils";
 import { themeRegistry } from "@/data/themes";
 import { TripImage } from "@/components/trip/trip-image";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Rating } from "@/components/primitives/rating";
 import { Price } from "@/components/primitives/price";
 import { Button } from "@/components/ui/button";
+import { SaveButton } from "@/components/saved/save-button";
 
 export interface TripCardProps {
   trip: Trip;
@@ -28,7 +30,7 @@ export function TripCard({ trip, className }: TripCardProps) {
   const lowSeats = seatsLeft > 0 && seatsLeft <= 4;
 
   return (
-    <Card className={className}>
+    <Card className={cn("relative", className)}>
       <Link href={`/trips/${trip.slug}`} className="relative block" aria-label={trip.title}>
         <TripImage asset={trip.coverImage} theme={theme} variant="cover" containerClassName="rounded-t-lg rounded-b-none" />
         <div className="absolute left-3 top-3 z-10 flex gap-2">
@@ -41,6 +43,12 @@ export function TripCard({ trip, className }: TripCardProps) {
           </div>
         )}
       </Link>
+      <SaveButton
+        itemType="trip"
+        itemSlug={trip.slug}
+        itemLabel={trip.title}
+        className={cn("absolute top-3 right-3", lowSeats && "top-12")}
+      />
 
       <CardContent className="flex flex-col gap-2 pt-5">
         <h3 className="font-display text-lg font-medium text-foreground">
