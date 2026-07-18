@@ -29,7 +29,7 @@ export function FooterSocialLinks({ links, className }: FooterSocialLinksProps) 
   if (links.length === 0) return null;
 
   return (
-    <ul className={cn("flex items-center gap-2", className)}>
+    <ul className={cn("flex flex-wrap items-center gap-3", className)}>
       {links.map((social) => {
         const Icon = PLATFORM_ICON[social.platform];
         return (
@@ -40,11 +40,11 @@ export function FooterSocialLinks({ links, className }: FooterSocialLinksProps) 
               rel="noopener noreferrer"
               aria-label={social.label}
               className={cn(
-                "inline-flex size-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors",
-                "hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                "inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-foreground transition-colors",
+                "hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               )}
             >
-              <Icon className="size-4" aria-hidden="true" />
+              <Icon className="size-5" aria-hidden="true" />
             </a>
           </li>
         );

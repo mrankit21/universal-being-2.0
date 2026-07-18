@@ -8,9 +8,10 @@ import { useBrand } from "@/components/layout/brand-provider";
 
 export interface LogoProps {
   className?: string;
-  /** "full" shows the tagline beneath the wordmark (footer); "mark" is the
-   * compact header version. */
-  variant?: "mark" | "full";
+  /** "mark" is the compact header version. "full" shows the tagline
+   * beneath a medium wordmark. "footer" is a much larger, standalone
+   * wordmark (no tagline) for a prominent footer brand moment. */
+  variant?: "mark" | "full" | "footer";
 }
 
 /**
@@ -23,13 +24,13 @@ export interface LogoProps {
  */
 export function Logo({ className, variant = "mark" }: LogoProps) {
   const { brandName, tagline, logo } = useBrand();
-  const logoSize = variant === "full" ? 40 : 32;
+  const logoSize = variant === "mark" ? 32 : variant === "full" ? 56 : 104;
 
   return (
     <Link
       href="/"
       className={cn(
-        "inline-flex items-center gap-2 leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm",
+        "inline-flex items-center gap-3 leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm",
         className
       )}
     >
@@ -45,8 +46,18 @@ export function Logo({ className, variant = "mark" }: LogoProps) {
         />
       )}
       <span className="inline-flex flex-col leading-none">
-        <span className="font-display text-xl font-semibold tracking-tight text-foreground">{brandName}</span>
-        {variant === "full" && <span className="mt-1 text-sm font-normal text-muted-foreground">{tagline}</span>}
+        <span
+          className={
+            variant === "footer"
+              ? "font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl"
+              : variant === "full"
+                ? "font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl"
+                : "font-display text-xl font-semibold tracking-tight text-foreground"
+          }
+        >
+          {brandName}
+        </span>
+        {variant === "full" && <span className="mt-2 text-sm font-normal text-muted-foreground">{tagline}</span>}
       </span>
     </Link>
   );

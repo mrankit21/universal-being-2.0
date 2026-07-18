@@ -29,6 +29,10 @@ export interface SiteSettingsDocument extends Document {
   footer: {
     columns: { title: string; links: { label: string; href: string }[] }[];
     copyrightHolder: string;
+    /** Optional background image behind the footer + adjustable darkening
+     * overlay opacity, same pattern as the homepage CTA section. */
+    backgroundImage?: unknown;
+    overlayOpacity: number;
   };
   updatedBy?: string;
   createdAt: string;
@@ -78,6 +82,8 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
         default: [],
       },
       copyrightHolder: { type: String, default: "" },
+      backgroundImage: { type: ImageAssetSchema },
+      overlayOpacity: { type: Number, default: 0.7, min: 0, max: 1 },
     },
     updatedBy: { type: String },
   },

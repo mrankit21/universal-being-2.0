@@ -22,6 +22,7 @@ export interface ResolvedSiteSettings {
   socialLinks: { platform: string; href: string; label: string }[];
   footerColumns: { title: string; links: { label: string; href: string }[] }[];
   copyrightHolder: string;
+  footerBackground: { image?: { url: string; alt: string; isPlaceholder: boolean }; overlayOpacity: number };
   seoDefaults: { title: string; description: string; ogImageUrl?: string };
   /** True when this response came from MongoDB rather than the static
    * fallback — surfaced for admin/debug use only. */
@@ -35,6 +36,7 @@ function staticSiteSettings(): ResolvedSiteSettings {
     socialLinks: staticSiteConfig.socialLinks,
     footerColumns: staticSiteConfig.footerColumns,
     copyrightHolder: staticSiteConfig.copyrightHolder,
+    footerBackground: { overlayOpacity: 0.7 },
     seoDefaults: { title: staticSiteConfig.brandName, description: staticSiteConfig.tagline },
     source: "static",
   };
@@ -63,6 +65,8 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
 
     if (!doc) return staticSiteSettings();
 
+    const footerImg = doc.footer?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+
     return {
       brandStory: doc.brandStory || staticSiteConfig.brandStory,
       contact: {
@@ -74,6 +78,10 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
       socialLinks: doc.socialLinks?.length ? doc.socialLinks : staticSiteConfig.socialLinks,
       footerColumns: doc.footer?.columns?.length ? doc.footer.columns : staticSiteConfig.footerColumns,
       copyrightHolder: doc.footer?.copyrightHolder || staticSiteConfig.copyrightHolder,
+      footerBackground: {
+        image: footerImg?.url && !footerImg.isPlaceholder ? { url: footerImg.url, alt: footerImg.alt ?? "", isPlaceholder: false } : undefined,
+        overlayOpacity: doc.footer?.overlayOpacity ?? 0.7,
+      },
       seoDefaults: {
         title: doc.seoDefaults?.title || staticSiteConfig.brandName,
         description: doc.seoDefaults?.description || staticSiteConfig.tagline,

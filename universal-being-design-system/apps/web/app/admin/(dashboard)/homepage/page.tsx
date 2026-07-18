@@ -319,12 +319,77 @@ export default function HomepagePage() {
           <FormField label="CTA Link">
             <Input value={data.ctaSection.ctaHref} onChange={(e) => set(["ctaSection", "ctaHref"], e.target.value)} />
           </FormField>
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.ctaSection.overlayOpacity ?? 0.45}
+              onChange={(e) => set(["ctaSection", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))}
+            />
+          </FormField>
           <div className="md:col-span-2">
             <ImageAssetField
               label="Background Image"
               value={data.ctaSection.backgroundImage ?? { provider: "placeholder", url: "", alt: "", width: 1920, height: 1080, isPlaceholder: true }}
               onChange={(v) => set(["ctaSection", "backgroundImage"], v)}
               category="banners"
+              hint="Leave empty to use the themed background instead. Use Overlay Opacity above to darken/lighten the image."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Why Travel With Us — Background</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.valuePropsSection?.overlayOpacity ?? 0.6}
+              onChange={(e) =>
+                set(["valuePropsSection", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))
+              }
+            />
+          </FormField>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Background Image"
+              value={data.valuePropsSection?.backgroundImage ?? { provider: "placeholder", url: "", alt: "", width: 1920, height: 1080, isPlaceholder: true }}
+              onChange={(v) => set(["valuePropsSection", "backgroundImage"], v)}
+              category="banners"
+              hint="Leave empty for the plain light background. Use Overlay Opacity to darken the image so card text stays readable."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Testimonials — Background</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.testimonialsSection?.overlayOpacity ?? 0.6}
+              onChange={(e) =>
+                set(["testimonialsSection", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))
+              }
+            />
+          </FormField>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Background Image"
+              value={data.testimonialsSection?.backgroundImage ?? { provider: "placeholder", url: "", alt: "", width: 1920, height: 1080, isPlaceholder: true }}
+              onChange={(v) => set(["testimonialsSection", "backgroundImage"], v)}
+              category="banners"
+              hint="Leave empty for the plain light background. Use Overlay Opacity to darken the image so card text stays readable."
             />
           </div>
         </CardContent>

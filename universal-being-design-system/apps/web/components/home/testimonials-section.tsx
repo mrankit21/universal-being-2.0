@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { Quote } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
@@ -11,6 +12,7 @@ import { SectionHeading } from "@/components/primitives/section-heading";
 import { Rating } from "@/components/primitives/rating";
 import { Card, CardContent } from "@/components/ui/card";
 import { ease, duration } from "@/lib/motion-tokens";
+import type { ResolvedSectionBackground } from "@/lib/api/home";
 
 const AUTOPLAY_MS = 5500;
 
@@ -21,12 +23,19 @@ const AUTOPLAY_MS = 5500;
  * about `CarouselBase` and its other consumers (TripGallery, mobile
  * itinerary, FeaturedTripsSection's mobile view) is untouched.
  */
-export function TestimonialsSection({ testimonials }: { testimonials: Testimonial[] }) {
+export function TestimonialsSection({
+  testimonials,
+  background,
+}: {
+  testimonials: Testimonial[];
+  background?: ResolvedSectionBackground;
+}) {
   const { theme } = useTheme();
   const prefersReducedMotion = useReducedMotion();
   const [index, setIndex] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
   const count = testimonials.length;
+  const hasImage = Boolean(background?.backgroundImage);
 
   React.useEffect(() => {
     if (paused || prefersReducedMotion || count === 0) return;
@@ -43,18 +52,17 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
     .join("")
     .slice(0, 2);
 
-  return (
-    <ThemeBackground
-      theme={theme}
-      area="section"
-      className="ub-section-light border-y border-border"
-    >
-      <div className="mx-auto max-w-3xl px-6 py-section-sm sm:py-section-md">
+  const content = (
+    <div className="relative mx-auto max-w-3xl px-6 py-section-sm sm:py-section-md">
         <SectionHeading
           eyebrow="From past travelers"
           title="What the group chat says afterward"
           align="center"
-          className="mx-auto mb-8 max-w-2xl"
+          className={
+            hasImage
+              ? "mx-auto mb-8 max-w-2xl [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-ub-brass-300"
+              : "mx-auto mb-8 max-w-2xl"
+          }
         />
 
         <div
@@ -109,7 +117,33 @@ export function TestimonialsSection({ testimonials }: { testimonials: Testimonia
             ))}
           </div>
         </div>
+    </div>
+  );
+
+  if (hasImage && background?.backgroundImage) {
+    return (
+      <div className="relative isolate overflow-hidden border-y border-border">
+        <Image
+          src={background.backgroundImage.url}
+          alt={background.backgroundImage.alt}
+          fill
+          sizes="100vw"
+          className="absolute inset-0 object-cover"
+          unoptimized
+        />
+        <div
+          className="absolute inset-0 bg-black"
+          style={{ opacity: background.overlayOpacity }}
+          aria-hidden="true"
+        />
+        {content}
       </div>
+    );
+  }
+
+  return (
+    <ThemeBackground theme={theme} area="section" className="ub-section-light border-y border-border">
+      {content}
     </ThemeBackground>
   );
 }

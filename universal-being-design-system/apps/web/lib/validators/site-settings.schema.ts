@@ -30,6 +30,8 @@ export const siteSettingsSchema = z.object({
       .array(z.object({ title: z.string(), links: z.array(z.object({ label: z.string(), href: z.string() })) }))
       .default([]),
     copyrightHolder: z.string().default(""),
+    backgroundImage: imageAssetSchema.optional(),
+    overlayOpacity: z.number().min(0).max(1).default(0.7),
   }),
 });
 

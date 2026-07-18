@@ -63,9 +63,15 @@ export default async function HomePage() {
     themeExplorer: homepage.sectionVisibility.themeExplorer ? (
       <ThemeExplorerSection key="themeExplorer" destinations={destinations} />
     ) : null,
-    valueProps: homepage.sectionVisibility.valueProps ? <ValuePropsSection key="valueProps" /> : null,
+    valueProps: homepage.sectionVisibility.valueProps ? (
+      <ValuePropsSection key="valueProps" background={homepage.valuePropsSection} />
+    ) : null,
     testimonials: homepage.sectionVisibility.testimonials ? (
-      <TestimonialsSection key="testimonials" testimonials={homepage.testimonials} />
+      <TestimonialsSection
+        key="testimonials"
+        testimonials={homepage.testimonials}
+        background={homepage.testimonialsSection}
+      />
     ) : null,
     promoBanner: <PromoBannerSection key="promoBanner" config={homepage.promoBanner} />,
     cta: homepage.sectionVisibility.cta ? <CtaSection key="cta" config={homepage.ctaSection} /> : null,

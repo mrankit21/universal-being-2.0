@@ -16,8 +16,8 @@ export function FooterNav({ columns }: FooterNavProps) {
     <>
       {columns.map((column) => (
         <nav key={column.title} aria-label={column.title} className="flex flex-col gap-3">
-          <h3 className="text-sm font-bold tracking-wide text-foreground">{column.title}</h3>
-          <ul className="flex flex-col gap-2">
+          <h3 className="text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">{column.title}</h3>
+          <ul className="flex flex-col gap-2.5">
             {column.links.map((link) => (
               <li key={link.href}>
                 <Link

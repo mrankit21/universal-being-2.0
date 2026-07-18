@@ -73,6 +73,22 @@ export interface HomepageDocument extends Document {
     ctaLabel: string;
     ctaHref: string;
     backgroundImage?: unknown;
+    /** Darkening overlay strength over the background image, 0 (none) to
+     * 1 (solid black) — admin-adjustable per section, same pattern as
+     * `HeroSlideDoc.overlayOpacity`. Step: background image opacity control. */
+    overlayOpacity: number;
+  };
+  /** "Why travel with us" section — optional background image + adjustable
+   * overlay opacity, same shape/pattern as `ctaSection`. */
+  valuePropsSection: {
+    backgroundImage?: unknown;
+    overlayOpacity: number;
+  };
+  /** "From past travelers" section — optional background image + adjustable
+   * overlay opacity, same shape/pattern as `ctaSection`. */
+  testimonialsSection: {
+    backgroundImage?: unknown;
+    overlayOpacity: number;
   };
   featuredTrips: { tripSlug: string; enabled: boolean }[];
   testimonialIds: string[];
@@ -135,6 +151,15 @@ const HomepageSchema = new Schema<HomepageDocument>(
       ctaLabel: { type: String, default: "Plan Your Trip" },
       ctaHref: { type: String, default: "/trips" },
       backgroundImage: { type: ImageAssetSchema },
+      overlayOpacity: { type: Number, default: 0.45, min: 0, max: 1 },
+    },
+    valuePropsSection: {
+      backgroundImage: { type: ImageAssetSchema },
+      overlayOpacity: { type: Number, default: 0.6, min: 0, max: 1 },
+    },
+    testimonialsSection: {
+      backgroundImage: { type: ImageAssetSchema },
+      overlayOpacity: { type: Number, default: 0.6, min: 0, max: 1 },
     },
     featuredTrips: {
       type: [

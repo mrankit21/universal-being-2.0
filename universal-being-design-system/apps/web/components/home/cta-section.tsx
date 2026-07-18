@@ -39,7 +39,11 @@ export function CtaSection({ config }: { config: ResolvedCtaSection }) {
             className="absolute inset-0 object-cover"
             unoptimized
           />
-          <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: config.overlayOpacity }}
+            aria-hidden="true"
+          />
         </>
       ) : (
         <ThemeBackground theme={theme} area="hero" className="absolute inset-0" />

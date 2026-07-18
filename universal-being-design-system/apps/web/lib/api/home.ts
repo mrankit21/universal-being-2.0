@@ -54,6 +54,15 @@ export interface ResolvedCtaSection {
   ctaLabel: string;
   ctaHref: string;
   backgroundImage?: { url: string; alt: string; isPlaceholder: boolean };
+  overlayOpacity: number;
+}
+
+/** Background image + adjustable overlay opacity for a section that has no
+ * other admin-editable content of its own (Why Travel With Us, Testimonials
+ * intro) — same shape as `ResolvedCtaSection`'s background fields. */
+export interface ResolvedSectionBackground {
+  backgroundImage?: { url: string; alt: string; isPlaceholder: boolean };
+  overlayOpacity: number;
 }
 
 export interface ResolvedHomepage {
@@ -62,6 +71,8 @@ export interface ResolvedHomepage {
   testimonials: Testimonial[];
   promoBanner: ResolvedPromoBanner;
   ctaSection: ResolvedCtaSection;
+  valuePropsSection: ResolvedSectionBackground;
+  testimonialsSection: ResolvedSectionBackground;
   sectionOrder: HomepageSectionKey[];
   sectionVisibility: Record<Exclude<HomepageSectionKey, "promoBanner">, boolean>;
   /** True when this response came from MongoDB rather than the static
@@ -93,7 +104,11 @@ const DEFAULT_CTA_SECTION: ResolvedCtaSection = {
   body: "Tell us where you're leaning and we'll help you pick the right departure — no pressure, just a real conversation.",
   ctaLabel: "Book now",
   ctaHref: "/trips",
+  overlayOpacity: 0.45,
 };
+
+const DEFAULT_VALUE_PROPS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
+const DEFAULT_TESTIMONIALS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
 
 function staticHeroSlidesResolved(): ResolvedHeroSlide[] {
   return staticHeroSlides.map((s) => ({
@@ -183,6 +198,8 @@ async function staticHomepage(): Promise<ResolvedHomepage> {
     testimonials: staticTestimonials,
     promoBanner: { enabled: false, heading: "", body: "" },
     ctaSection: DEFAULT_CTA_SECTION,
+    valuePropsSection: DEFAULT_VALUE_PROPS_SECTION,
+    testimonialsSection: DEFAULT_TESTIMONIALS_SECTION,
     sectionOrder: DEFAULT_SECTION_ORDER,
     sectionVisibility: DEFAULT_SECTION_VISIBILITY,
     source: "static",
@@ -268,6 +285,8 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
 
     const promoBannerImg = doc.promoBanner?.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
     const ctaImg = doc.ctaSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const valuePropsImg = doc.valuePropsSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const testimonialsImg = doc.testimonialsSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
 
     return {
       heroSlides,
@@ -287,6 +306,21 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
         ctaLabel: doc.ctaSection?.ctaLabel || DEFAULT_CTA_SECTION.ctaLabel,
         ctaHref: doc.ctaSection?.ctaHref || DEFAULT_CTA_SECTION.ctaHref,
         backgroundImage: ctaImg?.url && !ctaImg.isPlaceholder ? { url: ctaImg.url, alt: ctaImg.alt ?? "", isPlaceholder: false } : undefined,
+        overlayOpacity: doc.ctaSection?.overlayOpacity ?? DEFAULT_CTA_SECTION.overlayOpacity,
+      },
+      valuePropsSection: {
+        backgroundImage:
+          valuePropsImg?.url && !valuePropsImg.isPlaceholder
+            ? { url: valuePropsImg.url, alt: valuePropsImg.alt ?? "", isPlaceholder: false }
+            : undefined,
+        overlayOpacity: doc.valuePropsSection?.overlayOpacity ?? DEFAULT_VALUE_PROPS_SECTION.overlayOpacity,
+      },
+      testimonialsSection: {
+        backgroundImage:
+          testimonialsImg?.url && !testimonialsImg.isPlaceholder
+            ? { url: testimonialsImg.url, alt: testimonialsImg.alt ?? "", isPlaceholder: false }
+            : undefined,
+        overlayOpacity: doc.testimonialsSection?.overlayOpacity ?? DEFAULT_TESTIMONIALS_SECTION.overlayOpacity,
       },
       sectionOrder: doc.sectionOrder?.length ? doc.sectionOrder : DEFAULT_SECTION_ORDER,
       sectionVisibility: { ...DEFAULT_SECTION_VISIBILITY, ...(doc.sectionVisibility ?? {}) },

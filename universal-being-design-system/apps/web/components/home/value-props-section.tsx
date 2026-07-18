@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Users, ShieldCheck, Sparkles, Compass, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -7,6 +8,7 @@ import { valueProps, type ValuePropIconKey } from "@/data/home/value-props";
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { Reveal } from "@/components/animation/reveal";
 import { FloatingElements } from "@/components/animation/floating-elements";
+import type { ResolvedSectionBackground } from "@/lib/api/home";
 
 /** Static icon registry — same pattern as nav-link.tsx's NavIconKey map. */
 const iconRegistry: Record<ValuePropIconKey, LucideIcon> = {
@@ -24,9 +26,28 @@ const cardVariants = ["tilt", "scale", "tilt", "scale"] as const;
  * section using the same fade-up), ambient `FloatingElements` in the
  * background, and a slow pulse glow behind each icon.
  */
-export function ValuePropsSection() {
+export function ValuePropsSection({ background }: { background?: ResolvedSectionBackground }) {
+  const hasImage = Boolean(background?.backgroundImage);
+
   return (
-    <div className="ub-section-light relative">
+    <div className={hasImage ? "relative isolate overflow-hidden" : "ub-section-light relative"}>
+      {hasImage && background?.backgroundImage ? (
+        <>
+          <Image
+            src={background.backgroundImage.url}
+            alt={background.backgroundImage.alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 object-cover"
+            unoptimized
+          />
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: background.overlayOpacity }}
+            aria-hidden="true"
+          />
+        </>
+      ) : null}
       <section className="relative mx-auto max-w-6xl px-6 py-section-sm sm:py-section-md">
         <FloatingElements className="text-ub-brass-500" />
 
@@ -34,7 +55,11 @@ export function ValuePropsSection() {
           eyebrow="Why travel with us"
           title="Trips designed, not just booked"
           align="center"
-          className="relative mx-auto mb-10 max-w-2xl"
+          className={
+            hasImage
+              ? "relative mx-auto mb-10 max-w-2xl [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-ub-brass-300"
+              : "relative mx-auto mb-10 max-w-2xl"
+          }
         />
 
         <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

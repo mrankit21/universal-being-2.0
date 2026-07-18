@@ -193,6 +193,23 @@ export default function SiteSettingsPage() {
           <FormField label="Footer Copyright Holder">
             <Input value={data.footer.copyrightHolder} onChange={(e) => set(["footer", "copyrightHolder"], e.target.value)} />
           </FormField>
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.footer.overlayOpacity ?? 0.7}
+              onChange={(e) => set(["footer", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))}
+            />
+          </FormField>
+          <ImageAssetField
+            label="Footer Background Image"
+            value={data.footer.backgroundImage ?? emptyImage()}
+            onChange={(v) => set(["footer", "backgroundImage"], v)}
+            category="banners"
+            hint="Leave empty for the plain purple background. Use Overlay Opacity to darken the image so footer text stays readable."
+          />
         </CardContent>
       </Card>
     </div>

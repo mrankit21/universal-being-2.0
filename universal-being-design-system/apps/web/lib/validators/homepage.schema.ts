@@ -35,7 +35,20 @@ export const homepageSchema = z.object({
     ctaLabel: z.string().default("Plan Your Trip"),
     ctaHref: z.string().default("/trips"),
     backgroundImage: imageAssetSchema.optional(),
+    overlayOpacity: z.number().min(0).max(1).default(0.45),
   }),
+  valuePropsSection: z
+    .object({
+      backgroundImage: imageAssetSchema.optional(),
+      overlayOpacity: z.number().min(0).max(1).default(0.6),
+    })
+    .default({ overlayOpacity: 0.6 }),
+  testimonialsSection: z
+    .object({
+      backgroundImage: imageAssetSchema.optional(),
+      overlayOpacity: z.number().min(0).max(1).default(0.6),
+    })
+    .default({ overlayOpacity: 0.6 }),
   featuredTrips: z
     .array(z.object({ tripSlug: z.string(), enabled: z.boolean().default(true) }))
     .default([]),
