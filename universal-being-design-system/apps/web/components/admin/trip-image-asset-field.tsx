@@ -1,70 +1,72 @@
 "use client";
 
 /**
- * ImageAssetField — edits one `ImageAsset` slot (Architecture §13: "every
- * slot is a typed field, never a bare string"). This is the ONE Image
- * Picker every CMS module uses (Step 7.6B §8 — "wherever an image is
- * required, always open the Media Library Picker"): search, filter by
- * category, browse recent uploads, preview, choose, or remove — all backed
- * by `/api/admin/media`, the single source of truth (Step 7.6A).
+ * TripImageAssetField — the Trip Editor's own image slot, used everywhere
+ * ImageAssetField used to be used inside TripForm (Hero/Cover/Thumbnail/
+ * Homepage Hero, per-gallery-item, per-itinerary-day, per-hotel, Review
+ * photo, SEO OG image).
+ *
+ * Two ways to fill a slot, both without ever leaving the Trip edit screen:
+ *  1. "Upload from device" — uploads straight to ImageKit and registers it
+ *     with `scope: "trip"` + this Trip's slug, so it never clutters (or
+ *     shows up in) the main Media Library grid.
+ *  2. "Choose from this Trip's uploads" — picks among images already
+ *     uploaded for *this* Trip only (never the general Media Library, and
+ *     never another Trip's uploads) — keeps the two pools fully separate,
+ *     per how the admin asked for this to work.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { ImageIcon, Link2, Loader2, Search, UploadCloud, X, Check } from "lucide-react";
+import { Check, ImageIcon, Loader2, Search, UploadCloud, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { uploadImageFile } from "@/lib/media/client-upload";
 import type { ImageAsset } from "@/types/trip";
 
-const CATEGORIES: { value: string; label: string }[] = [
-  { value: "homepage-hero", label: "Homepage Hero" },
-  { value: "trip-hero", label: "Trip Hero" },
-  { value: "trip-gallery", label: "Trip Gallery" },
-  { value: "destination-hero", label: "Destination Hero" },
-  { value: "destination-gallery", label: "Destination Gallery" },
-  { value: "logos", label: "Logos" },
-  { value: "icons", label: "Icons" },
-  { value: "banners", label: "Banners" },
-  { value: "general", label: "General" },
-  { value: "future-videos", label: "Future Videos" },
-];
-
-interface MediaAsset {
+interface TripMediaAsset {
   _id: string;
   url: string;
   alt: string;
   title: string;
-  category: string;
   width: number;
   height: number;
 }
 
-export function ImageAssetField({
+export function TripImageAssetField({
   label,
   value,
   onChange,
   category,
+  usage,
+  tripSlug,
+  tripTitle,
   hint,
 }: {
   label: string;
   value: ImageAsset;
   onChange: (next: ImageAsset) => void;
-  /** Pre-selects this category in the picker (e.g. "trip-gallery" for a Trip's gallery field). Just a default — the admin can still switch categories. */
+  /** Media category this upload should be filed under, e.g. "trip-hero", "trip-gallery". */
   category?: string;
+  /** Optional bookkeeping tag, e.g. "trip-hero-image", "gallery-image". */
+  usage?: string;
+  /** Current Trip's slug — required to actually upload/browse. Undefined
+   * while the Trip has no slug yet (brand-new, unsaved Trip). */
+  tripSlug?: string;
+  tripTitle?: string;
   hint?: string;
 }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [assets, setAssets] = useState<TripMediaAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState(category ?? "all");
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -72,51 +74,39 @@ export function ImageAssetField({
   }, [search]);
 
   const load = useCallback(async () => {
+    if (!tripSlug) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (categoryFilter !== "all") params.set("category", categoryFilter);
+      const params = new URLSearchParams({ scope: "trip", tripSlug, limit: "60" });
       if (debouncedSearch) params.set("q", debouncedSearch);
-      params.set("limit", "60");
-      // With no search/category applied, the API's default sort (most
-      // recent first) doubles as the "Recent Images" view the picker opens to.
       const res = await fetch(`/api/admin/media?${params.toString()}`);
       const json = await res.json();
       if (json.success) setAssets(json.data.items);
     } finally {
       setLoading(false);
     }
-  }, [categoryFilter, debouncedSearch]);
+  }, [tripSlug, debouncedSearch]);
 
   useEffect(() => {
     if (pickerOpen) load();
   }, [pickerOpen, load]);
 
-  function openPicker() {
-    setSearch("");
-    setCategoryFilter(category ?? "all");
-    setPickerOpen(true);
-  }
-
-  function selectAsset(asset: MediaAsset) {
-    onChange({
-      ...value,
-      provider: "imagekit",
-      url: asset.url,
-      alt: asset.alt || value.alt,
-      width: asset.width || value.width,
-      height: asset.height || value.height,
-      isPlaceholder: false,
-    });
-    setPickerOpen(false);
-  }
-
-  async function handleUpload(files: FileList | null) {
-    const file = files?.[0];
-    if (!file) return;
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    if (!tripSlug) {
+      toast.error("Set the Trip's Title & Slug first (Basic Info tab), then upload images.");
+      return;
+    }
+    const file = files[0];
     setUploading(true);
     try {
-      const asset = await uploadImageFile(file, { category: category ?? "general" });
+      const asset = await uploadImageFile(file, {
+        category: category ?? "general",
+        scope: "trip",
+        relatedTripSlug: tripSlug,
+        relatedTripTitle: tripTitle,
+        usage,
+      });
       onChange({
         ...value,
         provider: "imagekit",
@@ -132,6 +122,19 @@ export function ImageAssetField({
     } finally {
       setUploading(false);
     }
+  }
+
+  function selectAsset(asset: TripMediaAsset) {
+    onChange({
+      ...value,
+      provider: "imagekit",
+      url: asset.url,
+      alt: asset.alt || value.alt,
+      width: asset.width || value.width,
+      height: asset.height || value.height,
+      isPlaceholder: false,
+    });
+    setPickerOpen(false);
   }
 
   function removeImage() {
@@ -158,67 +161,57 @@ export function ImageAssetField({
               accept="image/*"
               className="hidden"
               onChange={(e) => {
-                handleUpload(e.target.files);
+                handleFiles(e.target.files);
                 e.target.value = "";
               }}
             />
-            <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={uploading || !tripSlug}
+              onClick={() => fileInputRef.current?.click()}
+            >
               {uploading ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
               {uploading ? "Uploading…" : "Upload from device"}
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={openPicker}>
-              <Link2 className="size-4" />
-              Choose from Media Library
+            <Button type="button" variant="outline" size="sm" disabled={!tripSlug} onClick={() => setPickerOpen(true)}>
+              <ImageIcon className="size-4" />
+              Choose from this Trip
             </Button>
             {value.url ? (
               <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={removeImage}>
                 <X className="size-4" />
-                Remove Image
+                Remove
               </Button>
             ) : null}
           </div>
-          <Input
-            value={value.alt}
-            onChange={(e) => onChange({ ...value, alt: e.target.value })}
-            placeholder="Alt text"
-          />
+          {!tripSlug ? (
+            <p className="text-xs text-warning">Set the Trip&rsquo;s Title &amp; Slug in Basic Info first to enable uploads.</p>
+          ) : null}
+          <Input value={value.alt} onChange={(e) => onChange({ ...value, alt: e.target.value })} placeholder="Alt text" />
         </div>
       </div>
 
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Choose from Media Library</DialogTitle>
+            <DialogTitle>Choose from this Trip&rsquo;s uploads</DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-wrap gap-2">
-            <div className="relative min-w-56 flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                autoFocus
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title, filename, alt text, or tag…"
-                className="pl-8"
-              />
-            </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-52">
-                <SelectValue placeholder="All categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search this trip's images…"
+              className="pl-8"
+            />
           </div>
-          {!debouncedSearch && categoryFilter === "all" ? (
-            <p className="text-xs text-muted-foreground">Showing recent uploads. Search or filter to narrow down.</p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Only images uploaded for this Trip show here — not the main Media Library.
+          </p>
 
           {loading ? (
             <div className="grid max-h-96 grid-cols-4 gap-3 overflow-y-auto">
@@ -228,7 +221,7 @@ export function ImageAssetField({
             </div>
           ) : assets.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              No images match. Add images from the Media Library page first.
+              No images uploaded for this Trip yet. Use &ldquo;Upload from device&rdquo; above.
             </p>
           ) : (
             <div className="grid max-h-96 grid-cols-4 gap-3 overflow-y-auto">
@@ -265,6 +258,25 @@ export function ImageAssetField({
               })}
             </div>
           )}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              handleFiles(e.dataTransfer.files);
+              setPickerOpen(false);
+            }}
+            className={`flex items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-center text-xs text-muted-foreground transition-colors ${
+              dragOver ? "border-primary bg-primary/5" : "border-border"
+            }`}
+          >
+            <UploadCloud className="size-4" />
+            Or drag &amp; drop a new image here to upload it for this Trip
+          </div>
         </DialogContent>
       </Dialog>
     </div>

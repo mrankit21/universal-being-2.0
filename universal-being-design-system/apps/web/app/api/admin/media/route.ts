@@ -46,6 +46,11 @@ const mediaCreateSchema = z.object({
   usage: z.string().optional(),
   heroSlideNumber: z.number().int().min(1).max(6).optional(),
   galleryPosition: z.number().int().min(1).max(6).optional(),
+  // Trip-scoped uploads (Trip Editor's own "upload for this trip" fields
+  // and Gallery multi-upload) — keeps them out of the main Media Library
+  // grid entirely. Defaults to "library" so every existing caller (Media
+  // Library page, SmartMediaUpload wizard) is unaffected.
+  scope: z.enum(["library", "trip"]).default("library"),
 });
 
 export async function GET(req: NextRequest) {
@@ -61,7 +66,25 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(100, Math.max(1, Number(params.get("limit")) || 24));
     const sort = params.get("sort") === "oldest" ? { createdAt: 1 as const } : { createdAt: -1 as const };
 
+    // Scope: defaults to "library" so the Media Library page (which never
+    // sends this param) keeps showing exactly what it always has — never
+    // any image uploaded from inside a Trip's own editor. A Trip editor
+    // explicitly requests `scope=trip&tripSlug=...` to see (only) its own
+    // uploads. `scope=all` is available for internal/admin tooling.
+    const scopeParam = params.get("scope");
+    const scope = scopeParam === "trip" || scopeParam === "all" ? scopeParam : "library";
+    const tripSlug = params.get("tripSlug")?.trim();
+
     const filter: Record<string, unknown> = {};
+    if (scope === "library") {
+      // Pre-existing documents have no `scope` at all (created before this
+      // field existed) — treat those as "library" too, same as the schema
+      // default, so nothing that used to show up disappears.
+      filter.scope = { $in: ["library", null] };
+    } else if (scope === "trip") {
+      filter.scope = "trip";
+      if (tripSlug) filter.relatedTripSlug = tripSlug;
+    }
     if (category && category !== "all") filter.category = category;
     if (q) {
       filter.$or = [
@@ -72,6 +95,15 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Category badge counts should reflect the same scope as the list
+    // itself (so, e.g., the Media Library page's per-category counts never
+    // include images uploaded from inside a Trip editor) — but not the
+    // text search, so switching categories from a search still shows every
+    // category's total rather than only ones matching the current query.
+    const scopeOnlyFilter: Record<string, unknown> = {};
+    if (filter.scope) scopeOnlyFilter.scope = filter.scope;
+    if (filter.relatedTripSlug) scopeOnlyFilter.relatedTripSlug = filter.relatedTripSlug;
+
     const [items, total, categoryCounts] = await Promise.all([
       MediaModel.find(filter)
         .sort(sort)
@@ -79,7 +111,10 @@ export async function GET(req: NextRequest) {
         .limit(limit)
         .lean(),
       MediaModel.countDocuments(filter),
-      MediaModel.aggregate([{ $group: { _id: "$category", count: { $sum: 1 } } }]),
+      MediaModel.aggregate([
+        { $match: scopeOnlyFilter },
+        { $group: { _id: "$category", count: { $sum: 1 } } },
+      ]),
     ]);
 
     const usageMap = await findUsageForAssets(items.map((i) => ({ url: i.url, publicId: i.publicId })));

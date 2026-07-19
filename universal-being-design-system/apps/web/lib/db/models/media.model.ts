@@ -84,6 +84,14 @@ export interface MediaDocument extends Document {
   /** @deprecated use `category` */
   folder?: MediaFolder;
   category: MediaCategory;
+  /** Where this asset was uploaded from — keeps the Media Library page and
+   * a Trip's own per-trip uploads from ever mixing. "library" = uploaded
+   * from the main Media Library page (default, unchanged legacy behavior).
+   * "trip" = uploaded directly from a specific Trip's edit screen; only
+   * ever shown back inside that same Trip's editor, never in the Media
+   * Library grid. Purely additive — every pre-existing document has no
+   * `scope` and is treated as "library" via the schema default. */
+  scope: "library" | "trip";
   tags: string[];
   filename: string;
   mimeType?: string;
@@ -143,6 +151,12 @@ const MediaSchema = new Schema<MediaDocument>(
       type: String,
       enum: MEDIA_CATEGORIES,
       default: "general",
+      index: true,
+    },
+    scope: {
+      type: String,
+      enum: ["library", "trip"],
+      default: "library",
       index: true,
     },
     tags: { type: [String], default: [], index: true },

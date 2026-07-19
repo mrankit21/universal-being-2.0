@@ -17,7 +17,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { FormField } from "./form-field";
-import { ImageAssetField } from "./image-asset-field";
+import { TripImageAssetField } from "./trip-image-asset-field";
+import { TripGalleryUploadField } from "./trip-gallery-upload-field";
 import { StringListEditor } from "./string-list-editor";
 import { ArrayFieldEditor } from "./array-field-editor";
 import { TestimonialPickerField } from "./testimonial-picker-field";
@@ -112,6 +113,14 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
   const [value, setValue] = useState<TripFormValue>(initialValue ? normalize(initialValue) : blank());
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
+
+  // Trip-scoped image uploads (Upload from device / Choose from this
+  // Trip's uploads / Gallery multi-upload) are tagged against this Trip's
+  // slug, so they only ever show back up inside this Trip's own editor.
+  // Needs a real slug first, so uploads are disabled until Basic Info's
+  // Slug field is filled in.
+  const tripSlug = value.slug?.trim() || undefined;
+  const tripTitle = value.title?.trim() || undefined;
 
   function set<K extends keyof TripFormValue>(key: K, val: TripFormValue[K]) {
     setValue((prev) => ({ ...prev, [key]: val }));
@@ -347,22 +356,63 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
           <Card>
             <CardHeader><CardTitle className="text-base">Hero, Cover & Thumbnail</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <ImageAssetField label="Hero Image (trip page banner)" value={value.heroImage} onChange={(v) => set("heroImage", v)} category="trip-hero" />
-              <ImageAssetField
+              <TripImageAssetField
+                label="Hero Image (trip page banner)"
+                value={value.heroImage}
+                onChange={(v) => set("heroImage", v)}
+                category="trip-hero"
+                usage="trip-hero-image"
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
+              />
+              <TripImageAssetField
                 label="Mobile Hero Image (optional)"
                 value={value.heroImageMobile ?? emptyImage()}
                 onChange={(v) => set("heroImageMobile", v)}
                 category="trip-hero"
+                usage="trip-hero-image"
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
                 hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Hero Image above — do this only if that image loses an important subject when cropped narrow."
               />
-              <ImageAssetField label="Cover Image (used in cards)" value={value.coverImage} onChange={(v) => set("coverImage", v)} category="trip-hero" />
-              <ImageAssetField label="Thumbnail" value={value.thumbnail} onChange={(v) => set("thumbnail", v)} category="trip-hero" />
-              <ImageAssetField label="Homepage Hero Image" value={value.homepageHeroImage} onChange={(v) => set("homepageHeroImage", v)} category="homepage-hero" hint="Used when this trip is featured on the homepage" />
+              <TripImageAssetField
+                label="Cover Image (used in cards)"
+                value={value.coverImage}
+                onChange={(v) => set("coverImage", v)}
+                category="trip-hero"
+                usage="cover-image"
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
+              />
+              <TripImageAssetField
+                label="Thumbnail"
+                value={value.thumbnail}
+                onChange={(v) => set("thumbnail", v)}
+                category="trip-hero"
+                usage="thumbnail"
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
+              />
+              <TripImageAssetField
+                label="Homepage Hero Image"
+                value={value.homepageHeroImage}
+                onChange={(v) => set("homepageHeroImage", v)}
+                category="homepage-hero"
+                usage="homepage-hero-image"
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
+                hint="Used when this trip is featured on the homepage"
+              />
             </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle className="text-base">Gallery</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <TripGalleryUploadField
+                tripSlug={tripSlug}
+                tripTitle={tripTitle}
+                onUploaded={(assets) => set("gallery", [...value.gallery, ...assets])}
+              />
               <ArrayFieldEditor
                 items={value.gallery}
                 onChange={(v) => set("gallery", v)}
@@ -371,7 +421,15 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                 createItem={emptyImage}
                 draggable
                 renderItem={(img, _i, update) => (
-                  <ImageAssetField label="Gallery Image" value={img} onChange={update} category="trip-gallery" />
+                  <TripImageAssetField
+                    label="Gallery Image"
+                    value={img}
+                    onChange={update}
+                    category="trip-gallery"
+                    usage="gallery-image"
+                    tripSlug={tripSlug}
+                    tripTitle={tripTitle}
+                  />
                 )}
               />
             </CardContent>
@@ -417,7 +475,15 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                         createItem={emptyImage}
                         draggable
                         renderItem={(img, _j, updateImg) => (
-                          <ImageAssetField label="Image" value={img} onChange={updateImg} category="trip-gallery" />
+                          <TripImageAssetField
+                            label="Image"
+                            value={img}
+                            onChange={updateImg}
+                            category="trip-gallery"
+                            usage="gallery-image"
+                            tripSlug={tripSlug}
+                            tripTitle={tripTitle}
+                          />
                         )}
                       />
                     </FormField>
@@ -469,7 +535,15 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                         createItem={emptyImage}
                         draggable
                         renderItem={(img, _j, updateImg) => (
-                          <ImageAssetField label="Image" value={img} onChange={updateImg} category="trip-gallery" />
+                          <TripImageAssetField
+                            label="Image"
+                            value={img}
+                            onChange={updateImg}
+                            category="trip-gallery"
+                            usage="gallery-image"
+                            tripSlug={tripSlug}
+                            tripTitle={tripTitle}
+                          />
                         )}
                       />
                     </FormField>
@@ -610,11 +684,14 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                         />
                       </FormField>
                     </div>
-                    <ImageAssetField
+                    <TripImageAssetField
                       label="Customer Photo"
                       value={review.customerPhoto}
                       onChange={(v) => update({ customerPhoto: v })}
                       category="general"
+                      usage="review-image"
+                      tripSlug={tripSlug}
+                      tripTitle={tripTitle}
                     />
                     <FormField label="Review">
                       <Textarea rows={3} value={review.reviewText} onChange={(e) => update({ reviewText: e.target.value })} />
@@ -698,11 +775,14 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                 <Input value={value.seo.canonicalUrl ?? ""} onChange={(e) => set("seo", { ...value.seo, canonicalUrl: e.target.value })} placeholder="https://example.com/trips/your-trip" />
               </FormField>
               <div className="md:col-span-2">
-                <ImageAssetField
+                <TripImageAssetField
                   label="Open Graph Image"
                   value={value.seo.ogImage ?? emptyImage()}
                   onChange={(v) => set("seo", { ...value.seo, ogImage: v })}
                   category="trip-hero"
+                  usage="trip-hero-image"
+                  tripSlug={tripSlug}
+                  tripTitle={tripTitle}
                   hint="Optional — shown when this trip is shared on social media. Falls back to the Hero Image when unset."
                 />
               </div>
