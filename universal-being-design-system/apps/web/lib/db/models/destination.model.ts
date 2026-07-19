@@ -58,7 +58,7 @@ const DestinationSchema = new Schema<DestinationDocument>(
     themeKey: {
       type: String,
       required: true,
-      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest"],
+      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"],
     },
     tagline: { type: String, default: "" },
     shortDescription: { type: String, default: "" },

@@ -83,6 +83,8 @@ export function ImageAssetField({
       const res = await fetch(`/api/admin/media?${params.toString()}`);
       const json = await res.json();
       if (json.success) setAssets(json.data.items);
+    } catch {
+      toast.error("Couldn't load the media library — check your connection");
     } finally {
       setLoading(false);
     }
@@ -104,8 +106,11 @@ export function ImageAssetField({
       provider: "imagekit",
       url: asset.url,
       alt: asset.alt || value.alt,
-      width: asset.width || value.width,
-      height: asset.height || value.height,
+      // asset.width/height can come back 0 from some media records; the
+      // schema requires a positive int, so guard against 0 as well as
+      // undefined (`||` alone lets 0 slip through and fails save).
+      width: asset.width || value.width || 1600,
+      height: asset.height || value.height || 900,
       isPlaceholder: false,
     });
     setPickerOpen(false);
@@ -122,8 +127,8 @@ export function ImageAssetField({
         provider: "imagekit",
         url: asset.url,
         alt: asset.alt || value.alt,
-        width: asset.width || value.width,
-        height: asset.height || value.height,
+        width: asset.width || value.width || 1600,
+        height: asset.height || value.height || 900,
         isPlaceholder: false,
       });
       toast.success(`${label} uploaded`);
@@ -135,7 +140,7 @@ export function ImageAssetField({
   }
 
   function removeImage() {
-    onChange({ ...value, url: "", isPlaceholder: true });
+    onChange({ ...value, provider: "placeholder", url: "", isPlaceholder: true });
   }
 
   return (

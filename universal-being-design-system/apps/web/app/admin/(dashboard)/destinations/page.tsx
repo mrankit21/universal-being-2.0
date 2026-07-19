@@ -30,11 +30,16 @@ export default function DestinationsListPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/admin/destinations");
-    const json = await res.json();
-    if (json.success) setDestinations(json.data);
-    else toast.error(json.error);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/destinations");
+      const json = await res.json();
+      if (json.success) setDestinations(json.data);
+      else toast.error(json.error);
+    } catch {
+      toast.error("Couldn't reach the server — check your connection and try again");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -42,13 +47,17 @@ export default function DestinationsListPage() {
   }, []);
 
   async function handleDelete(id: string) {
-    const res = await fetch(`/api/admin/destinations/${id}`, { method: "DELETE" });
-    const json = await res.json();
-    if (json.success) {
-      toast.success("Destination deleted");
-      setDestinations((prev) => prev.filter((d) => d._id !== id));
-    } else {
-      toast.error(json.error);
+    try {
+      const res = await fetch(`/api/admin/destinations/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Destination deleted");
+        setDestinations((prev) => prev.filter((d) => d._id !== id));
+      } else {
+        toast.error(json.error);
+      }
+    } catch {
+      toast.error("Couldn't reach the server — check your connection and try again");
     }
   }
 
@@ -74,6 +83,11 @@ export default function DestinationsListPage() {
       setDestinations((prev) =>
         prev.map((d) => (d._id === destination._id ? { ...d, status: nextStatus } : d))
       );
+    } catch {
+      // Previously uncaught — a network error here (dropped connection,
+      // insecure-origin fetch block, etc.) threw silently and the button
+      // just looked dead with no feedback at all.
+      toast.error("Couldn't reach the server — check your connection and try again");
     } finally {
       setTogglingId(null);
     }

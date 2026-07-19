@@ -151,7 +151,7 @@ const TripSchema = new Schema<TripDocument>(
     themeKey: {
       type: String,
       required: true,
-      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest"],
+      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"],
     },
 
     shortDescription: { type: String, required: true, default: "" },

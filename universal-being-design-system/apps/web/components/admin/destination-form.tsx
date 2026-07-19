@@ -19,7 +19,7 @@ import { DestinationTripAssignmentField } from "./destination-trip-assignment-fi
 import type { Destination } from "@/types/destination";
 import type { ThemeKey } from "@/types/theme";
 
-const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest"];
+const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"];
 
 const emptyImage = () => ({
   provider: "placeholder" as const,
@@ -95,13 +95,21 @@ export function DestinationForm({
       });
       const json = await res.json();
       if (!json.success) {
-        if (json.details?.fieldErrors) setErrors(json.details.fieldErrors);
-        toast.error(json.error ?? "Something went wrong");
+        const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
+        if (fieldErrors) setErrors(fieldErrors);
+        // Surface exactly which field(s) failed instead of a bare generic
+        // toast — "Validation failed" alone is undebuggable on mobile
+        // where there's no DevTools/terminal to check.
+        const fieldNames = fieldErrors ? Object.keys(fieldErrors) : [];
+        const detail = fieldNames.length ? `: ${fieldNames.join(", ")}` : "";
+        toast.error(`${json.error ?? "Something went wrong"}${detail}`);
         return;
       }
       toast.success(destinationId ? "Destination updated" : "Destination created");
       router.push("/admin/destinations");
       router.refresh();
+    } catch {
+      toast.error("Couldn't reach the server — check your connection and try again");
     } finally {
       setSaving(false);
     }

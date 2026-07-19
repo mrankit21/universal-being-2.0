@@ -8,6 +8,11 @@ export const themeKeySchema = z.enum([
   "beach",
   "mountain",
   "forest",
+  "udaipur",
+  "spiti",
+  "manali",
+  "goa",
+  "jibhi",
 ]);
 
 export const imageAssetSchema = z.object({

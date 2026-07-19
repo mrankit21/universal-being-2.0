@@ -25,7 +25,7 @@ import { TestimonialPickerField } from "./testimonial-picker-field";
 import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview } from "@/types/trip";
 import type { ThemeKey } from "@/types/theme";
 
-const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest"];
+const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"];
 
 const emptyImage = () => ({
   provider: "placeholder" as const,

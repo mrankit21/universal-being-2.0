@@ -80,6 +80,8 @@ export function DestinationTripAssignmentField({
       const res = await fetch(`/api/admin/trips?destinationSlug=${encodeURIComponent(destinationSlug)}&limit=100`);
       const json = await res.json();
       if (json.success) setAssigned(json.data.trips);
+    } catch {
+      toast.error("Couldn't load assigned trips — check your connection");
     } finally {
       setLoading(false);
       setLoaded(true);
@@ -120,6 +122,8 @@ export function DestinationTripAssignmentField({
       const res = await fetch(`/api/admin/trips?${params.toString()}`);
       const json = await res.json();
       if (json.success) setPickerTrips(json.data.trips);
+    } catch {
+      toast.error("Couldn't load trips — check your connection");
     } finally {
       setPickerLoading(false);
     }
