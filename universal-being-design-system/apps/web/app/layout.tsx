@@ -7,6 +7,7 @@ import { RootShell } from "@/components/layout/root-shell";
 import { BrandProvider } from "@/components/layout/brand-provider";
 import { getActiveAnnouncement } from "@/lib/api/announcements";
 import { getSiteBrand } from "@/lib/api/site-brand";
+import { getSiteUrl } from "@/lib/seo/site-url";
 
 import "./globals.css";
 import "@/styles/themes.css";
@@ -30,10 +31,43 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Universal Being",
-  description: "Curated trips, themed to the destination.",
-};
+/**
+ * Step 8 fix: this used to be a static `export const metadata` with no
+ * `icons`/`openGraph.images` at all — Admin → Settings → Brand Assets let
+ * you upload a Favicon, Apple Touch Icon, and OG Image (Step 7.6B §7,
+ * `SiteSettingsModel.favicon/appleTouchIcon/ogImage`), but nothing ever
+ * read those fields back out, so every page kept showing the generic
+ * `public/favicon.png` / no share-preview image regardless of what was
+ * uploaded. `generateMetadata` runs per-request (same as this file's
+ * `RootLayout`), so it can call the DB-first `getSiteBrand()` — which is
+ * wrapped in React `cache()`, so this and `RootLayout`'s call below share
+ * one Mongo round trip, not two. Falls back to the static `public/`
+ * assets only when nothing has been uploaded yet, same DB-first/
+ * static-fallback rule every other brand field already follows.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getSiteBrand();
+  const siteUrl = getSiteUrl();
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: brand.brandName,
+    description: brand.tagline || "Curated trips, themed to the destination.",
+    icons: {
+      icon: brand.favicon?.url || "/favicon.png",
+      apple: brand.appleTouchIcon?.url || "/brand/app-icon.png",
+    },
+    openGraph: {
+      title: brand.brandName,
+      description: brand.tagline,
+      url: siteUrl,
+      siteName: brand.brandName,
+      images: brand.ogImage
+        ? [{ url: brand.ogImage.url, width: brand.ogImage.width, height: brand.ogImage.height, alt: brand.ogImage.alt || brand.brandName }]
+        : undefined,
+    },
+  };
+}
 
 /**
  * Root layout — resolves the default themeKey ("brand") and hands it to

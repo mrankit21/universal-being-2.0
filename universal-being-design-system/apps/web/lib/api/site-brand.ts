@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { SiteSettingsModel, type SiteSettingsDocument } from "@/lib/db/models";
 import { siteConfig as staticSiteConfig } from "@/data/layout/site-config";
@@ -19,6 +21,14 @@ export interface SiteBrand {
   tagline: string;
   logo: ImageAsset | null;
   logoDark: ImageAsset | null;
+  /** Browser tab icon — Step 8 fix: was in SiteSettingsModel/the admin form
+   * but never reached `app/layout.tsx`'s `metadata.icons`. */
+  favicon: ImageAsset | null;
+  /** iOS "Add to Home Screen" icon — same gap as `favicon`. */
+  appleTouchIcon: ImageAsset | null;
+  /** WhatsApp/Facebook/Twitter link-preview image — same gap, feeds
+   * `metadata.openGraph.images`. */
+  ogImage: ImageAsset | null;
 }
 
 const emptyBrand: SiteBrand = {
@@ -26,6 +36,9 @@ const emptyBrand: SiteBrand = {
   tagline: staticSiteConfig.tagline,
   logo: null,
   logoDark: null,
+  favicon: null,
+  appleTouchIcon: null,
+  ogImage: null,
 };
 
 function isRealAsset(asset: unknown): asset is ImageAsset {
@@ -41,7 +54,7 @@ function isRealAsset(asset: unknown): asset is ImageAsset {
  * an admin clearing the logo field should result in the text wordmark,
  * not the static logo reappearing.
  */
-export async function getSiteBrand(): Promise<SiteBrand> {
+export const getSiteBrand = cache(async function getSiteBrand(): Promise<SiteBrand> {
   if (!isDatabaseConfigured()) return emptyBrand;
 
   try {
@@ -55,6 +68,9 @@ export async function getSiteBrand(): Promise<SiteBrand> {
       tagline: doc.tagline || staticSiteConfig.tagline,
       logo: isRealAsset(doc.logo) ? (doc.logo as ImageAsset) : null,
       logoDark: isRealAsset(doc.logoDark) ? (doc.logoDark as ImageAsset) : null,
+      favicon: isRealAsset(doc.favicon) ? (doc.favicon as ImageAsset) : null,
+      appleTouchIcon: isRealAsset(doc.appleTouchIcon) ? (doc.appleTouchIcon as ImageAsset) : null,
+      ogImage: isRealAsset(doc.ogImage) ? (doc.ogImage as ImageAsset) : null,
     };
   } catch (err) {
     // A configured-but-unreachable MONGODB_URI (bad credentials, placeholder
@@ -63,4 +79,4 @@ export async function getSiteBrand(): Promise<SiteBrand> {
     console.error("[getSiteBrand] MongoDB unreachable, falling back to static brand:", err);
     return emptyBrand;
   }
-}
+});

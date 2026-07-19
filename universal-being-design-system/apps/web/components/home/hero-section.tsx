@@ -266,29 +266,6 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
         </AnimatePresence>
       </div>
 
-      {/* Slide indicators */}
-      {count > 1 ? (
-        <div
-          className="absolute inset-x-0 bottom-6 z-10 flex items-center justify-center gap-2 sm:bottom-8"
-          role="tablist"
-          aria-label="Destination slides"
-        >
-          {slides.map((s, i) => (
-            <button
-              key={`${s.eyebrow}-${i}`}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Show ${s.eyebrow || `slide ${i + 1}`}`}
-              onClick={() => goTo(i)}
-              className={cn(
-                "h-1.5 rounded-full bg-white/40 transition-all duration-ub-base",
-                i === index ? "w-8 bg-white" : "w-1.5 hover:bg-white/70"
-              )}
-            />
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }

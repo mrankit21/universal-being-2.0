@@ -30,7 +30,16 @@ export interface UploadedMediaAsset {
 }
 
 export async function uploadImageFile(file: File, meta: ClientUploadMeta = {}): Promise<UploadedMediaAsset> {
-  const signRes = await fetch("/api/admin/media/sign", { method: "POST" });
+  let signRes: Response;
+  try {
+    signRes = await fetch("/api/admin/media/sign", { method: "POST" });
+  } catch {
+    // A raw "Failed to fetch" means the request never reached the server
+    // (dev server mid-restart from Fast Refresh, WiFi drop on LAN dev,
+    // etc.) — not an application error, so give a message that tells the
+    // person to retry instead of surfacing the bare TypeError.
+    throw new Error("Couldn't reach the server to start the upload. Check your connection and try again.");
+  }
   const signJson = await signRes.json().catch(() => null);
   if (!signRes.ok || !signJson?.success) {
     throw new Error(

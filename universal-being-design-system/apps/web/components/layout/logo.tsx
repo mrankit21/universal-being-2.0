@@ -16,14 +16,23 @@ export interface LogoProps {
 
 /**
  * Logo — brand mark + wordmark. Brand name/tagline and the (optional)
- * uploaded logo image now come from `useBrand()` (DB-first, via
+ * uploaded logo image(s) now come from `useBrand()` (DB-first, via
  * `BrandProvider` in app/layout.tsx) instead of the static site-config
  * import, so Admin → Settings → Brand Assets actually reaches the live
  * site. When no real logo has been uploaded yet (`logo` is null —
  * placeholder/empty), only the text wordmark renders, same as before.
+ *
+ * Step 8 fix: `logoDark` was already resolved by `getSiteBrand()` and sat
+ * in the `useBrand()` context, but this component never read it — dark
+ * mode (the `.dark` class ThemeModeToggle puts on `<html>`) kept showing
+ * the light logo regardless. Both images are now rendered together and
+ * Tailwind's `dark:` class variant (`darkMode: "class"` in
+ * tailwind.config.ts) picks the right one, so there's no client-side
+ * flicker and no hydration mismatch. If only one variant has been
+ * uploaded, that one shows in both modes.
  */
 export function Logo({ className, variant = "mark" }: LogoProps) {
-  const { brandName, tagline, logo } = useBrand();
+  const { brandName, tagline, logo, logoDark } = useBrand();
   const logoSize = variant === "mark" ? 32 : variant === "full" ? 56 : 104;
 
   return (
@@ -40,7 +49,18 @@ export function Logo({ className, variant = "mark" }: LogoProps) {
           alt={logo.alt || brandName}
           width={logo.width || logoSize}
           height={logo.height || logoSize}
-          className="shrink-0 object-contain"
+          className={cn("shrink-0 object-contain", logoDark && "dark:hidden")}
+          style={{ height: logoSize, width: "auto" }}
+          priority
+        />
+      )}
+      {logoDark && (
+        <Image
+          src={logoDark.url}
+          alt={logoDark.alt || brandName}
+          width={logoDark.width || logoSize}
+          height={logoDark.height || logoSize}
+          className={cn("shrink-0 object-contain", logo && "hidden dark:block")}
           style={{ height: logoSize, width: "auto" }}
           priority
         />

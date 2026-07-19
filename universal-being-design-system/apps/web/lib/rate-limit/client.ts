@@ -154,3 +154,17 @@ export const couponValidateRateLimit = makeLimiter(
   "COUPON_RATE_LIMIT",
   "coupon-validate"
 );
+
+/** POST /api/admin/auth/verify-password — the "type your password to
+ * confirm delete" re-authentication check (Admin Panel destructive-action
+ * guard). Keyed by the logged-in admin's own user id, not IP — an admin's
+ * own session cookie is already required to reach this route, so the
+ * thing worth capping is repeated guesses against *that* account.
+ * Default: 5 attempts / 10 min. Override with
+ * `ADMIN_REAUTH_RATE_LIMIT="<tokens>,<window>"`. */
+export const adminReauthRateLimit = makeLimiter(
+  process.env.ADMIN_REAUTH_RATE_LIMIT,
+  { tokens: 5, window: "10 m" },
+  "ADMIN_REAUTH_RATE_LIMIT",
+  "admin-reauth"
+);
