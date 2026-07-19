@@ -33,7 +33,7 @@ export function PackageIncludesStrip() {
         <p className="mb-1 font-display text-sm font-medium text-foreground sm:text-base">Package Includes</p>
         <div className="mb-3 h-0.5 w-10 rounded-full bg-ub-brass-500" aria-hidden="true" />
 
-        <div className="-mx-6 flex gap-6 overflow-x-auto px-6 sm:mx-0 sm:justify-between sm:gap-2 sm:overflow-visible sm:px-0">
+        <div className="scrollbar-hide -mx-6 flex gap-6 overflow-x-auto px-6 sm:mx-0 sm:justify-between sm:gap-2 sm:overflow-visible sm:px-0">
           {includes.map(({ label, icon: Icon }) => (
             <div key={label} className="flex shrink-0 flex-col items-center gap-1.5 text-center">
               <Icon className="size-5 text-ub-brass-500" aria-hidden="true" />

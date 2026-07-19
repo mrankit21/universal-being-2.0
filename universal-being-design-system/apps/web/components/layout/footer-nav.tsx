@@ -22,7 +22,7 @@ export function FooterNav({ columns }: FooterNavProps) {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:underline"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:underline"
                 >
                   {link.label}
                 </Link>

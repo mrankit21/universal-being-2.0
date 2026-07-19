@@ -429,29 +429,29 @@
    lighter purple automatically via the --card token.
    ========================================================================== */
 .ub-footer-purple {
-  --background: #4f0d4f;
+  --background: #4c0c47;
   --foreground: #ffffff;
 
-  --card: #6b2c68;
+  --card: #4c0c47;
   --card-foreground: #ffffff;
 
-  --popover: #6b2c68;
+  --popover: #4c0c47;
   --popover-foreground: #ffffff;
 
   --primary: #d4a75f;
   --primary-foreground: #1c1c1c;
 
-  --secondary: #6b2c68;
+  --secondary: #4c0c47;
   --secondary-foreground: #ffffff;
 
-  --muted: #6b2c68;
-  --muted-foreground: rgba(255, 255, 255, 0.7);
+  --muted: #4c0c47;
+  --muted-foreground: rgba(255, 255, 255, 0.92);
 
-  --accent: #6b2c68;
+  --accent: #4c0c47;
   --accent-foreground: #ffffff;
 
-  --border: rgba(255, 255, 255, 0.14);
-  --input: rgba(255, 255, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.18);
+  --input: rgba(255, 255, 255, 0.18);
   --ring: #d4a75f;
 
   --ub-color-brass-300: #e4b96d;
@@ -460,8 +460,8 @@
   --ub-color-brass-600: #d4a75f;
   --ub-color-brass-700: #e4b96d;
 
-  --ub-theme-gradient-hero: #4f0d4f;
-  --ub-theme-gradient-section: #4f0d4f;
+  --ub-theme-gradient-hero: #4c0c47;
+  --ub-theme-gradient-section: #4c0c47;
 
   background-color: var(--background);
   color: var(--foreground);
@@ -473,4 +473,17 @@
 .ub-footer-purple a:hover,
 .ub-footer-purple a:focus-visible {
   color: #d4a75f;
+}
+
+/* Hides the native scrollbar track on horizontally-swipeable strips
+   (e.g. PackageIncludesStrip) while keeping the element scrollable. */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }

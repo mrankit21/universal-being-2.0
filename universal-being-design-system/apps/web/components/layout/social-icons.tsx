@@ -64,3 +64,21 @@ export const LinkedinMark = React.forwardRef<SVGSVGElement, LucideProps>(
   )
 );
 LinkedinMark.displayName = "LinkedinMark";
+
+export const WhatsappMark = React.forwardRef<SVGSVGElement, LucideProps>(
+  ({ className, size = 24, strokeWidth = 1.75, ...props }, ref) => (
+    <svg ref={ref} viewBox="0 0 24 24" width={size} height={size} fill="none" className={className} {...props}>
+      <path
+        d="M12 3.5a8.5 8.5 0 0 0-7.34 12.77L3.5 20.5l4.36-1.14A8.5 8.5 0 1 0 12 3.5Z"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 9.3c-.1-.5.15-1.05.6-1.2.3-.1.6-.05.75.2l.55.9c.15.25.15.55 0 .8l-.4.6c-.1.15-.1.3 0 .45.35.65 1 1.35 1.65 1.7.15.1.3.1.45 0l.6-.4c.25-.15.55-.15.8 0l.9.55c.25.15.3.45.2.75-.15.45-.7.7-1.2.6-1.4-.3-3.6-1.85-4.9-4.3Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+);
+WhatsappMark.displayName = "WhatsappMark";

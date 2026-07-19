@@ -1,15 +1,23 @@
-import { MessageCircle, type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { InstagramMark, FacebookMark, YoutubeMark, XMark, LinkedinMark } from "@/components/layout/social-icons";
+import {
+  InstagramMark,
+  FacebookMark,
+  YoutubeMark,
+  XMark,
+  LinkedinMark,
+  WhatsappMark,
+} from "@/components/layout/social-icons";
 import type { SocialLink, SocialPlatform } from "@/types/layout";
 
 /**
  * lucide-react dropped brand/logo glyphs from its icon set (Instagram,
  * Facebook, Youtube, Twitter, Linkedin no longer exist there — confirmed
- * against the installed package). Those five now come from a small local
- * icon file instead; MessageCircle (whatsapp) is a real lucide icon and is
- * unaffected.
+ * against the installed package). All six brand marks (including WhatsApp,
+ * which was previously a generic MessageCircle bubble) now come from the
+ * local social-icons file instead, so the "Follow us" row always shows the
+ * real WhatsApp glyph rather than a plain chat bubble.
  */
 const PLATFORM_ICON: Record<SocialPlatform, LucideIcon> = {
   instagram: InstagramMark,
@@ -17,7 +25,7 @@ const PLATFORM_ICON: Record<SocialPlatform, LucideIcon> = {
   youtube: YoutubeMark,
   twitter: XMark,
   linkedin: LinkedinMark,
-  whatsapp: MessageCircle,
+  whatsapp: WhatsappMark,
 };
 
 export interface FooterSocialLinksProps {

@@ -69,7 +69,7 @@ export async function SiteFooter() {
           <p className="max-w-xl text-sm text-muted-foreground sm:text-base">{settings.brandStory}</p>
         </div>
 
-        <div className="rounded-3xl bg-card p-8 sm:p-10">
+        <div className="rounded-3xl bg-card border border-border p-8 sm:p-10">
           <h3 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
             Subscribe to the Newsletter
           </h3>
@@ -78,13 +78,13 @@ export async function SiteFooter() {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-card p-8 sm:p-10">
+        <div className="rounded-3xl bg-card border border-border p-8 sm:p-10">
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             <FooterNav columns={settings.footerColumns} />
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 rounded-3xl bg-card p-8 sm:p-10">
+        <div className="flex flex-col gap-4 rounded-3xl bg-card border border-border p-8 sm:p-10">
           <h3 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">Follow us</h3>
           <FooterSocialLinks links={settings.socialLinks} />
         </div>
