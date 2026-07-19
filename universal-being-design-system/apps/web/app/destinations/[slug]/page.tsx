@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getDestinationBySlug, getDestinationSlugs, getOrderedDestinationTrips } from "@/lib/api/destinations";
+import { getDestinationBySlug, getDestinationBySlugWithResolvedImages, getDestinationSlugs } from "@/lib/api/destinations";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { DestinationHero } from "@/components/destination/destination-hero";
 import { DestinationGallery } from "@/components/destination/destination-gallery";
@@ -44,10 +44,10 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
  */
 export default async function DestinationDetailPage({ params }: DestinationPageProps) {
   const { slug } = await params;
-  const destination = await getDestinationBySlug(slug);
-  if (!destination) notFound();
+  const result = await getDestinationBySlugWithResolvedImages(slug);
+  if (!result) notFound();
 
-  const trips = await getOrderedDestinationTrips(destination);
+  const { destination, trips } = result;
 
   return (
     <div>

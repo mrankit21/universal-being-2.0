@@ -38,7 +38,7 @@ export function NewsletterForm({ onSubscribe }: NewsletterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <Label htmlFor="newsletter-email" className="text-sm font-semibold text-foreground">
+      <Label htmlFor="newsletter-email" className="text-sm font-semibold text-white drop-shadow-sm">
         Get trip drops in your inbox
       </Label>
       <div className="flex gap-2">
@@ -50,13 +50,19 @@ export function NewsletterForm({ onSubscribe }: NewsletterFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "submitting"}
-          className="max-w-xs"
+          className="max-w-xs rounded-full border-white/30 bg-white/10 text-white shadow-lg backdrop-blur-md placeholder:text-white/70 focus-visible:ring-white/60 focus-visible:ring-offset-0"
         />
-        <Button type="submit" size="icon" disabled={status === "submitting"} aria-label="Subscribe">
+        <Button
+          type="submit"
+          size="icon"
+          disabled={status === "submitting"}
+          aria-label="Subscribe"
+          className="shrink-0 rounded-full border border-white/30 bg-white/10 text-white shadow-lg backdrop-blur-md hover:bg-white/20 focus-visible:ring-white/60 focus-visible:ring-offset-0"
+        >
           <Send className="size-4" aria-hidden="true" />
         </Button>
       </div>
-      <p role="status" aria-live="polite" className="min-h-[1rem] text-xs text-muted-foreground">
+      <p role="status" aria-live="polite" className="min-h-[1rem] text-xs text-white/80 drop-shadow-sm">
         {status === "success" && "You're subscribed."}
         {status === "error" && "Something went wrong — try again."}
       </p>

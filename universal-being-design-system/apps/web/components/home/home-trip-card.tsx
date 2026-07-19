@@ -60,8 +60,10 @@ export function HomeTripCard({ trip }: HomeTripCardProps) {
             </span>
           </div>
 
-          <div className="px-3 py-2 text-center">
-            <h3 className="font-display text-lg font-medium text-neutral-900">{trip.title}</h3>
+          <div className="px-3 py-3 text-center">
+            <h3 className="font-display text-lg font-semibold tracking-tight text-neutral-900 [font-feature-settings:'ss01'_1,'liga'_1]">
+              {trip.title}
+            </h3>
           </div>
         </Link>
       </motion.div>

@@ -16,11 +16,12 @@ import { NewsletterForm } from "@/components/layout/newsletter-form";
  * these in the Admin Panel reaches the live footer instead of only its
  * own preview.
  *
- * Layout: a large standalone wordmark (`Logo variant="footer"`) followed
- * by three stacked rounded "cards" — Newsletter, Nav links, Follow us —
- * then a bottom bar with copyright + Back to top. Mirrors the brand
- * reference the design was matched against: a prominent, hard-to-miss
- * brand name up top instead of a small inline logo lost among the columns.
+ * Layout: a large standalone wordmark (`Logo variant="footer"`), then
+ * Newsletter / Nav links / Follow us / copyright, all floating directly
+ * over the uploaded footer background image behind one shared, capped
+ * (<=25%) dark scrim — no per-section card fills, so the photo stays
+ * visible edge-to-edge through every section (glass input + glass icon
+ * buttons are the only "surfaces" on the page).
  *
  * `theme.footer.style` ("minimal" | "rich" | "illustrated") is read by
  * whichever page wraps this in a themed `<ThemeBackground area="section">`
@@ -32,9 +33,13 @@ export async function SiteFooter() {
 
   const bgImage = settings.footerBackground.image;
   const bgImageMobile = settings.footerBackground.imageMobile ?? bgImage;
+  // Single, subtle overlay for the whole footer — never darker than 25%,
+  // regardless of what's stored, so the uploaded background always reads
+  // through edge-to-edge instead of being hidden behind per-section fills.
+  const overlayOpacity = Math.min(settings.footerBackground.overlayOpacity, 0.25);
 
   return (
-    <footer className="ub-footer-purple relative isolate overflow-hidden border-t border-border pb-24 pt-14 md:pb-16">
+    <footer className="ub-footer-glass relative isolate overflow-hidden pb-24 pt-14 md:pb-16">
       {bgImage ? (
         <>
           <Image
@@ -42,7 +47,7 @@ export async function SiteFooter() {
             alt={bgImageMobile!.alt}
             fill
             sizes="100vw"
-            className="absolute inset-0 -z-10 object-cover md:hidden"
+            className="absolute inset-0 -z-20 object-cover md:hidden"
             unoptimized
           />
           <Image
@@ -50,27 +55,25 @@ export async function SiteFooter() {
             alt={bgImage.alt}
             fill
             sizes="100vw"
-            className="absolute inset-0 -z-10 hidden object-cover md:block"
+            className="absolute inset-0 -z-20 hidden object-cover md:block"
             unoptimized
-          />
-          <div
-            className="absolute inset-0 -z-10 bg-black"
-            style={{ opacity: settings.footerBackground.overlayOpacity }}
-            aria-hidden="true"
           />
         </>
       ) : null}
+      {/* One dark scrim across the whole footer, capped at 25%, so text
+          stays readable without ever hiding the image behind a solid fill. */}
+      <div className="absolute inset-0 -z-10 bg-black" style={{ opacity: overlayOpacity }} aria-hidden="true" />
 
-      <div className="relative mx-auto flex max-w-5xl flex-col gap-6 px-6">
+      <div className="relative mx-auto flex max-w-5xl flex-col gap-14 px-6">
         {/* Big, unmissable brand moment — the main ask: the brand name
             should read instantly, not blend into the columns below. */}
         <div className="flex flex-col gap-3">
           <Logo variant="footer" />
-          <p className="max-w-xl text-sm text-muted-foreground sm:text-base">{settings.brandStory}</p>
+          <p className="max-w-xl text-sm text-white/85 drop-shadow-sm sm:text-base">{settings.brandStory}</p>
         </div>
 
-        <div className="rounded-3xl bg-card border border-border p-8 sm:p-10">
-          <h3 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">
+        <div>
+          <h3 className="font-display text-2xl font-semibold text-white drop-shadow-sm sm:text-3xl">
             Subscribe to the Newsletter
           </h3>
           <div className="mt-6 max-w-sm">
@@ -78,19 +81,17 @@ export async function SiteFooter() {
           </div>
         </div>
 
-        <div className="rounded-3xl bg-card border border-border p-8 sm:p-10">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-            <FooterNav columns={settings.footerColumns} />
-          </div>
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <FooterNav columns={settings.footerColumns} />
         </div>
 
-        <div className="flex flex-col gap-4 rounded-3xl bg-card border border-border p-8 sm:p-10">
-          <h3 className="font-display text-2xl font-semibold text-foreground sm:text-3xl">Follow us</h3>
+        <div className="flex flex-col gap-4">
+          <h3 className="font-display text-2xl font-semibold text-white drop-shadow-sm sm:text-3xl">Follow us</h3>
           <FooterSocialLinks links={settings.socialLinks} />
         </div>
 
-        <div className="flex flex-col items-center gap-6 border-t border-border pt-8 sm:flex-row sm:justify-center">
-          <p className="text-xs text-muted-foreground">
+        <div className="flex flex-col items-center gap-6 border-t border-white/20 pt-8 sm:flex-row sm:justify-center">
+          <p className="text-xs text-white/70 drop-shadow-sm">
             © {new Date().getFullYear()} {settings.copyrightHolder}. All rights reserved.
           </p>
         </div>

@@ -51,8 +51,8 @@ export function TripCard({ trip, className }: TripCardProps) {
       />
 
       <CardContent className="flex flex-col gap-2 pt-5">
-        <h3 className="font-display text-lg font-medium text-foreground">
-          <Link href={`/trips/${trip.slug}`} className="hover:underline">
+        <h3 className="font-display text-lg font-semibold tracking-tight text-foreground">
+          <Link href={`/trips/${trip.slug}`} className="hover:underline underline-offset-4">
             {trip.title}
           </Link>
         </h3>

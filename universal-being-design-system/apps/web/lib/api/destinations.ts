@@ -23,6 +23,73 @@ function withThumbnailFallback(destination: Destination): Destination {
   return { ...destination, thumbnail: destination.coverImage };
 }
 
+/** The trip whose images stand in for a destination's still-placeholder
+ * image slots: the one flagged "Featured" within this destination (Display
+ * Order §3), falling back to the first trip in the given order, then any
+ * globally-featured trip, then simply the first trip returned. Kept as one
+ * small helper so every fallback slot below picks the same trip, instead of
+ * each image field independently guessing which trip "represents" the
+ * destination. */
+function pickRepresentativeTrip(trips: (Trip & { destinationFeatured?: boolean })[]): Trip | undefined {
+  if (trips.length === 0) return undefined;
+  return trips.find((t) => t.destinationFeatured) ?? trips.find((t) => t.featured) ?? trips[0];
+}
+
+/** Borrows imagery from this destination's trips wherever the destination
+ * hasn't had its own photos uploaded yet (Architecture's "shared reference,
+ * not duplicated content" pattern, applied one level down: a Destination and
+ * its Trips commonly cover the same place, e.g. "Udaipur" the destination
+ * and "Udaipur Lake Trail" the trip). Until an admin uploads
+ * destination-specific hero/cover/thumbnail photos, those single-image slots
+ * are filled with the representative trip's matching image (see
+ * `pickRepresentativeTrip`) instead of showing the generic themed
+ * placeholder — and, being single slots, a real destination upload always
+ * fully replaces the borrowed one. Gallery works differently since it's a
+ * list: the destination's own gallery photos always show, and the trip's
+ * gallery is appended after them (deduped), so admins can keep adding their
+ * own photos on top of the borrowed set instead of it disappearing the
+ * moment they upload one. */
+function withTripImageFallback(
+  destination: Destination,
+  trips: (Trip & { destinationFeatured?: boolean })[]
+): Destination {
+  const trip = pickRepresentativeTrip(trips);
+  if (!trip) return destination;
+
+  const resolved = { ...destination };
+
+  if (destination.heroImage.isPlaceholder && !trip.heroImage.isPlaceholder) {
+    resolved.heroImage = trip.heroImage;
+    // Only borrow the mobile crop alongside the desktop one — never mix a
+    // destination's own heroImageMobile with a trip's desktop heroImage.
+    resolved.heroImageMobile = trip.heroImageMobile ?? trip.heroImage;
+  }
+
+  if (destination.coverImage.isPlaceholder && !trip.coverImage.isPlaceholder) {
+    resolved.coverImage = trip.coverImage;
+  }
+
+  if ((!destination.thumbnail || destination.thumbnail.isPlaceholder) && !trip.thumbnail.isPlaceholder) {
+    resolved.thumbnail = trip.thumbnail;
+  }
+
+  // Gallery is additive, not all-or-nothing: the destination's own photos
+  // always show, and the trip's gallery is appended after them (deduped by
+  // url/publicId) — so uploading a photo directly on the destination adds a
+  // 7th photo alongside the 6 borrowed ones instead of replacing them.
+  // (hero/cover/thumbnail stay replace-only above — there's only one slot,
+  // nothing to "merge" a second image into.)
+  if (trip.gallery.length > 0) {
+    const seen = new Set(destination.gallery.map((img) => img.publicId ?? img.url));
+    const extra = trip.gallery.filter((img) => !seen.has(img.publicId ?? img.url));
+    if (extra.length > 0) {
+      resolved.gallery = [...destination.gallery, ...extra];
+    }
+  }
+
+  return resolved;
+}
+
 function staticDestinations(): Destination[] {
   return destinationSlugs
     .map((slug) => destinationRegistry[slug])
@@ -51,10 +118,19 @@ export async function getAllDestinations(): Promise<Destination[]> {
 /** Destinations eligible for homepage-facing widgets (e.g. Theme Explorer)
  * — published AND `homepageVisible` (Step 7.6C-B Part 2 §2: deleting or
  * hiding a destination removes it from the homepage without a code change).
+ * Also resolves `withTripImageFallback` per destination, same as the
+ * Destination Listing/Detail pages, so this widget doesn't show "Photo
+ * coming soon" once a trip under that destination already has real photos.
  */
 export async function getHomepageVisibleDestinations(): Promise<Destination[]> {
   const destinations = await getAllDestinations();
-  return destinations.filter((d) => d.homepageVisible !== false);
+  const visible = destinations.filter((d) => d.homepageVisible !== false);
+  return Promise.all(
+    visible.map(async (destination) => {
+      const trips = await getTripsByDestination(destination.slug);
+      return withTripImageFallback(destination, trips);
+    })
+  );
 }
 
 export const getDestinationBySlug = cache(async function getDestinationBySlug(
@@ -95,7 +171,10 @@ export async function getDestinationSlugs(): Promise<string[]> {
 
 /** A destination plus a live count of its published trips -- used on the
  * Destination Listing Page so cards can show "6 trips" without every card
- * component independently importing the trips data layer. */
+ * component independently importing the trips data layer. Also resolves
+ * `withTripImageFallback` here since the trips are already fetched for the
+ * count -- so listing cards get the same borrowed imagery as the detail
+ * page, not just the hero/gallery. */
 export async function getDestinationsWithTripCounts(): Promise<
   (Destination & { tripCount: number })[]
 > {
@@ -103,7 +182,8 @@ export async function getDestinationsWithTripCounts(): Promise<
   const withCounts = await Promise.all(
     destinations.map(async (destination) => {
       const trips = await getTripsByDestination(destination.slug);
-      return { ...destination, tripCount: trips.length };
+      const resolved = withTripImageFallback(destination, trips);
+      return { ...resolved, tripCount: trips.length };
     })
   );
   return withCounts;
@@ -132,4 +212,21 @@ export async function getOrderedDestinationTrips(
       return a.trip.title.localeCompare(b.trip.title);
     })
     .map(({ trip, assignment }) => ({ ...trip, destinationFeatured: assignment?.featured ?? false }));
+}
+
+/** Everything the Destination Detail Page needs in one call: the ordered
+ * trip list (unchanged from `getOrderedDestinationTrips`) plus a destination
+ * whose hero/cover/thumbnail/gallery already have `withTripImageFallback`
+ * applied against that same trip list -- so `DestinationHero`,
+ * `DestinationGallery`, and `DestinationJsonLd` can keep reading
+ * `destination.heroImage` etc. directly with no component changes. */
+export async function getDestinationBySlugWithResolvedImages(slug: string): Promise<{
+  destination: Destination;
+  trips: (Trip & { destinationFeatured: boolean })[];
+} | null> {
+  const destination = await getDestinationBySlug(slug);
+  if (!destination) return null;
+
+  const trips = await getOrderedDestinationTrips(destination);
+  return { destination: withTripImageFallback(destination, trips), trips };
 }

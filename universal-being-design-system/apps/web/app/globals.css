@@ -424,30 +424,23 @@
 }
 
 /* ==========================================================================
-   FOOTER — deep royal purple band, per brand reference screenshot.
-   Footer "cards" (the newsletter input, any bg-card surface) pick up the
-   lighter purple automatically via the --card token.
+   FOOTER — immersive glass band over the uploaded background image.
+   Deliberately sets NO --background/--card fill: the footer paints only the
+   single capped scrim (see site-footer.tsx) behind it, so the image reads
+   edge-to-edge through every section. Text/link tokens are still swapped to
+   white here so headings, nav links, and the copyright line stay legible
+   over a photo without every consumer needing its own white-text classes.
    ========================================================================== */
-.ub-footer-purple {
-  --background: #4c0c47;
+.ub-footer-glass {
   --foreground: #ffffff;
-
-  --card: #4c0c47;
   --card-foreground: #ffffff;
-
-  --popover: #4c0c47;
   --popover-foreground: #ffffff;
 
   --primary: #d4a75f;
   --primary-foreground: #1c1c1c;
 
-  --secondary: #4c0c47;
   --secondary-foreground: #ffffff;
-
-  --muted: #4c0c47;
-  --muted-foreground: rgba(255, 255, 255, 0.92);
-
-  --accent: #4c0c47;
+  --muted-foreground: rgba(255, 255, 255, 0.78);
   --accent-foreground: #ffffff;
 
   --border: rgba(255, 255, 255, 0.18);
@@ -460,18 +453,14 @@
   --ub-color-brass-600: #d4a75f;
   --ub-color-brass-700: #e4b96d;
 
-  --ub-theme-gradient-hero: #4c0c47;
-  --ub-theme-gradient-section: #4c0c47;
-
-  background-color: var(--background);
   color: var(--foreground);
 }
 
 /* Links stay white by default, swap to Luxury Gold on hover/focus. Higher
    specificity + later source order than the utility hover:text-foreground
    classes already on those links, so this wins without editing markup. */
-.ub-footer-purple a:hover,
-.ub-footer-purple a:focus-visible {
+.ub-footer-glass a:hover,
+.ub-footer-glass a:focus-visible {
   color: #d4a75f;
 }
 

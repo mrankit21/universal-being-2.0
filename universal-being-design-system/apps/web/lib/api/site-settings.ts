@@ -43,7 +43,7 @@ function staticSiteSettings(): ResolvedSiteSettings {
     socialLinks: staticSiteConfig.socialLinks,
     footerColumns: staticSiteConfig.footerColumns,
     copyrightHolder: staticSiteConfig.copyrightHolder,
-    footerBackground: { overlayOpacity: 0.7 },
+    footerBackground: { overlayOpacity: 0.25 },
     seoDefaults: { title: staticSiteConfig.brandName, description: staticSiteConfig.tagline },
     source: "static",
   };
@@ -94,7 +94,7 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
           footerImgMobile?.url && !footerImgMobile.isPlaceholder
             ? { url: footerImgMobile.url, alt: footerImgMobile.alt ?? "", isPlaceholder: false }
             : undefined,
-        overlayOpacity: doc.footer?.overlayOpacity ?? 0.7,
+        overlayOpacity: doc.footer?.overlayOpacity ?? 0.25,
       },
       seoDefaults: {
         title: doc.seoDefaults?.title || staticSiteConfig.brandName,
