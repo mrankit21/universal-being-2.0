@@ -5,7 +5,6 @@ import { Logo } from "@/components/layout/logo";
 import { FooterNav } from "@/components/layout/footer-nav";
 import { FooterSocialLinks } from "@/components/layout/footer-social-links";
 import { NewsletterForm } from "@/components/layout/newsletter-form";
-import { BackToTopButton } from "@/components/layout/back-to-top-button";
 
 /**
  * SiteFooter — server component; nothing here needs client interactivity
@@ -81,11 +80,10 @@ export async function SiteFooter() {
           <FooterSocialLinks links={settings.socialLinks} />
         </div>
 
-        <div className="flex flex-col items-center gap-6 border-t border-border pt-8 sm:flex-row sm:justify-between">
+        <div className="flex flex-col items-center gap-6 border-t border-border pt-8 sm:flex-row sm:justify-center">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} {settings.copyrightHolder}. All rights reserved.
           </p>
-          <BackToTopButton />
         </div>
       </div>
     </footer>

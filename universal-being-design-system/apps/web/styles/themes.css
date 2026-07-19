@@ -16,15 +16,28 @@
    runtime source of truth; this file lets the same values paint the very
    first server-rendered frame before any JS runs (hydration-safe, no FOUC).
 
-   Selector specificity note: `html[data-theme="x"]` (0,1,1) intentionally
-   beats `:root` (0,1,0) in globals.css regardless of file import order.
+   Selector specificity note: theme blocks are wrapped in `:where(...)`
+   so they carry ZERO specificity — they still match the `data-theme`
+   attribute ThemeProvider sets on its wrapper `<div>` (not `<html>`), but
+   can never outrank section-scoped override classes like
+   `.ub-footer-purple` / `.ub-luxury-section` / `.ub-section-light` in
+   globals.css, regardless of stylesheet import order. Without `:where()`,
+   a plain `[data-theme="x"]` attribute selector ties in specificity with
+   those single-class overrides, and — because this file imports after
+   globals.css — would win the tie and leak theme colors into sections
+   that are deliberately locked to a fixed palette (e.g. the footer must
+   always stay purple, never the active trip's mood color). Dark-mode
+   variants use `.dark [data-theme="x"]` (descendant combinator, also
+   wrapped in `:where()`) since `.dark` is toggled on `<html>` while
+   `data-theme` sits on the inner wrapper div — the two attributes are
+   never on the same element.
    ========================================================================== */
 
 /* ---------------------------------------------------------------------- */
 /* Brand (default) — falls back to the Phase 2 tokens as-is, no overrides */
 /* other than the --ub-theme-* mirror needed by theme/ components.        */
 /* ---------------------------------------------------------------------- */
-html[data-theme="brand"] {
+:where([data-theme="brand"]) {
   --ub-theme-primary: #b0873f;
   --ub-theme-secondary: #2b5c56;
   --ub-theme-accent: #c9a15a;
@@ -40,7 +53,7 @@ html[data-theme="brand"] {
 /* ---------------------------------------------------------------------- */
 /* Rajasthan — warm desert gold                                          */
 /* ---------------------------------------------------------------------- */
-html[data-theme="rajasthan"] {
+:where([data-theme="rajasthan"]) {
   --primary: #c9812f;
   --secondary: #8e3d3a;
   --ring: #c9812f;
@@ -61,7 +74,7 @@ html[data-theme="rajasthan"] {
   --ub-theme-glass-intensity: 0.18;
   --ub-theme-particle-color: #e8b559;
 }
-html[data-theme="rajasthan"].dark {
+:where(.dark [data-theme="rajasthan"]) {
   --background: #241305;
   --primary: #e8b559;
   --secondary: #c76b57;
@@ -75,7 +88,7 @@ html[data-theme="rajasthan"].dark {
 /* ---------------------------------------------------------------------- */
 /* Winter — cold blue, frost                                             */
 /* ---------------------------------------------------------------------- */
-html[data-theme="winter"] {
+:where([data-theme="winter"]) {
   --primary: #3f6fa8;
   --secondary: #5b8ba3;
   --ring: #3f6fa8;
@@ -96,7 +109,7 @@ html[data-theme="winter"] {
   --ub-theme-glass-intensity: 0.3;
   --ub-theme-particle-color: #ffffff;
 }
-html[data-theme="winter"].dark {
+:where(.dark [data-theme="winter"]) {
   --background: #0c1420;
   --primary: #8fb4d1;
   --secondary: #5b8ba3;
@@ -110,7 +123,7 @@ html[data-theme="winter"].dark {
 /* ---------------------------------------------------------------------- */
 /* Monsoon — muted green-grey, rain                                      */
 /* ---------------------------------------------------------------------- */
-html[data-theme="monsoon"] {
+:where([data-theme="monsoon"]) {
   --primary: #4b6b63;
   --secondary: #6f7d8c;
   --ring: #4b6b63;
@@ -126,7 +139,7 @@ html[data-theme="monsoon"] {
   --ub-theme-glass-intensity: 0.24;
   --ub-theme-particle-color: #c7d1cb;
 }
-html[data-theme="monsoon"].dark {
+:where(.dark [data-theme="monsoon"]) {
   --background: #10140f;
   --primary: #8fae9f;
   --secondary: #6f7d8c;
@@ -139,7 +152,7 @@ html[data-theme="monsoon"].dark {
 /* ---------------------------------------------------------------------- */
 /* Beach — bright teal + sun                                             */
 /* ---------------------------------------------------------------------- */
-html[data-theme="beach"] {
+:where([data-theme="beach"]) {
   --primary: #1e8fa3;
   --secondary: #e8935f;
   --ring: #1e8fa3;
@@ -155,7 +168,7 @@ html[data-theme="beach"] {
   --ub-theme-glass-intensity: 0.2;
   --ub-theme-particle-color: #ffffff;
 }
-html[data-theme="beach"].dark {
+:where(.dark [data-theme="beach"]) {
   --background: #062226;
   --primary: #3fb8c4;
   --secondary: #e8935f;
@@ -168,7 +181,7 @@ html[data-theme="beach"].dark {
 /* ---------------------------------------------------------------------- */
 /* Mountain — cool slate, mist                                           */
 /* ---------------------------------------------------------------------- */
-html[data-theme="mountain"] {
+:where([data-theme="mountain"]) {
   --primary: #5a6b8c;
   --secondary: #8c7256;
   --ring: #5a6b8c;
@@ -184,7 +197,7 @@ html[data-theme="mountain"] {
   --ub-theme-glass-intensity: 0.16;
   --ub-theme-particle-color: #dfe4ee;
 }
-html[data-theme="mountain"].dark {
+:where(.dark [data-theme="mountain"]) {
   --background: #12141c;
   --primary: #9aa8c2;
   --secondary: #8c7256;
@@ -197,7 +210,7 @@ html[data-theme="mountain"].dark {
 /* ---------------------------------------------------------------------- */
 /* Forest — deep green, earthy                                           */
 /* ---------------------------------------------------------------------- */
-html[data-theme="forest"] {
+:where([data-theme="forest"]) {
   --primary: #3d7a4c;
   --secondary: #8a6a3d;
   --ring: #3d7a4c;
@@ -213,7 +226,7 @@ html[data-theme="forest"] {
   --ub-theme-glass-intensity: 0.14;
   --ub-theme-particle-color: #9fc98a;
 }
-html[data-theme="forest"].dark {
+:where(.dark [data-theme="forest"]) {
   --background: #0e160f;
   --primary: #6ba374;
   --secondary: #8a6a3d;
@@ -226,7 +239,7 @@ html[data-theme="forest"].dark {
 /* ---------------------------------------------------------------------- */
 /* Udaipur — Rajasthan variant, lake-evening amber                       */
 /* ---------------------------------------------------------------------- */
-html[data-theme="udaipur"] {
+:where([data-theme="udaipur"]) {
   --primary: #c9812f;
   --secondary: #7a3b4f;
   --ring: #c9812f;
@@ -242,7 +255,7 @@ html[data-theme="udaipur"] {
   --ub-theme-glass-intensity: 0.2;
   --ub-theme-particle-color: #f0c26a;
 }
-html[data-theme="udaipur"].dark {
+:where(.dark [data-theme="udaipur"]) {
   --background: #26130a;
   --primary: #f0c26a;
   --secondary: #a8607a;
@@ -255,7 +268,7 @@ html[data-theme="udaipur"].dark {
 /* ---------------------------------------------------------------------- */
 /* Spiti — high-altitude night, deep blue + stars                        */
 /* ---------------------------------------------------------------------- */
-html[data-theme="spiti"] {
+:where([data-theme="spiti"]) {
   --primary: #2d4f7c;
   --secondary: #6b7ea3;
   --ring: #2d4f7c;
@@ -271,7 +284,7 @@ html[data-theme="spiti"] {
   --ub-theme-glass-intensity: 0.32;
   --ub-theme-particle-color: #e6f0ff;
 }
-html[data-theme="spiti"].dark {
+:where(.dark [data-theme="spiti"]) {
   --background: #070b14;
   --primary: #b7c9e6;
   --secondary: #6b7ea3;
@@ -284,7 +297,7 @@ html[data-theme="spiti"].dark {
 /* ---------------------------------------------------------------------- */
 /* Manali — pine mountain town, cold morning fog                         */
 /* ---------------------------------------------------------------------- */
-html[data-theme="manali"] {
+:where([data-theme="manali"]) {
   --primary: #4a7a6b;
   --secondary: #5a6b8c;
   --ring: #4a7a6b;
@@ -300,7 +313,7 @@ html[data-theme="manali"] {
   --ub-theme-glass-intensity: 0.22;
   --ub-theme-particle-color: #ffffff;
 }
-html[data-theme="manali"].dark {
+:where(.dark [data-theme="manali"]) {
   --background: #0c1614;
   --primary: #8fb4a8;
   --secondary: #5a6b8c;
@@ -313,7 +326,7 @@ html[data-theme="manali"].dark {
 /* ---------------------------------------------------------------------- */
 /* Goa — sunset ocean, warm coastal orange                               */
 /* ---------------------------------------------------------------------- */
-html[data-theme="goa"] {
+:where([data-theme="goa"]) {
   --primary: #e0703f;
   --secondary: #1e8fa3;
   --ring: #e0703f;
@@ -329,7 +342,7 @@ html[data-theme="goa"] {
   --ub-theme-glass-intensity: 0.2;
   --ub-theme-particle-color: #3a2418;
 }
-html[data-theme="goa"].dark {
+:where(.dark [data-theme="goa"]) {
   --background: #241108;
   --primary: #f0824a;
   --secondary: #1e8fa3;
@@ -342,7 +355,7 @@ html[data-theme="goa"].dark {
 /* ---------------------------------------------------------------------- */
 /* Jibhi — misty forest, soft green                                      */
 /* ---------------------------------------------------------------------- */
-html[data-theme="jibhi"] {
+:where([data-theme="jibhi"]) {
   --primary: #4c8a5a;
   --secondary: #7a8f6a;
   --ring: #4c8a5a;
@@ -358,7 +371,7 @@ html[data-theme="jibhi"] {
   --ub-theme-glass-intensity: 0.18;
   --ub-theme-particle-color: #b9d6a8;
 }
-html[data-theme="jibhi"].dark {
+:where(.dark [data-theme="jibhi"]) {
   --background: #0c150d;
   --primary: #7fb088;
   --secondary: #7a8f6a;

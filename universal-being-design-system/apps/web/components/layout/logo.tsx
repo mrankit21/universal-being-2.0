@@ -49,10 +49,10 @@ export function Logo({ className, variant = "mark" }: LogoProps) {
         <span
           className={
             variant === "footer"
-              ? "font-display text-5xl font-semibold tracking-tight text-foreground sm:text-6xl"
+              ? "font-display text-5xl font-bold tracking-tight text-foreground sm:text-6xl"
               : variant === "full"
-                ? "font-display text-4xl font-semibold tracking-tight text-foreground sm:text-5xl"
-                : "font-display text-xl font-semibold tracking-tight text-foreground"
+                ? "font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl"
+                : "font-display text-xl font-bold tracking-tight text-foreground"
           }
         >
           {brandName}

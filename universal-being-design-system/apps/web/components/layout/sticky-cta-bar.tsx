@@ -63,7 +63,10 @@ export function StickyCtaBar() {
           <Button
             key={action.type}
             variant={ACTION_VARIANT[action.type]}
-            className="flex-1"
+            className={cn(
+              "flex-1 font-bold",
+              ACTION_VARIANT[action.type] === "outline" && "border-2 border-foreground/70 text-foreground"
+            )}
             asChild={isLink}
             onClick={isLink ? undefined : () => handleAction(action)}
           >
