@@ -169,6 +169,12 @@ export interface Trip {
   fullDescription: string;
 
   heroImage: ImageAsset;
+  /** Optional dedicated crop for narrow viewports — falls back to
+   * `heroImage` when not set. A wide hero photo with subjects spread
+   * toward the edges can lose one of them when cropped into a much
+   * narrower phone-width box; this lets admins supply a portrait-friendly
+   * crop instead. */
+  heroImageMobile?: ImageAsset;
   coverImage: ImageAsset;
   thumbnail: ImageAsset;
   /** Dedicated image slot for this trip's homepage placement (Step 7.6C-A

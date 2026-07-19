@@ -30,6 +30,10 @@ export type HomepageSectionKey =
 export interface HeroSlideDoc {
   destinationLabel: string;
   image: unknown;
+  /** Optional dedicated crop for narrow viewports — falls back to `image`
+   * when not set. See `ResolvedCtaSection.backgroundImageMobile` for the
+   * same fallback rule. */
+  imageMobile?: unknown;
   heading: string;
   subtitle: string;
   /** Badge chips under the CTAs, e.g. "3 days, 2 nights", "12–18 people",
@@ -73,6 +77,9 @@ export interface HomepageDocument extends Document {
     ctaLabel: string;
     ctaHref: string;
     backgroundImage?: unknown;
+    /** Optional dedicated crop for narrow viewports — see `lib/api/home.ts`
+     * `ResolvedCtaSection.backgroundImageMobile` for the fallback rule. */
+    backgroundImageMobile?: unknown;
     /** Darkening overlay strength over the background image, 0 (none) to
      * 1 (solid black) — admin-adjustable per section, same pattern as
      * `HeroSlideDoc.overlayOpacity`. Step: background image opacity control. */
@@ -82,12 +89,14 @@ export interface HomepageDocument extends Document {
    * overlay opacity, same shape/pattern as `ctaSection`. */
   valuePropsSection: {
     backgroundImage?: unknown;
+    backgroundImageMobile?: unknown;
     overlayOpacity: number;
   };
   /** "From past travelers" section — optional background image + adjustable
    * overlay opacity, same shape/pattern as `ctaSection`. */
   testimonialsSection: {
     backgroundImage?: unknown;
+    backgroundImageMobile?: unknown;
     overlayOpacity: number;
   };
   featuredTrips: { tripSlug: string; enabled: boolean }[];
@@ -103,6 +112,7 @@ const HeroSlideSchema = new Schema<HeroSlideDoc>(
   {
     destinationLabel: { type: String, default: "" },
     image: { type: ImageAssetSchema },
+    imageMobile: { type: ImageAssetSchema },
     heading: { type: String, default: "" },
     subtitle: { type: String, default: "" },
     badges: { type: [String], default: [] },
@@ -151,14 +161,17 @@ const HomepageSchema = new Schema<HomepageDocument>(
       ctaLabel: { type: String, default: "Plan Your Trip" },
       ctaHref: { type: String, default: "/trips" },
       backgroundImage: { type: ImageAssetSchema },
+      backgroundImageMobile: { type: ImageAssetSchema },
       overlayOpacity: { type: Number, default: 0.45, min: 0, max: 1 },
     },
     valuePropsSection: {
       backgroundImage: { type: ImageAssetSchema },
+      backgroundImageMobile: { type: ImageAssetSchema },
       overlayOpacity: { type: Number, default: 0.6, min: 0, max: 1 },
     },
     testimonialsSection: {
       backgroundImage: { type: ImageAssetSchema },
+      backgroundImageMobile: { type: ImageAssetSchema },
       overlayOpacity: { type: Number, default: 0.6, min: 0, max: 1 },
     },
     featuredTrips: {

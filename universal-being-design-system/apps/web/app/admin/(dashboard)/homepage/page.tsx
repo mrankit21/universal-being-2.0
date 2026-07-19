@@ -252,6 +252,14 @@ export default function HomepagePage() {
                   category="homepage-hero"
                   hint="Chosen only from the Media Library. Leave empty to use the themed background instead."
                 />
+
+                <ImageAssetField
+                  label="Mobile Hero Image (optional)"
+                  value={slide.imageMobile ?? { ...BLANK_IMAGE, width: 1080, height: 1920 }}
+                  onChange={(v) => update({ imageMobile: v })}
+                  category="homepage-hero"
+                  hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Hero Image above — do this only if that image loses an important subject when cropped narrow."
+                />
               </div>
             )}
           />
@@ -338,6 +346,15 @@ export default function HomepagePage() {
               hint="Leave empty to use the themed background instead. Use Overlay Opacity above to darken/lighten the image."
             />
           </div>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Mobile Background Image (optional)"
+              value={data.ctaSection.backgroundImageMobile ?? { provider: "placeholder", url: "", alt: "", width: 1080, height: 1920, isPlaceholder: true }}
+              onChange={(v) => set(["ctaSection", "backgroundImageMobile"], v)}
+              category="banners"
+              hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Background Image above — do this only if that image loses an important subject when cropped narrow."
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -365,6 +382,15 @@ export default function HomepagePage() {
               hint="Leave empty for the plain light background. Use Overlay Opacity to darken the image so card text stays readable."
             />
           </div>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Mobile Background Image (optional)"
+              value={data.valuePropsSection?.backgroundImageMobile ?? { provider: "placeholder", url: "", alt: "", width: 1080, height: 1920, isPlaceholder: true }}
+              onChange={(v) => set(["valuePropsSection", "backgroundImageMobile"], v)}
+              category="banners"
+              hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Background Image above."
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -390,6 +416,15 @@ export default function HomepagePage() {
               onChange={(v) => set(["testimonialsSection", "backgroundImage"], v)}
               category="banners"
               hint="Leave empty for the plain light background. Use Overlay Opacity to darken the image so card text stays readable."
+            />
+          </div>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Mobile Background Image (optional)"
+              value={data.testimonialsSection?.backgroundImageMobile ?? { provider: "placeholder", url: "", alt: "", width: 1080, height: 1920, isPlaceholder: true }}
+              onChange={(v) => set(["testimonialsSection", "backgroundImageMobile"], v)}
+              category="banners"
+              hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Background Image above."
             />
           </div>
         </CardContent>

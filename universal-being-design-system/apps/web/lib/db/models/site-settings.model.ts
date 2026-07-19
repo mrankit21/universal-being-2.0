@@ -32,6 +32,10 @@ export interface SiteSettingsDocument extends Document {
     /** Optional background image behind the footer + adjustable darkening
      * overlay opacity, same pattern as the homepage CTA section. */
     backgroundImage?: unknown;
+    /** Optional dedicated crop for narrow viewports — see
+     * `lib/api/home.ts` `ResolvedCtaSection.backgroundImageMobile` for the
+     * fallback rule. */
+    backgroundImageMobile?: unknown;
     overlayOpacity: number;
   };
   updatedBy?: string;
@@ -83,6 +87,7 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
       },
       copyrightHolder: { type: String, default: "" },
       backgroundImage: { type: ImageAssetSchema },
+      backgroundImageMobile: { type: ImageAssetSchema },
       overlayOpacity: { type: Number, default: 0.7, min: 0, max: 1 },
     },
     updatedBy: { type: String },

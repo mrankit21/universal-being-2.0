@@ -6,6 +6,7 @@ const SECTION_KEYS = ["hero", "featuredTrips", "themeExplorer", "valueProps", "t
 export const heroSlideSchema = z.object({
   destinationLabel: z.string().default(""),
   image: imageAssetSchema.optional(),
+  imageMobile: imageAssetSchema.optional(),
   heading: z.string().default(""),
   subtitle: z.string().default(""),
   badges: z.array(z.string()).default([]),
@@ -35,17 +36,20 @@ export const homepageSchema = z.object({
     ctaLabel: z.string().default("Plan Your Trip"),
     ctaHref: z.string().default("/trips"),
     backgroundImage: imageAssetSchema.optional(),
+    backgroundImageMobile: imageAssetSchema.optional(),
     overlayOpacity: z.number().min(0).max(1).default(0.45),
   }),
   valuePropsSection: z
     .object({
       backgroundImage: imageAssetSchema.optional(),
+      backgroundImageMobile: imageAssetSchema.optional(),
       overlayOpacity: z.number().min(0).max(1).default(0.6),
     })
     .default({ overlayOpacity: 0.6 }),
   testimonialsSection: z
     .object({
       backgroundImage: imageAssetSchema.optional(),
+      backgroundImageMobile: imageAssetSchema.optional(),
       overlayOpacity: z.number().min(0).max(1).default(0.6),
     })
     .default({ overlayOpacity: 0.6 }),

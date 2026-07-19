@@ -28,7 +28,7 @@ const includes: IncludeItem[] = [
  */
 export function PackageIncludesStrip() {
   return (
-    <div className="border-b border-border bg-background">
+    <div className="bg-background">
       <div className="mx-auto max-w-6xl px-6 py-4">
         <p className="mb-1 font-display text-sm font-medium text-foreground sm:text-base">Package Includes</p>
         <div className="mb-3 h-0.5 w-10 rounded-full bg-ub-brass-500" aria-hidden="true" />

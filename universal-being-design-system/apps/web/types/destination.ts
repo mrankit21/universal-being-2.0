@@ -51,6 +51,9 @@ export interface Destination {
   longDescription: string;
 
   heroImage: ImageAsset;
+  /** Optional dedicated crop for narrow viewports — same fallback rule as
+   * `Trip.heroImageMobile`. */
+  heroImageMobile?: ImageAsset;
   coverImage: ImageAsset;
   /** Card/listing thumbnail — distinct from `coverImage` so admins can crop
    * a tighter image for grid cards without touching the wider cover shot

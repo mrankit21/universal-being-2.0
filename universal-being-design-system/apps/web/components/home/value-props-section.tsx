@@ -34,11 +34,19 @@ export function ValuePropsSection({ background }: { background?: ResolvedSection
       {hasImage && background?.backgroundImage ? (
         <>
           <Image
+            src={(background.backgroundImageMobile ?? background.backgroundImage).url}
+            alt={(background.backgroundImageMobile ?? background.backgroundImage).alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 object-cover md:hidden"
+            unoptimized
+          />
+          <Image
             src={background.backgroundImage.url}
             alt={background.backgroundImage.alt}
             fill
             sizes="100vw"
-            className="absolute inset-0 object-cover"
+            className="absolute inset-0 hidden object-cover md:block"
             unoptimized
           />
           <div

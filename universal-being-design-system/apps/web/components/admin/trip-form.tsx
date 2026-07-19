@@ -348,6 +348,13 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
             <CardHeader><CardTitle className="text-base">Hero, Cover & Thumbnail</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <ImageAssetField label="Hero Image (trip page banner)" value={value.heroImage} onChange={(v) => set("heroImage", v)} category="trip-hero" />
+              <ImageAssetField
+                label="Mobile Hero Image (optional)"
+                value={value.heroImageMobile ?? emptyImage()}
+                onChange={(v) => set("heroImageMobile", v)}
+                category="trip-hero"
+                hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Hero Image above — do this only if that image loses an important subject when cropped narrow."
+              />
               <ImageAssetField label="Cover Image (used in cards)" value={value.coverImage} onChange={(v) => set("coverImage", v)} category="trip-hero" />
               <ImageAssetField label="Thumbnail" value={value.thumbnail} onChange={(v) => set("thumbnail", v)} category="trip-hero" />
               <ImageAssetField label="Homepage Hero Image" value={value.homepageHeroImage} onChange={(v) => set("homepageHeroImage", v)} category="homepage-hero" hint="Used when this trip is featured on the homepage" />

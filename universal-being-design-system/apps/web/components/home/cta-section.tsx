@@ -32,11 +32,19 @@ export function CtaSection({ config }: { config: ResolvedCtaSection }) {
       {config.backgroundImage ? (
         <>
           <Image
+            src={(config.backgroundImageMobile ?? config.backgroundImage).url}
+            alt={(config.backgroundImageMobile ?? config.backgroundImage).alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 object-cover md:hidden"
+            unoptimized
+          />
+          <Image
             src={config.backgroundImage.url}
             alt={config.backgroundImage.alt}
             fill
             sizes="100vw"
-            className="absolute inset-0 object-cover"
+            className="absolute inset-0 hidden object-cover md:block"
             unoptimized
           />
           <div

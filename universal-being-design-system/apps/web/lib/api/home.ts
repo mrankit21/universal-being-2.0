@@ -37,6 +37,10 @@ export interface ResolvedHeroSlide {
    * badges/secondaryCta fields above. */
   overlayOpacity: number;
   image?: { url: string; alt: string; isPlaceholder: boolean; width: number; height: number };
+  /** Optional dedicated crop for narrow viewports — falls back to `image`
+   * when not set. See `ResolvedCtaSection.backgroundImageMobile` for the
+   * same fallback rule. */
+  imageMobile?: { url: string; alt: string; isPlaceholder: boolean; width: number; height: number };
 }
 
 export interface ResolvedPromoBanner {
@@ -54,6 +58,12 @@ export interface ResolvedCtaSection {
   ctaLabel: string;
   ctaHref: string;
   backgroundImage?: { url: string; alt: string; isPlaceholder: boolean };
+  /** Optional separate crop for narrow viewports — falls back to
+   * `backgroundImage` when not set. A single wide landscape source often
+   * can't survive being cropped into a much narrower mobile box without
+   * losing a subject at one edge, so admins can supply a dedicated
+   * portrait-friendly crop instead of relying on one image for both. */
+  backgroundImageMobile?: { url: string; alt: string; isPlaceholder: boolean };
   overlayOpacity: number;
 }
 
@@ -62,6 +72,8 @@ export interface ResolvedCtaSection {
  * intro) — same shape as `ResolvedCtaSection`'s background fields. */
 export interface ResolvedSectionBackground {
   backgroundImage?: { url: string; alt: string; isPlaceholder: boolean };
+  /** See `ResolvedCtaSection.backgroundImageMobile` — same fallback rule. */
+  backgroundImageMobile?: { url: string; alt: string; isPlaceholder: boolean };
   overlayOpacity: number;
 }
 
@@ -237,6 +249,9 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
       .sort((a, b) => a.order - b.order)
       .map((s): ResolvedHeroSlide => {
         const img = s.image as { url?: string; alt?: string; isPlaceholder?: boolean; width?: number; height?: number } | undefined;
+        const imgMobile = s.imageMobile as
+          | { url?: string; alt?: string; isPlaceholder?: boolean; width?: number; height?: number }
+          | undefined;
         return {
           themeKey: (s.themeKey || "brand") as ThemeKey,
           eyebrow: s.destinationLabel,
@@ -251,6 +266,16 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
           image:
             img?.url && !img.isPlaceholder
               ? { url: img.url, alt: img.alt ?? "", isPlaceholder: false, width: img.width ?? 1920, height: img.height ?? 1080 }
+              : undefined,
+          imageMobile:
+            imgMobile?.url && !imgMobile.isPlaceholder
+              ? {
+                  url: imgMobile.url,
+                  alt: imgMobile.alt ?? "",
+                  isPlaceholder: false,
+                  width: imgMobile.width ?? 1080,
+                  height: imgMobile.height ?? 1920,
+                }
               : undefined,
         };
       });
@@ -285,8 +310,15 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
 
     const promoBannerImg = doc.promoBanner?.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
     const ctaImg = doc.ctaSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const ctaImgMobile = doc.ctaSection?.backgroundImageMobile as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
     const valuePropsImg = doc.valuePropsSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const valuePropsImgMobile = doc.valuePropsSection?.backgroundImageMobile as
+      | { url?: string; alt?: string; isPlaceholder?: boolean }
+      | undefined;
     const testimonialsImg = doc.testimonialsSection?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const testimonialsImgMobile = doc.testimonialsSection?.backgroundImageMobile as
+      | { url?: string; alt?: string; isPlaceholder?: boolean }
+      | undefined;
 
     return {
       heroSlides,
@@ -306,6 +338,10 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
         ctaLabel: doc.ctaSection?.ctaLabel || DEFAULT_CTA_SECTION.ctaLabel,
         ctaHref: doc.ctaSection?.ctaHref || DEFAULT_CTA_SECTION.ctaHref,
         backgroundImage: ctaImg?.url && !ctaImg.isPlaceholder ? { url: ctaImg.url, alt: ctaImg.alt ?? "", isPlaceholder: false } : undefined,
+        backgroundImageMobile:
+          ctaImgMobile?.url && !ctaImgMobile.isPlaceholder
+            ? { url: ctaImgMobile.url, alt: ctaImgMobile.alt ?? "", isPlaceholder: false }
+            : undefined,
         overlayOpacity: doc.ctaSection?.overlayOpacity ?? DEFAULT_CTA_SECTION.overlayOpacity,
       },
       valuePropsSection: {
@@ -313,12 +349,20 @@ export async function getResolvedHomepage(): Promise<ResolvedHomepage> {
           valuePropsImg?.url && !valuePropsImg.isPlaceholder
             ? { url: valuePropsImg.url, alt: valuePropsImg.alt ?? "", isPlaceholder: false }
             : undefined,
+        backgroundImageMobile:
+          valuePropsImgMobile?.url && !valuePropsImgMobile.isPlaceholder
+            ? { url: valuePropsImgMobile.url, alt: valuePropsImgMobile.alt ?? "", isPlaceholder: false }
+            : undefined,
         overlayOpacity: doc.valuePropsSection?.overlayOpacity ?? DEFAULT_VALUE_PROPS_SECTION.overlayOpacity,
       },
       testimonialsSection: {
         backgroundImage:
           testimonialsImg?.url && !testimonialsImg.isPlaceholder
             ? { url: testimonialsImg.url, alt: testimonialsImg.alt ?? "", isPlaceholder: false }
+            : undefined,
+        backgroundImageMobile:
+          testimonialsImgMobile?.url && !testimonialsImgMobile.isPlaceholder
+            ? { url: testimonialsImgMobile.url, alt: testimonialsImgMobile.alt ?? "", isPlaceholder: false }
             : undefined,
         overlayOpacity: doc.testimonialsSection?.overlayOpacity ?? DEFAULT_TESTIMONIALS_SECTION.overlayOpacity,
       },

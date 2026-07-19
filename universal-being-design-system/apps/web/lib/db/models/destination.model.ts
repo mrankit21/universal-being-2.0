@@ -18,6 +18,7 @@ export interface DestinationDocument extends Document {
   shortDescription: string;
   longDescription: string;
   heroImage: unknown;
+  heroImageMobile?: unknown;
   coverImage: unknown;
   thumbnail?: unknown;
   gallery: unknown[];
@@ -63,6 +64,7 @@ const DestinationSchema = new Schema<DestinationDocument>(
     shortDescription: { type: String, default: "" },
     longDescription: { type: String, default: "" },
     heroImage: { type: ImageAssetSchema, required: true },
+    heroImageMobile: { type: ImageAssetSchema },
     coverImage: { type: ImageAssetSchema, required: true },
     /** Optional — falls back to `coverImage` at the `lib/api/destinations.ts`
      * read layer for destinations created before this field existed. */

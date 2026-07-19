@@ -94,6 +94,7 @@ export interface TripDocument extends Document {
   shortDescription: string;
   fullDescription: string;
   heroImage: unknown;
+  heroImageMobile?: unknown;
   coverImage: unknown;
   thumbnail: unknown;
   homepageHeroImage: unknown;
@@ -157,6 +158,7 @@ const TripSchema = new Schema<TripDocument>(
     fullDescription: { type: String, required: true, default: "" },
 
     heroImage: { type: ImageAssetSchema, required: true },
+    heroImageMobile: { type: ImageAssetSchema },
     coverImage: { type: ImageAssetSchema, required: true },
     thumbnail: { type: ImageAssetSchema, required: true },
     homepageHeroImage: { type: ImageAssetSchema, required: true },

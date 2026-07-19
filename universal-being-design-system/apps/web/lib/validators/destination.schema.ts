@@ -21,6 +21,7 @@ export const destinationSchema = z.object({
   shortDescription: z.string().default(""),
   longDescription: z.string().default(""),
   heroImage: imageAssetSchema,
+  heroImageMobile: imageAssetSchema.optional(),
   coverImage: imageAssetSchema,
   /** Optional — public read layer falls back to `coverImage` when unset. */
   thumbnail: imageAssetSchema.optional(),

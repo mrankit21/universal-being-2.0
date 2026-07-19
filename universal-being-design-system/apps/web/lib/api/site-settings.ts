@@ -22,7 +22,14 @@ export interface ResolvedSiteSettings {
   socialLinks: { platform: string; href: string; label: string }[];
   footerColumns: { title: string; links: { label: string; href: string }[] }[];
   copyrightHolder: string;
-  footerBackground: { image?: { url: string; alt: string; isPlaceholder: boolean }; overlayOpacity: number };
+  footerBackground: {
+    image?: { url: string; alt: string; isPlaceholder: boolean };
+    /** Optional dedicated crop for narrow viewports — falls back to
+     * `image` when not set. See `ResolvedCtaSection.backgroundImageMobile`
+     * in `lib/api/home.ts` for the same fallback rule. */
+    imageMobile?: { url: string; alt: string; isPlaceholder: boolean };
+    overlayOpacity: number;
+  };
   seoDefaults: { title: string; description: string; ogImageUrl?: string };
   /** True when this response came from MongoDB rather than the static
    * fallback — surfaced for admin/debug use only. */
@@ -66,6 +73,9 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
     if (!doc) return staticSiteSettings();
 
     const footerImg = doc.footer?.backgroundImage as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const footerImgMobile = doc.footer?.backgroundImageMobile as
+      | { url?: string; alt?: string; isPlaceholder?: boolean }
+      | undefined;
 
     return {
       brandStory: doc.brandStory || staticSiteConfig.brandStory,
@@ -80,6 +90,10 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
       copyrightHolder: doc.footer?.copyrightHolder || staticSiteConfig.copyrightHolder,
       footerBackground: {
         image: footerImg?.url && !footerImg.isPlaceholder ? { url: footerImg.url, alt: footerImg.alt ?? "", isPlaceholder: false } : undefined,
+        imageMobile:
+          footerImgMobile?.url && !footerImgMobile.isPlaceholder
+            ? { url: footerImgMobile.url, alt: footerImgMobile.alt ?? "", isPlaceholder: false }
+            : undefined,
         overlayOpacity: doc.footer?.overlayOpacity ?? 0.7,
       },
       seoDefaults: {

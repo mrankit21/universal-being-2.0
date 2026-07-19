@@ -124,11 +124,19 @@ export function TestimonialsSection({
     return (
       <div className="relative isolate overflow-hidden border-y border-border">
         <Image
+          src={(background.backgroundImageMobile ?? background.backgroundImage).url}
+          alt={(background.backgroundImageMobile ?? background.backgroundImage).alt}
+          fill
+          sizes="100vw"
+          className="absolute inset-0 object-cover md:hidden"
+          unoptimized
+        />
+        <Image
           src={background.backgroundImage.url}
           alt={background.backgroundImage.alt}
           fill
           sizes="100vw"
-          className="absolute inset-0 object-cover"
+          className="absolute inset-0 hidden object-cover md:block"
           unoptimized
         />
         <div

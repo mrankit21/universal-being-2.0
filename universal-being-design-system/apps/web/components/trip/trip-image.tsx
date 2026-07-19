@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 
 export interface TripImageProps {
   asset: ImageAsset;
+  /** Optional dedicated crop for narrow viewports — falls back to `asset`
+   * when not set/placeholder. See `Trip.heroImageMobile` for the rationale. */
+  mobileAsset?: ImageAsset;
   theme: ThemeConfig;
   variant?: UbImageVariant;
   className?: string;
@@ -44,6 +47,7 @@ const variantAspect: Record<UbImageVariant, string> = {
  */
 export function TripImage({
   asset,
+  mobileAsset,
   theme,
   variant = "cover",
   className,
@@ -53,6 +57,7 @@ export function TripImage({
   children,
 }: TripImageProps) {
   const resolved = resolveImage(asset, variant);
+  const resolvedMobile = mobileAsset ? resolveImage(mobileAsset, variant) : undefined;
 
   if (resolved.isPlaceholder) {
     return (
@@ -69,6 +74,32 @@ export function TripImage({
             </span>
           </div>
         </ThemeBackground>
+        {children}
+      </div>
+    );
+  }
+
+  if (resolvedMobile && !resolvedMobile.isPlaceholder) {
+    return (
+      <div className="relative">
+        <UbImage
+          src={resolvedMobile.src}
+          alt={resolvedMobile.alt}
+          variant={variant}
+          className={className}
+          containerClassName={cn(containerClassName, "md:hidden")}
+          sizes={sizes}
+          priority={priority}
+        />
+        <UbImage
+          src={resolved.src}
+          alt={resolved.alt}
+          variant={variant}
+          className={className}
+          containerClassName={cn(containerClassName, "hidden md:block")}
+          sizes={sizes}
+          priority={priority}
+        />
         {children}
       </div>
     );

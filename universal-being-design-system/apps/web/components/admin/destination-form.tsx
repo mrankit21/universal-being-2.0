@@ -162,6 +162,13 @@ export function DestinationForm({
         <CardHeader><CardTitle className="text-base">Imagery</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <ImageAssetField label="Hero Image" value={value.heroImage} onChange={(v) => set("heroImage", v)} category="destination-hero" hint="Wide banner shown at the top of the destination page." />
+          <ImageAssetField
+            label="Mobile Hero Image (optional)"
+            value={value.heroImageMobile ?? emptyImage()}
+            onChange={(v) => set("heroImageMobile", v)}
+            category="destination-hero"
+            hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Hero Image above — do this only if that image loses an important subject when cropped narrow."
+          />
           <ImageAssetField label="Cover Image" value={value.coverImage} onChange={(v) => set("coverImage", v)} category="destination-hero" hint="Used on the homepage Theme Explorer cards." />
           <ImageAssetField label="Thumbnail" value={value.thumbnail ?? emptyImage()} onChange={(v) => set("thumbnail", v)} category="destination-hero" hint="Tighter crop used on the Destinations listing cards. Falls back to Cover Image if left unset." />
         </CardContent>

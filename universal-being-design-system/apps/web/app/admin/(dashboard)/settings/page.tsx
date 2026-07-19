@@ -210,6 +210,13 @@ export default function SiteSettingsPage() {
             category="banners"
             hint="Leave empty for the plain purple background. Use Overlay Opacity to darken the image so footer text stays readable."
           />
+          <ImageAssetField
+            label="Mobile Footer Background Image (optional)"
+            value={data.footer.backgroundImageMobile ?? emptyImage()}
+            onChange={(v) => set(["footer", "backgroundImageMobile"], v)}
+            category="banners"
+            hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Footer Background Image above — do this only if that image loses an important subject when cropped narrow."
+          />
         </CardContent>
       </Card>
     </div>

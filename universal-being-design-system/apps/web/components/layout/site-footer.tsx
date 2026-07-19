@@ -31,17 +31,26 @@ export async function SiteFooter() {
   const settings = await getSiteSettings();
 
   const bgImage = settings.footerBackground.image;
+  const bgImageMobile = settings.footerBackground.imageMobile ?? bgImage;
 
   return (
     <footer className="ub-footer-purple relative isolate overflow-hidden border-t border-border pb-24 pt-14 md:pb-16">
       {bgImage ? (
         <>
           <Image
+            src={bgImageMobile!.url}
+            alt={bgImageMobile!.alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 -z-10 object-cover md:hidden"
+            unoptimized
+          />
+          <Image
             src={bgImage.url}
             alt={bgImage.alt}
             fill
             sizes="100vw"
-            className="absolute inset-0 -z-10 object-cover"
+            className="absolute inset-0 -z-10 hidden object-cover md:block"
             unoptimized
           />
           <div

@@ -87,7 +87,9 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
 
   const heroStyle = {
     ...buildThemeCssVars(theme),
-    ...(slide.image ? { "--hero-ratio": `${slide.image.width} / ${slide.image.height}` } : {}),
+    ...(slide.image
+      ? { "--hero-ratio": `${(slide.imageMobile ?? slide.image).width} / ${(slide.imageMobile ?? slide.image).height}` }
+      : {}),
   } as React.CSSProperties;
 
   return (
@@ -123,15 +125,26 @@ export function HeroSection({ slides }: { slides: ResolvedHeroSlide[] }) {
               transition={{ duration: SLIDE_DURATION_MS / 1000, ease: "linear" }}
             >
               {slide.image ? (
-                <Image
-                  src={slide.image.url}
-                  alt={slide.image.alt}
-                  fill
-                  priority={index === 0}
-                  sizes="100vw"
-                  className="object-cover"
-                  unoptimized
-                />
+                <>
+                  <Image
+                    src={(slide.imageMobile ?? slide.image).url}
+                    alt={(slide.imageMobile ?? slide.image).alt}
+                    fill
+                    priority={index === 0}
+                    sizes="100vw"
+                    className="object-cover md:hidden"
+                    unoptimized
+                  />
+                  <Image
+                    src={slide.image.url}
+                    alt={slide.image.alt}
+                    fill
+                    priority={index === 0}
+                    sizes="100vw"
+                    className="hidden object-cover md:block"
+                    unoptimized
+                  />
+                </>
               ) : (
                 <ThemeBackground theme={theme} area="hero" className="h-full w-full" />
               )}

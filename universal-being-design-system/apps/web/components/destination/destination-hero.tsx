@@ -24,9 +24,10 @@ export function DestinationHero({ destination }: DestinationHeroProps) {
         />
       </div>
 
-      <div className="mx-auto max-w-6xl px-6 pt-4">
+      <div className="mx-auto max-w-6xl px-2 pt-4 sm:px-6">
         <TripImage
           asset={destination.heroImage}
+          mobileAsset={destination.heroImageMobile}
           theme={theme}
           variant="hero"
           containerClassName="rounded-xl"

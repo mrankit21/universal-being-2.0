@@ -38,9 +38,10 @@ export function TripHero({ trip }: TripHeroProps) {
         />
       </div>
 
-      <div className="mx-auto max-w-6xl px-6 pt-4">
+      <div className="mx-auto max-w-6xl px-2 pt-4 sm:px-6">
         <TripImage
           asset={trip.heroImage}
+          mobileAsset={trip.heroImageMobile}
           theme={theme}
           variant="hero"
           containerClassName="rounded-xl"

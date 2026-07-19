@@ -31,6 +31,7 @@ export const siteSettingsSchema = z.object({
       .default([]),
     copyrightHolder: z.string().default(""),
     backgroundImage: imageAssetSchema.optional(),
+    backgroundImageMobile: imageAssetSchema.optional(),
     overlayOpacity: z.number().min(0).max(1).default(0.7),
   }),
 });
