@@ -30,6 +30,15 @@ const emptyImage = () => ({
   isPlaceholder: true,
 });
 
+const emptyPointOfInterest = () => ({
+  name: "",
+  description: "",
+  category: "famous" as const,
+  image: emptyImage(),
+});
+
+const POI_CATEGORIES = ["famous", "historical", "adventure"] as const;
+
 type DestinationFormValue = Omit<Destination, "id" | "createdAt" | "updatedAt">;
 
 function blank(): DestinationFormValue {
@@ -49,6 +58,7 @@ function blank(): DestinationFormValue {
     bestSeason: [],
     altitude: "",
     highlights: [],
+    pointsOfInterest: [],
     featured: false,
     homepageVisible: true,
     tripAssignments: [],
@@ -73,6 +83,7 @@ export function DestinationForm({
     featured: initialValue?.featured ?? false,
     homepageVisible: initialValue?.homepageVisible ?? true,
     tripAssignments: initialValue?.tripAssignments ?? [],
+    pointsOfInterest: initialValue?.pointsOfInterest ?? [],
   }));
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
@@ -208,6 +219,48 @@ export function DestinationForm({
           <FormField label="Highlights">
             <StringListEditor items={value.highlights} onChange={(v) => set("highlights", v)} placeholder="e.g. Old City & lakes" addLabel="Add highlight" />
           </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Points of Interest</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Famous, historical, or adventure spots within this destination — each shown with its own
+            photo on the destination page.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ArrayFieldEditor
+            items={value.pointsOfInterest}
+            onChange={(v) => set("pointsOfInterest", v)}
+            addLabel="Add place"
+            emptyMessage="No places added yet."
+            createItem={emptyPointOfInterest}
+            renderItem={(poi, _i, update) => (
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="Name">
+                    <Input value={poi.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. Naggar Castle" />
+                  </FormField>
+                  <FormField label="Category">
+                    <Select value={poi.category} onValueChange={(v) => update({ category: v as typeof poi.category })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {POI_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </div>
+                <FormField label="Description">
+                  <Textarea value={poi.description} onChange={(e) => update({ description: e.target.value })} rows={3} />
+                </FormField>
+                <ImageAssetField label="Photo" value={poi.image} onChange={(v) => update({ image: v })} category="destination-gallery" />
+              </div>
+            )}
+          />
         </CardContent>
       </Card>
 

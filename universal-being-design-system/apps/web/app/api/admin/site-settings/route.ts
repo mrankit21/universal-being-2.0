@@ -48,9 +48,14 @@ export async function PATCH(req: NextRequest) {
     const session = await requirePermission("settings:write");
     await connectToDatabase();
     const parsed = siteSettingsUpdateSchema.parse(await req.json());
+    // See destinations/[id]/route.ts — `.partial()` leaves untouched fields
+    // as explicit `undefined` rather than omitting them. Object.assign
+    // copies those `undefined`s onto `doc` too, so a save() here could wipe
+    // required fields the client never sent.
+    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
 
     const doc = await getOrCreateSingleton();
-    Object.assign(doc, parsed, { updatedBy: session.email });
+    Object.assign(doc, update, { updatedBy: session.email });
     await doc.save();
 
     revalidatePath("/", "layout");

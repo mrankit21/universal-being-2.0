@@ -45,6 +45,7 @@ export function buildDestination(input: DestinationSeedInput): Destination {
     bestSeason: input.bestSeason,
     altitude: input.altitude,
     highlights: input.highlights,
+    pointsOfInterest: [],
     featured: false,
     homepageVisible: true,
     tripAssignments: [],

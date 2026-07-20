@@ -26,6 +26,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await connectToDatabase();
     const { id } = await params;
     const parsed = couponUpdateSchema.parse(await req.json());
+    // See destinations/[id]/route.ts — `.partial()` leaves untouched fields
+    // as explicit `undefined` rather than omitting them, which Mongoose
+    // would otherwise $set (i.e. unset) on the document. No runValidators
+    // here so this wasn't throwing, but it was still silently wiping other
+    // fields on every partial edit.
+    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
 
     if (parsed.code) {
       const dupe = await CouponModel.findOne({ code: parsed.code.toUpperCase(), _id: { $ne: id } }).lean();
@@ -34,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const coupon = await CouponModel.findByIdAndUpdate(
       id,
-      { ...parsed, ...(parsed.code ? { code: parsed.code.toUpperCase() } : {}) },
+      { ...update, ...(parsed.code ? { code: parsed.code.toUpperCase() } : {}) },
       { new: true }
     );
     if (!coupon) return fail("Coupon not found", 404);

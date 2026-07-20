@@ -11,6 +11,13 @@ export const destinationTripAssignmentSchema = z.object({
   featured: z.boolean().default(false),
 });
 
+export const destinationPointOfInterestSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().default(""),
+  category: z.enum(["famous", "historical", "adventure"]),
+  image: imageAssetSchema,
+});
+
 export const destinationSchema = z.object({
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase kebab-case"),
   name: z.string().min(1),
@@ -29,6 +36,7 @@ export const destinationSchema = z.object({
   bestSeason: z.array(z.string()).default([]),
   altitude: z.string().optional(),
   highlights: z.array(z.string()).default([]),
+  pointsOfInterest: z.array(destinationPointOfInterestSchema).default([]),
   featured: z.boolean().default(false),
   homepageVisible: z.boolean().default(true),
   tripAssignments: z.array(destinationTripAssignmentSchema).default([]),

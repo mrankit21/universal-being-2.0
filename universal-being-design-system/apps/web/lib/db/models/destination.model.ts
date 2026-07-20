@@ -8,6 +8,13 @@ export interface DestinationTripAssignmentDoc {
   featured: boolean;
 }
 
+export interface DestinationPointOfInterestDoc {
+  name: string;
+  description: string;
+  category: "famous" | "historical" | "adventure";
+  image: unknown;
+}
+
 export interface DestinationDocument extends Document {
   slug: string;
   name: string;
@@ -25,6 +32,7 @@ export interface DestinationDocument extends Document {
   bestSeason: string[];
   altitude?: string;
   highlights: string[];
+  pointsOfInterest: DestinationPointOfInterestDoc[];
   featured: boolean;
   homepageVisible: boolean;
   tripAssignments: DestinationTripAssignmentDoc[];
@@ -45,6 +53,17 @@ const DestinationTripAssignmentSchema = new Schema(
     tripSlug: { type: String, required: true },
     order: { type: Number, default: 0 },
     featured: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+/** "Places to see" entries — see `types/destination.ts#DestinationPointOfInterest`. */
+const DestinationPointOfInterestSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    description: { type: String, default: "" },
+    category: { type: String, enum: ["famous", "historical", "adventure"], required: true },
+    image: { type: ImageAssetSchema, required: true },
   },
   { _id: false }
 );
@@ -73,6 +92,7 @@ const DestinationSchema = new Schema<DestinationDocument>(
     bestSeason: { type: [String], default: [] },
     altitude: { type: String },
     highlights: { type: [String], default: [] },
+    pointsOfInterest: { type: [DestinationPointOfInterestSchema], default: [] },
     featured: { type: Boolean, default: false, index: true },
     homepageVisible: { type: Boolean, default: true, index: true },
     tripAssignments: { type: [DestinationTripAssignmentSchema], default: [] },

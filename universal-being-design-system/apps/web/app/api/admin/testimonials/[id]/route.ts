@@ -14,9 +14,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await connectToDatabase();
     const { id } = await params;
     const parsed = testimonialUpdateSchema.parse(await req.json());
-    const testimonial = await TestimonialModel.findByIdAndUpdate(id, parsed, {
+    // See destinations/[id]/route.ts — `.partial()` leaves untouched fields
+    // as explicit `undefined` rather than omitting them, which Mongoose
+    // would otherwise $set (i.e. unset) on the document.
+    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
+    // Fetch as plain object, merge, write the whole document back — see
+    // destinations/[id]/route.ts for why hydrate-then-save() wasn't
+    // reliable enough here.
+    const existing = await TestimonialModel.findById(id).lean();
+    if (!existing) return fail("Testimonial not found", 404);
+    const merged = { ...existing, ...update };
+    delete (merged as Record<string, unknown>)._id;
+    delete (merged as Record<string, unknown>).__v;
+    delete (merged as Record<string, unknown>).createdAt;
+    delete (merged as Record<string, unknown>).updatedAt;
+
+    const testimonial = await TestimonialModel.findByIdAndUpdate(id, merged, {
       new: true,
-      runValidators: true,
+      overwrite: true,
     });
     if (!testimonial) return fail("Testimonial not found", 404);
     revalidatePath("/", "layout");

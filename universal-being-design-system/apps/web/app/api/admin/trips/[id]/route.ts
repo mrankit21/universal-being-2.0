@@ -32,27 +32,46 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const body = await req.json();
     const parsed = tripUpdateSchema.parse(body);
+    // Zod's `.partial()` keeps every shape key on the output as an explicit
+    // `key: undefined` for fields the client didn't send, instead of
+    // omitting them. Passed straight to Mongoose those get $set anyway,
+    // which unsets the path — so a PATCH of one tab (e.g. just pricing)
+    // could wipe out required fields from other tabs. Only forward keys the
+    // client actually sent.
+    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
 
     if (parsed.slug) {
       const clash = await TripModel.findOne({ slug: parsed.slug, _id: { $ne: id } });
       if (clash) return fail(`A trip with slug "${parsed.slug}" already exists`, 409);
     }
 
-    const before = await TripModel.findById(id).select("slug destinationSlug").lean();
+    // Fetch the full document as a plain object, merge the change into it,
+    // and write the WHOLE merged object back with `overwrite: true` — see
+    // destinations/[id]/route.ts for why hydrate-then-save() wasn't
+    // reliable enough here.
+    const existing = await TripModel.findById(id).lean();
+    if (!existing) return fail("Trip not found", 404);
+    const beforeSlug = existing.slug;
+    const beforeDestinationSlug = existing.destinationSlug;
 
-    const trip = await TripModel.findByIdAndUpdate(
-      id,
-      { ...parsed, updatedBy: session.email },
-      { new: true, runValidators: true }
-    );
+    const merged = { ...existing, ...update, updatedBy: session.email };
+    delete (merged as Record<string, unknown>)._id;
+    delete (merged as Record<string, unknown>).__v;
+    delete (merged as Record<string, unknown>).createdAt;
+    delete (merged as Record<string, unknown>).updatedAt;
+
+    const trip = await TripModel.findByIdAndUpdate(id, merged, {
+      new: true,
+      overwrite: true,
+    });
     if (!trip) return fail("Trip not found", 404);
 
     revalidateTripSurfaces(trip);
     // Slug or destination reassignment: also clear the old paths so the
     // Trip doesn't keep serving a stale page at its previous address, and
     // its old Destination page stops listing it.
-    if (before && (before.slug !== trip.slug || before.destinationSlug !== trip.destinationSlug)) {
-      revalidateTripSurfaces(before);
+    if (beforeSlug !== trip.slug || beforeDestinationSlug !== trip.destinationSlug) {
+      revalidateTripSurfaces({ slug: beforeSlug, destinationSlug: beforeDestinationSlug });
     }
 
     return ok(trip);

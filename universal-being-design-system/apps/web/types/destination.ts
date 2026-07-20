@@ -35,6 +35,22 @@ export interface DestinationTripAssignment {
   featured: boolean;
 }
 
+export type DestinationPointOfInterestCategory = "famous" | "historical" | "adventure";
+
+/**
+ * DestinationPointOfInterest — "Places to see" entries admins add per
+ * destination (e.g. a specific lake, temple, or viewpoint) so the public
+ * detail page can show more than just the top-level description/gallery.
+ * Each entry carries its own image, independent of the destination's
+ * hero/cover/gallery imagery.
+ */
+export interface DestinationPointOfInterest {
+  name: string;
+  description: string;
+  category: DestinationPointOfInterestCategory;
+  image: ImageAsset;
+}
+
 export interface Destination {
   id: string;
   slug: string;
@@ -66,6 +82,10 @@ export interface Destination {
   bestSeason: string[];
   altitude?: string;
   highlights: string[];
+
+  /** "Places to see" — famous/historical/adventure spots within this
+   * destination, each with its own name, description, category, and image. */
+  pointsOfInterest: DestinationPointOfInterest[];
 
   /** Editorial "Featured Destination" flag — independent of `status`, lets
    * admins spotlight a destination (e.g. in listings) without it being tied

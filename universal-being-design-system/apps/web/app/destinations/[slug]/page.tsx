@@ -5,6 +5,7 @@ import { getDestinationBySlug, getDestinationBySlugWithResolvedImages, getDestin
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { DestinationHero } from "@/components/destination/destination-hero";
 import { DestinationGallery } from "@/components/destination/destination-gallery";
+import { DestinationPointsOfInterest } from "@/components/destination/destination-points-of-interest";
 import { DestinationJsonLd } from "@/components/destination/destination-json-ld";
 import { TripCard } from "@/components/trip/trip-card";
 import { SectionHeading } from "@/components/primitives/section-heading";
@@ -55,6 +56,8 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
       <DestinationHero destination={destination} />
 
       <DestinationGallery destination={destination} />
+
+      <DestinationPointsOfInterest destination={destination} />
 
       <div className="mx-auto max-w-6xl px-6 py-8">
         <SectionHeading title={`Trips in ${destination.name}`} className="mb-5" />

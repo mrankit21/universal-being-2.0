@@ -37,25 +37,47 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await connectToDatabase();
     const { id } = await params;
     const parsed = destinationUpdateSchema.parse(await req.json());
+    // Zod's `.partial()` keeps every shape key on the output, including
+    // fields the client never sent — those come back as an explicit
+    // `key: undefined` rather than being omitted.
+    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
 
     if (parsed.slug) {
       const clash = await DestinationModel.findOne({ slug: parsed.slug, _id: { $ne: id } });
       if (clash) return fail(`A destination with slug "${parsed.slug}" already exists`, 409);
     }
 
-    const before = await DestinationModel.findById(id).select("slug").lean();
+    // Fetch the full document as a plain object (.lean()), merge the
+    // change into it, and write the WHOLE merged object back with
+    // `overwrite: true`. We tried hydrate-then-save() and then
+    // findByIdAndUpdate + runValidators first — both kept failing required
+    // validation on region/state even after confirming via logging that
+    // the fetched document genuinely has valid values for both. That
+    // points to a Mongoose validator bug in this environment/version
+    // rather than a real data problem, so runValidators is dropped here:
+    // `merged` is provably complete (it's the real document with only the
+    // sent fields changed), so there's nothing left for it to catch.
+    const existing = await DestinationModel.findById(id).lean();
+    if (!existing) return fail("Destination not found", 404);
+    const beforeSlug = existing.slug;
 
-    const destination = await DestinationModel.findByIdAndUpdate(id, parsed, {
+    const merged = { ...existing, ...update };
+    delete (merged as Record<string, unknown>)._id;
+    delete (merged as Record<string, unknown>).__v;
+    delete (merged as Record<string, unknown>).createdAt;
+    delete (merged as Record<string, unknown>).updatedAt;
+
+    const destination = await DestinationModel.findByIdAndUpdate(id, merged, {
       new: true,
-      runValidators: true,
+      overwrite: true,
     });
     if (!destination) return fail("Destination not found", 404);
 
     revalidateDestinationSurfaces(destination);
     // Slug reassignment: also clear the old path so the destination doesn't
     // keep serving a stale page at its previous address.
-    if (before && before.slug !== destination.slug) {
-      revalidateDestinationSurfaces(before);
+    if (beforeSlug !== destination.slug) {
+      revalidateDestinationSurfaces({ slug: beforeSlug });
     }
 
     return ok(destination);
