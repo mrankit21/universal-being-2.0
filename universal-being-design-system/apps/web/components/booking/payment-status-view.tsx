@@ -145,9 +145,9 @@ export function PaymentStatusView({ bookingId, outcome }: { bookingId: string; o
           <p>Total amount: {money(booking.totalAmount, booking.currency)}</p>
           <p>Amount paid: {money(booking.amountPaid, booking.currency)}</p>
           <p>Remaining amount: {money(booking.remainingAmount, booking.currency)}</p>
-          <p>
+          <div>
             Booking status: <Badge variant={isPaid ? "success" : "warning"}>{booking.status}</Badge>
-          </p>
+          </div>
         </div>
 
         {!isPaid ? (

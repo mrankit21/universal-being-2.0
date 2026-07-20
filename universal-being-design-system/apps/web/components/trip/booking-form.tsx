@@ -217,11 +217,11 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {confirmation.paymentComplete ? (
-              <p className="text-muted-foreground">
+              <div className="text-muted-foreground">
                 Your Book Your Slot payment for <span className="font-medium text-foreground">{trip.title}</span>{" "}
                 is <Badge variant="success">Confirmed</Badge>. The remaining balance is payable as{" "}
                 <span className="font-medium text-foreground">Cash During Trip</span> (travelling bus / tour start).
-              </p>
+              </div>
             ) : confirmation.expired ? (
               <p className="text-destructive">
                 Your reservation window expired before payment was completed, so the seat was released
