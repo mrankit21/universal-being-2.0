@@ -23,6 +23,25 @@ function withThumbnailFallback(destination: Destination): Destination {
   return { ...destination, thumbnail: destination.coverImage };
 }
 
+/** Backfills `gallery`, `highlights`, `pointsOfInterest`, `tripAssignments`,
+ * and `bestSeason` for Destination documents written before those fields
+ * existed. `.lean()` reads return exactly what's stored, without Mongoose
+ * schema defaults applied, so older documents can arrive missing them —
+ * same gap `lib/api/trips.ts`'s `normalizeTrip` backfills for Trip docs.
+ * Without this, a legacy destination crashed `next build` the moment
+ * `withTripImageFallback` or `getOrderedDestinationTrips` read `.length`/
+ * `.map` on one of these fields. */
+function normalizeDestination(destination: Destination): Destination {
+  return {
+    ...destination,
+    gallery: destination.gallery ?? [],
+    highlights: destination.highlights ?? [],
+    pointsOfInterest: destination.pointsOfInterest ?? [],
+    tripAssignments: destination.tripAssignments ?? [],
+    bestSeason: destination.bestSeason ?? [],
+  };
+}
+
 /** The trip whose images stand in for a destination's still-placeholder
  * image slots: the one flagged "Featured" within this destination (Display
  * Order §3), falling back to the first trip in the given order, then any
@@ -79,11 +98,19 @@ function withTripImageFallback(
   // 7th photo alongside the 6 borrowed ones instead of replacing them.
   // (hero/cover/thumbnail stay replace-only above — there's only one slot,
   // nothing to "merge" a second image into.)
-  if (trip.gallery.length > 0) {
-    const seen = new Set(destination.gallery.map((img) => img.publicId ?? img.url));
-    const extra = trip.gallery.filter((img) => !seen.has(img.publicId ?? img.url));
+  //
+  // `trip.gallery` and `destination.gallery` fall back to `[]` here because
+  // the Mongoose schema `default: []` only fills in the field for documents
+  // created *after* it was added — a trip or destination saved to MongoDB
+  // before then still comes back from `.lean()` with `gallery: undefined`,
+  // which previously crashed this whole page during `next build`.
+  const tripGallery = trip.gallery ?? [];
+  const destinationGallery = destination.gallery ?? [];
+  if (tripGallery.length > 0) {
+    const seen = new Set(destinationGallery.map((img) => img.publicId ?? img.url));
+    const extra = tripGallery.filter((img) => !seen.has(img.publicId ?? img.url));
     if (extra.length > 0) {
-      resolved.gallery = [...destination.gallery, ...extra];
+      resolved.gallery = [...destinationGallery, ...extra];
     }
   }
 
@@ -107,7 +134,7 @@ export async function getAllDestinations(): Promise<Destination[]> {
       // page. Once `npm run seed:destinations` has run this branch stops
       // being hit and the DB becomes the sole source.
       if (docs.length === 0) return staticDestinations();
-      return docs.map((doc) => withThumbnailFallback(toEntity(doc) as unknown as Destination));
+      return docs.map((doc) => withThumbnailFallback(normalizeDestination(toEntity(doc) as unknown as Destination)));
     } catch (err) {
       console.error("[getAllDestinations] MongoDB unreachable, falling back to static destination registry:", err);
     }
@@ -140,7 +167,7 @@ export const getDestinationBySlug = cache(async function getDestinationBySlug(
     try {
       await connectToDatabase();
       const doc = await DestinationModel.findOne({ slug, status: "published" }).lean();
-      if (doc) return withThumbnailFallback(toEntity(doc) as unknown as Destination);
+      if (doc) return withThumbnailFallback(normalizeDestination(toEntity(doc) as unknown as Destination));
       // Not found by slug -- before returning 404, check whether the
       // collection is empty (unseeded) rather than this slug genuinely
       // not existing. Same temporary safety net as getAllDestinations().
@@ -198,7 +225,7 @@ export async function getOrderedDestinationTrips(
   destination: Destination
 ): Promise<(Trip & { destinationFeatured: boolean })[]> {
   const trips = await getTripsByDestination(destination.slug);
-  const orderBySlug = new Map(destination.tripAssignments.map((a) => [a.tripSlug, a]));
+  const orderBySlug = new Map((destination.tripAssignments ?? []).map((a) => [a.tripSlug, a]));
 
   return trips
     .map((trip) => ({

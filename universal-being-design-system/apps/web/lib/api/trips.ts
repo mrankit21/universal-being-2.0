@@ -46,6 +46,16 @@ function normalizeTrip(trip: Trip): Trip {
     mealPlan: { ...trip.mealPlan, snacks: trip.mealPlan?.snacks ?? false },
     reviewIds: trip.reviewIds ?? [],
     seo: { ...trip.seo, keywords: trip.seo?.keywords ?? [] },
+    // Same "field added after some documents already existed" gap as the
+    // fields above — `gallery`, `highlights`, `departureDates`, and
+    // `bestSeason` are all rendered with an unguarded `.length`/`.map`
+    // somewhere downstream (TripGallery, TripHighlights, getTripAvailability,
+    // the Destination page's image-borrowing logic), so a legacy document
+    // missing any of them crashed `next build` on static generation.
+    gallery: trip.gallery ?? [],
+    highlights: trip.highlights ?? [],
+    departureDates: trip.departureDates ?? [],
+    bestSeason: trip.bestSeason ?? [],
   };
 }
 
