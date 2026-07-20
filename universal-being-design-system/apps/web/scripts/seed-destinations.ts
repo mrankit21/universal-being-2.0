@@ -17,11 +17,11 @@ async function main() {
 
   for (const slug of destinationSlugs) {
     const destination = destinationRegistry[slug];
-    const result = await DestinationModel.findOneAndUpdate(
+    const result = (await DestinationModel.findOneAndUpdate(
       { slug },
       { $set: destination },
       { upsert: true, new: true, setDefaultsOnInsert: true, rawResult: true }
-    );
+    )) as unknown as { lastErrorObject?: { upserted?: boolean } };
 
     if (result?.lastErrorObject?.upserted) {
       created++;

@@ -20,11 +20,11 @@ async function main() {
     const trip = tripRegistry[slug];
     // Mongoose will ignore/clean any stray client-only fields (like `id`)
     // that aren't in the TripSchema — safe to pass the whole object.
-    const result = await TripModel.findOneAndUpdate(
+    const result = (await TripModel.findOneAndUpdate(
       { slug },
       { $set: trip },
       { upsert: true, new: true, setDefaultsOnInsert: true, rawResult: true }
-    );
+    )) as unknown as { lastErrorObject?: { upserted?: boolean } };
 
     if (result?.lastErrorObject?.upserted) {
       created++;

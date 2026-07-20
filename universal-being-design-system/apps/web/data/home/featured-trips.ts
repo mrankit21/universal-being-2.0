@@ -1,4 +1,5 @@
 import type { ThemeKey } from "@/types/theme";
+import type { ImageAsset } from "@/types/trip";
 
 /**
  * HomeTripSummary — a deliberately small, homepage-only shape. This is NOT
@@ -28,7 +29,7 @@ export interface HomeTripSummary {
    * this through `TripImage`, which already falls back to the themed
    * placeholder panel when `isPlaceholder` is true — so this is safe to omit
    * for the static seed data below, which has no real photos. */
-  image?: { url: string; alt: string; isPlaceholder: boolean };
+  image?: ImageAsset;
 }
 
 /**

@@ -40,7 +40,13 @@ export async function loadEnv() {
   }
 }
 
-export async function connect(): Promise<void> {
+export interface SeedSummary {
+  created: number;
+  updated: number;
+  total: number;
+}
+
+export async function connect(scriptName?: string): Promise<void> {
   await loadEnv();
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI || MONGODB_URI.includes("<user>")) {
@@ -51,7 +57,7 @@ export async function connect(): Promise<void> {
     process.exit(1);
   }
   await mongoose.connect(MONGODB_URI);
-  console.log("[seed] Connected to MongoDB.");
+  console.log(scriptName ? `[${scriptName}] Connected to MongoDB.` : "[seed] Connected to MongoDB.");
 }
 
 export async function disconnect(): Promise<void> {

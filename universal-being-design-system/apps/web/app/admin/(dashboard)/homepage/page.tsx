@@ -278,7 +278,7 @@ export default function HomepagePage() {
               Add Blank Slide
             </Button>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">Drag slides by the handle to reorder, or type a number in "Slide #" to jump straight to a position. Maximum of 6 slides.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Drag slides by the handle to reorder, or type a number in &quot;Slide #&quot; to jump straight to a position. Maximum of 6 slides.</p>
         </CardContent>
       </Card>
 

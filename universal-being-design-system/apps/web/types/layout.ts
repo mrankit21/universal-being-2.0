@@ -45,7 +45,11 @@ export type SocialPlatform =
   | "whatsapp";
 
 export interface SocialLink {
-  platform: SocialPlatform;
+  /** Free text in the Admin Panel (a plain Input, not a dropdown) — not
+   * constrained to `SocialPlatform`. `FooterSocialLinks` matches known
+   * platform names to a brand icon and falls back to a generic icon for
+   * anything else. */
+  platform: string;
   href: string;
   label: string;
 }

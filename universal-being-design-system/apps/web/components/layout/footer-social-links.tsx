@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Globe } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -9,7 +10,7 @@ import {
   LinkedinMark,
   WhatsappMark,
 } from "@/components/layout/social-icons";
-import type { SocialLink, SocialPlatform } from "@/types/layout";
+import type { SocialLink } from "@/types/layout";
 
 /**
  * lucide-react dropped brand/logo glyphs from its icon set (Instagram,
@@ -18,12 +19,18 @@ import type { SocialLink, SocialPlatform } from "@/types/layout";
  * which was previously a generic MessageCircle bubble) now come from the
  * local social-icons file instead, so the "Follow us" row always shows the
  * real WhatsApp glyph rather than a plain chat bubble.
+ *
+ * `platform` is free text in the Admin Panel (see types/layout.ts), so this
+ * is a best-effort match against the known brands — anything else (or a
+ * typo/different casing) falls back to a generic globe icon rather than
+ * crashing the footer.
  */
-const PLATFORM_ICON: Record<SocialPlatform, LucideIcon> = {
+const PLATFORM_ICON: Partial<Record<string, LucideIcon>> = {
   instagram: InstagramMark,
   facebook: FacebookMark,
   youtube: YoutubeMark,
   twitter: XMark,
+  x: XMark,
   linkedin: LinkedinMark,
   whatsapp: WhatsappMark,
 };
@@ -38,10 +45,10 @@ export function FooterSocialLinks({ links, className }: FooterSocialLinksProps) 
 
   return (
     <ul className={cn("flex flex-wrap items-center gap-3", className)}>
-      {links.map((social) => {
-        const Icon = PLATFORM_ICON[social.platform];
+      {links.map((social, i) => {
+        const Icon = PLATFORM_ICON[social.platform.trim().toLowerCase()] ?? Globe;
         return (
-          <li key={social.platform}>
+          <li key={`${social.platform}-${i}`}>
             <a
               href={social.href}
               target="_blank"
