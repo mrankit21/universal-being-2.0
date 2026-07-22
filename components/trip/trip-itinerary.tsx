@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { UtensilsCrossed, Home, ListChecks, ChevronLeft, ChevronRight } from "lucide-react";
+import { UtensilsCrossed, Home, ListChecks } from "lucide-react";
 
 import type { DayPlan, Trip } from "@/types/trip";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { Tag } from "@/components/primitives/tag";
 import { TripImage } from "@/components/trip/trip-image";
+import { placeholderImage } from "@/lib/image/resolve-image";
 import { themeRegistry } from "@/data/themes";
 import type { ThemeConfig } from "@/types/theme";
-
 
 export interface TripItineraryProps {
   trip: Trip;
@@ -22,99 +21,54 @@ const mealLabel: Record<string, string> = {
   dinner: "Dinner",
 };
 
-interface LocationGroup {
-  location: string;
-  days: DayPlan[];
+/** Resolves the destination name shown on a day's image overlay. Prefers
+ * the admin-set `day.location` (already correct — e.g. "Lachung", "Gangtok",
+ * "Udaipur") since a day's title alone can't reliably imply its place (e.g.
+ * "Arrival, Lake Pichola" says nothing textually about "Udaipur"). Falls
+ * back to the trip's own destination name for the rare day with no
+ * `location` set (kept purely as a safety net, never the primary path). */
+function getDestinationName(day: DayPlan, trip: Trip): string {
+  if (day.location?.trim()) return day.location.trim();
+  return trip.destinationName;
 }
 
-/** Groups consecutive days that share the same `location` into one banner
- * block. Days with no `location` (pure transit days) are never grouped —
- * each renders as its own single-day entry so the banner only appears where
- * an admin has actually set a destination. */
-function groupByLocation(itinerary: DayPlan[]): LocationGroup[] {
-  const groups: LocationGroup[] = [];
-  for (const day of itinerary) {
-    const last = groups[groups.length - 1];
-    if (day.location && last?.location === day.location) {
-      last.days.push(day);
-    } else {
-      groups.push({ location: day.location ?? "", days: [day] });
-    }
-  }
-  return groups;
-}
-
-function DestinationBanner({ group, theme }: { group: LocationGroup; theme: ThemeConfig }) {
-  const images = group.days.flatMap((d) => d.images);
-  const [index, setIndex] = useState(0);
-  if (images.length === 0) return null;
-  const active = images[Math.min(index, images.length - 1)];
-  const thumbs = images.slice(1, 4);
-  const extra = images.length - 1 - thumbs.length;
+/** Part 1 — the always-visible destination image card. Shows the day's own
+ * photo (first uploaded image) with a bottom-left overlay: day number, "Day
+ * in", destination name. Not part of the accordion trigger — only the
+ * header row below it toggles the expanded content. */
+function DayImageCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: ThemeConfig }) {
+  const destination = getDestinationName(day, trip);
+  const cover = day.images[0] ?? placeholderImage(destination);
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
-      <TripImage asset={active} theme={theme} variant="hero" containerClassName="aspect-[16/10] sm:aspect-[21/9]">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+    <div className="relative overflow-hidden rounded-[20px]">
+      <TripImage
+        asset={cover}
+        theme={theme}
+        variant="hero"
+        containerClassName="aspect-[4/3] sm:aspect-[16/9] rounded-[20px]"
+      >
+        <div className="absolute inset-0 rounded-[20px] bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
       </TripImage>
 
-      <div className="absolute left-4 bottom-4 flex items-baseline gap-2 text-white sm:left-6 sm:bottom-6">
-        <span className="font-display text-4xl font-semibold leading-none sm:text-5xl">{group.days.length}</span>
+      <div className="absolute inset-x-4 bottom-4 flex items-baseline gap-2 text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.55)] sm:inset-x-6 sm:bottom-6">
+        <span className="font-display text-4xl font-semibold leading-none sm:text-5xl">{day.day}</span>
         <span className="flex flex-col text-sm leading-tight">
-          <span>{group.days.length === 1 ? "Day in" : "Days in"}</span>
-          <span className="font-display text-lg font-medium sm:text-xl">{group.location}</span>
+          <span>Day in</span>
+          <span className="font-display text-lg font-medium sm:text-xl">{destination}</span>
         </span>
       </div>
-
-      {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            aria-label="Previous photo"
-            onClick={() => setIndex((i) => (i - 1 + images.length) % images.length)}
-            className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white hover:bg-black/60 sm:flex"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Next photo"
-            onClick={() => setIndex((i) => (i + 1) % images.length)}
-            className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/40 p-1.5 text-white hover:bg-black/60 sm:flex"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white sm:bottom-6">
-            {index + 1}/{images.length}
-          </span>
-        </>
-      )}
-
-      {thumbs.length > 0 && (
-        <div className="absolute bottom-3 right-3 flex items-center sm:bottom-5 sm:right-5">
-          {thumbs.map((asset, i) => (
-            <div
-              key={i}
-              className="-ml-2 size-9 overflow-hidden rounded-full border-2 border-white first:ml-0 sm:size-10"
-              style={{ zIndex: thumbs.length - i }}
-            >
-              <TripImage asset={asset} theme={theme} variant="thumbnail" containerClassName="size-full" />
-            </div>
-          ))}
-          {extra > 0 && (
-            <div className="-ml-2 flex size-9 items-center justify-center rounded-full border-2 border-white bg-ub-brass-500 text-xs font-semibold text-white sm:size-10">
-              +{extra}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-function DayCard({ day, theme }: { day: DayPlan; theme: ThemeConfig }) {
+/** Part 2 — the compact accordion header + expandable detail content. The
+ * image card above stays put; only this part toggles. */
+function DayCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: ThemeConfig }) {
   return (
-    <AccordionItem value={`day-${day.day}`} className="rounded-lg border border-border bg-card px-5">
+    <AccordionItem value={`day-${day.day}`} className="flex flex-col gap-3 rounded-lg border border-border bg-card px-5">
+      <DayImageCard day={day} trip={trip} theme={theme} />
+
       <AccordionTrigger>
         <span className="flex items-center gap-3 text-left">
           <span className="shrink-0 rounded-full bg-ub-brass-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ub-brass-600">
@@ -150,9 +104,9 @@ function DayCard({ day, theme }: { day: DayPlan; theme: ThemeConfig }) {
             {day.meals.length === 0 && !day.stay && <Tag>On the move</Tag>}
           </div>
 
-          {day.images.length > 0 && (
+          {day.images.length > 1 && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {day.images.map((asset, i) => (
+              {day.images.slice(1).map((asset, i) => (
                 <TripImage key={i} asset={asset} theme={theme} variant="thumbnail" containerClassName="rounded-md" />
               ))}
             </div>
@@ -165,16 +119,17 @@ function DayCard({ day, theme }: { day: DayPlan; theme: ThemeConfig }) {
 
 /**
  * TripItinerary — Architecture §2/§5: "renders `itinerary[]` — day accordion
- * / swipe-through on mobile ... same data, one component." Days that share
- * a `location` (consecutive) are grouped under a destination photo banner
- * (dots/counter, avatar-stack thumbnails) above their accordion cards —
- * days without a `location` (pure transit days) render as plain cards with
- * no banner, same as before.
+ * / swipe-through on mobile ... same data, one component."
+ *
+ * Each day is its own browsable unit: a destination image card (day number +
+ * "Day in <place>" overlay) is always visible, with a compact accordion
+ * header immediately below it. All days start collapsed — nobody auto-opens
+ * — and only one day's detail content can be open at a time
+ * (`Accordion type="single" collapsible`, no `defaultValue`).
  */
 export function TripItinerary({ trip }: TripItineraryProps) {
   if (trip.itinerary.length === 0) return null;
   const theme = themeRegistry[trip.themeKey];
-  const groups = groupByLocation(trip.itinerary);
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-8">
@@ -184,23 +139,11 @@ export function TripItinerary({ trip }: TripItineraryProps) {
         className="mb-5"
       />
 
-      <div className="flex flex-col gap-4">
-        {groups.map((group, gi) => (
-          <div key={gi} className="flex flex-col gap-4">
-            {group.location && <DestinationBanner group={group} theme={theme} />}
-            <Accordion
-              type="single"
-              collapsible
-              defaultValue={gi === 0 ? `day-${group.days[0].day}` : undefined}
-              className="flex flex-col gap-3"
-            >
-              {group.days.map((day) => (
-                <DayCard key={day.day} day={day} theme={theme} />
-              ))}
-            </Accordion>
-          </div>
+      <Accordion type="single" collapsible className="flex flex-col gap-4">
+        {trip.itinerary.map((day) => (
+          <DayCard key={day.day} day={day} trip={trip} theme={theme} />
         ))}
-      </div>
+      </Accordion>
     </section>
   );
 }
