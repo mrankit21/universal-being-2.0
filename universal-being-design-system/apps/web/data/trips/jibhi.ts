@@ -17,6 +17,11 @@ export const jibhiTrip = buildTrip({
   groupSize: { min: 8, max: 14 },
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
+  circuitGroup: "jibhi-circuit",
+  destinationRoutes: [
+    { id: "jibhi-route-1", stops: ["Jibhi", "Tirthan Valley"] },
+    { id: "jibhi-route-2", stops: ["Jibhi", "Jalori Pass", "Serolsar Lake"] },
+  ],
   priceBase: 8999,
   priceDiscounted: 7999,
   bookingAmount: 1500,

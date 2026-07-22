@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Trip } from "@/types/trip";
+import type { Trip, ImageAsset } from "@/types/trip";
 import type { Testimonial } from "@/data/home/testimonials";
 import { tripRegistry, tripSlugs } from "@/data/trips";
 import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
@@ -33,6 +33,64 @@ function isPublished(trip: Trip) {
   return trip.status === "published";
 }
 
+/** True only for an admin-uploaded image — `_builder.ts`'s seed placeholder
+ * always sets `isPlaceholder: true` and an empty `url`, so that flag (not
+ * just "field exists") is what distinguishes "never uploaded" from "real
+ * photo". */
+function hasRealImage(img?: ImageAsset | null): img is ImageAsset {
+  return !!img && !img.isPlaceholder && !!img.url;
+}
+
+function hasRealGallery(gallery?: ImageAsset[] | null): boolean {
+  return !!gallery && gallery.some(hasRealImage);
+}
+
+/** Circuit Group Shared Media: a duration variant (4D/5D/6D...) that hasn't
+ * had its own hero/cover/gallery images uploaded yet borrows them from
+ * whichever sibling in the same `circuitGroup` DOES have real images — so
+ * an admin only has to upload photos once per circuit, not once per
+ * duration variant. The moment a variant gets its own real image uploaded,
+ * that field always wins over any sibling's. Purely a read-time fallback —
+ * nothing is written back to the DB, so this never risks another
+ * overwrite-style data loss. */
+function withSharedCircuitImages(trip: Trip, siblings: Trip[]): Trip {
+  const ownHasHero = hasRealImage(trip.heroImage);
+  const ownHasCover = hasRealImage(trip.coverImage);
+  const ownHasGallery = hasRealGallery(trip.gallery);
+  if (ownHasHero && ownHasCover && ownHasGallery) return trip;
+
+  const source = siblings.find(
+    (s) =>
+      s.slug !== trip.slug &&
+      (hasRealImage(s.heroImage) || hasRealImage(s.coverImage) || hasRealGallery(s.gallery))
+  );
+  if (!source) return trip;
+
+  return {
+    ...trip,
+    heroImage: ownHasHero ? trip.heroImage : source.heroImage,
+    heroImageMobile: hasRealImage(trip.heroImageMobile)
+      ? trip.heroImageMobile
+      : (source.heroImageMobile ?? source.heroImage),
+    coverImage: ownHasCover ? trip.coverImage : source.coverImage,
+    gallery: ownHasGallery ? trip.gallery : source.gallery,
+  };
+}
+
+/** Applies `withSharedCircuitImages` across a whole trip list by grouping
+ * on `circuitGroup` first — used by `getAllTrips()` so listings/cards get
+ * the same fallback as the single-trip detail page. */
+function applySharedCircuitImages(trips: Trip[]): Trip[] {
+  const byGroup = new Map<string, Trip[]>();
+  for (const t of trips) {
+    if (!t.circuitGroup) continue;
+    const arr = byGroup.get(t.circuitGroup) ?? [];
+    arr.push(t);
+    byGroup.set(t.circuitGroup, arr);
+  }
+  return trips.map((t) => (t.circuitGroup ? withSharedCircuitImages(t, byGroup.get(t.circuitGroup) ?? []) : t));
+}
+
 /** Backfills `itinerary[].images`, `accommodation[].images`, and
  * `seo.keywords` for Trip documents written before those fields existed —
  * `.lean()` reads return exactly what's stored, without Mongoose schema
@@ -56,6 +114,7 @@ function normalizeTrip(trip: Trip): Trip {
     highlights: trip.highlights ?? [],
     departureDates: trip.departureDates ?? [],
     bestSeason: trip.bestSeason ?? [],
+    destinationRoutes: trip.destinationRoutes ?? [],
   };
 }
 
@@ -102,13 +161,13 @@ export async function getAllTrips(): Promise<Trip[]> {
       // collection hasn't been seeded yet -- show static data instead of an
       // empty page. Once `npm run seed:trips` has run, dbTrips.length > 0
       // and this branch stops being hit; the DB becomes the sole source.
-      if (dbTrips.length === 0) return staticTrips();
-      return dbTrips;
+      if (dbTrips.length === 0) return applySharedCircuitImages(staticTrips());
+      return applySharedCircuitImages(dbTrips);
     } catch (err) {
       console.error("[getAllTrips] MongoDB unreachable, falling back to static trip registry:", err);
     }
   }
-  return staticTrips();
+  return applySharedCircuitImages(staticTrips());
 }
 
 export const getTripBySlug = cache(async function getTripBySlug(slug: string): Promise<Trip | null> {
@@ -116,7 +175,19 @@ export const getTripBySlug = cache(async function getTripBySlug(slug: string): P
     try {
       await connectToDatabase();
       const doc = await TripModel.findOne({ slug, status: "published" }).lean();
-      if (doc) return normalizeTrip(toEntity(doc) as unknown as Trip);
+      if (doc) {
+        const trip = normalizeTrip(toEntity(doc) as unknown as Trip);
+        if (!trip.circuitGroup) return trip;
+        // Fetch the rest of the circuit directly (cheaper than a full
+        // getAllTrips() call) purely to borrow images for fields this
+        // trip hasn't had its own uploaded for yet.
+        const siblingDocs = await TripModel.find({
+          circuitGroup: trip.circuitGroup,
+          status: "published",
+        }).lean();
+        const siblings = siblingDocs.map((d) => normalizeTrip(toEntity(d) as unknown as Trip));
+        return withSharedCircuitImages(trip, siblings);
+      }
       // Not found by slug -- before returning 404, check whether the
       // collection is empty (unseeded) rather than this slug genuinely
       // not existing. Same temporary safety net as getAllTrips().
@@ -128,7 +199,11 @@ export const getTripBySlug = cache(async function getTripBySlug(slug: string): P
   }
   const trip = tripRegistry[slug];
   if (!trip || !isPublished(trip)) return null;
-  return trip;
+  if (!trip.circuitGroup) return trip;
+  const siblings = Object.values(tripRegistry).filter(
+    (t) => t.circuitGroup === trip.circuitGroup && isPublished(t)
+  );
+  return withSharedCircuitImages(trip, siblings);
 });
 
 export async function getTripSlugs(): Promise<string[]> {
@@ -181,6 +256,22 @@ export async function searchTrips(filters: TripListFilters): Promise<Trip[]> {
   }
 
   return trips;
+}
+
+/** Powers the real "Choose Trip Duration" cards (`TripDurationSelector`):
+ * every other *published* Trip sharing this Trip's `circuitGroup`, plus
+ * this Trip itself, sorted by duration ascending. Each sibling is a fully
+ * independent Trip document — its own itinerary, pricing, and batch dates
+ * — the group tag only says "these are the same circuit at different
+ * lengths." Returns an empty array (selector self-hides) when `circuitGroup`
+ * is unset or no other published Trip shares it. Works against MongoDB or
+ * the local seed registry, same swap point as every other function here. */
+export async function getCircuitSiblings(trip: Trip): Promise<Trip[]> {
+  if (!trip.circuitGroup) return [];
+  const all = await getAllTrips();
+  const siblings = all.filter((t) => t.circuitGroup === trip.circuitGroup);
+  if (siblings.length < 2) return [];
+  return siblings.sort((a, b) => a.duration.days - b.duration.days);
 }
 
 /** "You might also like" — Step 7.6E Part 5: scored by destination, theme,

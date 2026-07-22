@@ -17,6 +17,12 @@ export const ladakhTrip = buildTrip({
   groupSize: { min: 10, max: 14 },
   pickup: "Leh Airport / Leh city hotel",
   drop: "Leh Airport / Leh city hotel",
+  circuitGroup: "ladakh-circuit",
+  destinationRoutes: [
+    { id: "ladakh-route-1", stops: ["Leh", "Nubra Valley", "Pangong"] },
+    { id: "ladakh-route-2", stops: ["Leh", "Tso Moriri", "Pangong"] },
+    { id: "ladakh-route-3", stops: ["Leh", "Kargil", "Zanskar"] },
+  ],
   priceBase: 22999,
   priceDiscounted: 20499,
   bookingAmount: 3500,

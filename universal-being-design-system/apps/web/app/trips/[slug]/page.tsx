@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials } from "@/lib/api/trips";
+import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials, getCircuitSiblings } from "@/lib/api/trips";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { siteConfig } from "@/data/layout/site-config";
 import { TripHero } from "@/components/trip/trip-hero";
+import { TripDurationSelector } from "@/components/trip/trip-duration-selector";
+import { TripDestinationRoutes } from "@/components/trip/trip-destination-routes";
 import { TripGallery } from "@/components/trip/trip-gallery";
 import { TripHighlights } from "@/components/trip/trip-highlights";
 import { TripBookingCard } from "@/components/trip/trip-booking-card";
@@ -78,6 +80,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
 
   const relatedTrips = await getRelatedTrips(trip);
   const assignedReviews = await getTripReviewTestimonials(trip);
+  const circuitSiblings = await getCircuitSiblings(trip);
 
   return (
     <div className="pb-16">
@@ -89,6 +92,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
           <TripBookingCard trip={trip} />
         </div>
       </div>
+      <TripDurationSelector trip={trip} siblings={circuitSiblings} />
       <TripGallery trip={trip} />
       <TripHighlights trip={trip} />
       <TripItinerary trip={trip} />
@@ -97,6 +101,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
       <TripTransportation trip={trip} />
       <TripInclusions trip={trip} />
       <TripPricingTable trip={trip} />
+      <TripDestinationRoutes trip={trip} />
       <TripMap trip={trip} />
       <TripReviews trip={trip} assignedReviews={assignedReviews} />
       <TripFAQ trip={trip} />

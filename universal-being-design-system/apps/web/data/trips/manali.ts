@@ -22,6 +22,11 @@ export const manaliTrip = buildTrip({
   groupSize: { min: 10, max: 16 },
   pickup: "Delhi (Volvo pickup point)",
   drop: "Delhi (Volvo drop point)",
+  circuitGroup: "manali-circuit",
+  destinationRoutes: [
+    { id: "manali-route-1", stops: ["Manali", "Solang", "Sissu"] },
+    { id: "manali-route-2", stops: ["Manali", "Kasol", "Tosh"] },
+  ],
   priceBase: 12999,
   priceDiscounted: 10999,
   bookingAmount: 2000,

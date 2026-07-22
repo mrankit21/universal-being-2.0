@@ -17,6 +17,11 @@ export const choptaTrip = buildTrip({
   groupSize: { min: 10, max: 18 },
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
+  circuitGroup: "chopta-circuit",
+  destinationRoutes: [
+    { id: "chopta-route-1", stops: ["Chopta", "Tungnath", "Chandrashila"] },
+    { id: "chopta-route-2", stops: ["Chopta", "Deoriatal"] },
+  ],
   priceBase: 6999,
   priceDiscounted: 5999,
   bookingAmount: 1500,

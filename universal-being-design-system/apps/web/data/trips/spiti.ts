@@ -17,6 +17,12 @@ export const spitiTrip = buildTrip({
   groupSize: { min: 8, max: 12 },
   pickup: "Manali (meeting point) or Shimla",
   drop: "Manali or Shimla",
+  circuitGroup: "spiti-circuit",
+  destinationRoutes: [
+    { id: "spiti-route-1", stops: ["Kaza", "Key Monastery", "Kibber"] },
+    { id: "spiti-route-2", stops: ["Kaza", "Chandratal"] },
+    { id: "spiti-route-3", stops: ["Manali", "Kaza", "Shimla"] },
+  ],
   priceBase: 18999,
   priceDiscounted: 16999,
   bookingAmount: 3000,

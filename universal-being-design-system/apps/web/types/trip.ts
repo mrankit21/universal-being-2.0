@@ -152,6 +152,18 @@ export interface TripSeo {
   canonicalUrl?: string;
 }
 
+/**
+ * One alternate multi-stop route built from the same destination — the
+ * "Destination Routes" list on the Trip Details page. Optional link target
+ * lets each row point at a real Trip once one exists for that route.
+ */
+export interface DestinationRoute {
+  id: string;
+  /** Ordered list of stop names, e.g. ["Leh", "Nubra Valley", "Pangong"]. */
+  stops: string[];
+  href?: string;
+}
+
 export interface Trip {
   id: string;
   slug: string;
@@ -213,6 +225,23 @@ export interface Trip {
   mealPlan: MealPlan;
 
   price: TripPrice;
+
+  /** Groups this Trip with its sibling duration variants — e.g. a 4D Quick
+   * Loop, 6D, and 9D Extended Explorer of the same Ladakh circuit are three
+   * separate, fully independent Trip documents (own itinerary, pricing,
+   * batches) that merely share this same string. `getCircuitSiblings()` in
+   * `lib/api/trips.ts` looks up every other published Trip with the same
+   * `circuitGroup` and `TripDurationSelector` renders one card per sibling
+   * (this Trip included), each linking straight to its own Trip page —
+   * no shared/duplicated data, no decorative price label. Optional —
+   * when unset, or when this is the only published Trip with that value,
+   * `TripDurationSelector` self-hides and the page renders exactly as it
+   * did before this field existed. */
+  circuitGroup?: string;
+  /** "Destination Routes" list (see `DestinationRoute`). Optional — self-hides
+   * when unset or empty, same backward-compatible pattern as everywhere else
+   * in this file. */
+  destinationRoutes?: DestinationRoute[];
 
   /** Convenience mirror of the next open batch — quick-editable in Admin
    * without opening the batch editor. `departureDates[]` remains the source

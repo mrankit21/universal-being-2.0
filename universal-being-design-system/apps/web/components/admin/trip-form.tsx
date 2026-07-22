@@ -22,7 +22,7 @@ import { TripGalleryUploadField } from "./trip-gallery-upload-field";
 import { StringListEditor } from "./string-list-editor";
 import { ArrayFieldEditor } from "./array-field-editor";
 import { TestimonialPickerField } from "./testimonial-picker-field";
-import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview } from "@/types/trip";
+import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview, DestinationRoute } from "@/types/trip";
 import type { ThemeKey } from "@/types/theme";
 
 const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"];
@@ -67,6 +67,8 @@ function blank(): TripFormValue {
     accommodation: [],
     mealPlan: { breakfast: false, lunch: false, dinner: false, snacks: false, description: "" },
     price: { base: 0, bookingAmount: 0, currency: "INR" },
+    circuitGroup: "",
+    destinationRoutes: [],
     totalSeats: 0,
     availableSeats: 0,
     departureDates: [],
@@ -103,6 +105,8 @@ function normalize(v: TripFormValue): TripFormValue {
     accommodation: v.accommodation.map((hotel) => ({ ...hotel, images: hotel.images ?? [], amenities: hotel.amenities ?? [] })),
     mealPlan: { ...v.mealPlan, snacks: v.mealPlan.snacks ?? false },
     reviewIds: v.reviewIds ?? [],
+    circuitGroup: v.circuitGroup ?? "",
+    destinationRoutes: v.destinationRoutes ?? [],
     seo: { ...v.seo, keywords: v.seo.keywords ?? [] },
     departureDates: v.departureDates.map((batch) => ({ ...batch, isPublished: batch.isPublished ?? true })),
   };
@@ -200,6 +204,17 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
               <FormField label="Destination Name">
                 <Input value={value.destinationName} onChange={(e) => set("destinationName", e.target.value)} required />
               </FormField>
+              <FormField
+                label="Circuit Group"
+                className="md:col-span-2"
+                hint='Optional. Give two or more Trips the exact same value (e.g. "ladakh-circuit") to group them as duration variants of one circuit — each keeps its own itinerary, pricing, and batches, but the Trip page shows a "Choose Trip Duration" card linking to every Trip sharing this value. Leave blank if this Trip has no duration siblings.'
+              >
+                <Input
+                  value={value.circuitGroup ?? ""}
+                  onChange={(e) => set("circuitGroup", e.target.value)}
+                  placeholder="e.g. ladakh-circuit"
+                />
+              </FormField>
               <FormField label="Theme">
                 <Select value={value.themeKey} onValueChange={(v) => set("themeKey", v as ThemeKey)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -256,6 +271,29 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
               </FormField>
               <FormField label="Highlights" className="md:col-span-2">
                 <StringListEditor items={value.highlights} onChange={(v) => set("highlights", v)} placeholder="e.g. Sunrise at Chandratal" />
+              </FormField>
+              <FormField
+                label="Destination Routes"
+                className="md:col-span-2"
+                hint="Optional. Other multi-stop route combinations built from the same destination (e.g. alternate Ladakh loops). Add a Trip URL to make a row clickable, or leave it blank to list it as not-yet-linked."
+              >
+                <ArrayFieldEditor<DestinationRoute>
+                  items={value.destinationRoutes ?? []}
+                  onChange={(v) => set("destinationRoutes", v)}
+                  createItem={() => ({ id: nextId("route"), stops: [], href: "" })}
+                  addLabel="Add route"
+                  emptyMessage="No alternate destination routes added yet."
+                  renderItem={(route, _index, update) => (
+                    <div className="grid gap-3 sm:grid-cols-[1fr_200px]">
+                      <FormField label="Stops" hint='Ordered, e.g. "Leh", "Nubra Valley", "Pangong"'>
+                        <StringListEditor items={route.stops} onChange={(v) => update({ stops: v })} placeholder="e.g. Nubra Valley" />
+                      </FormField>
+                      <FormField label="Link to Trip" hint="Optional — e.g. /trips/ladakh-himalayan-circuit">
+                        <Input value={route.href ?? ""} onChange={(e) => update({ href: e.target.value })} placeholder="/trips/..." />
+                      </FormField>
+                    </div>
+                  )}
+                />
               </FormField>
             </CardContent>
           </Card>

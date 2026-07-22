@@ -51,6 +51,12 @@ export const mealPlanSchema = z.object({
   description: z.string().default(""),
 });
 
+export const destinationRouteSchema = z.object({
+  id: z.string(),
+  stops: z.array(z.string()).default([]),
+  href: z.string().optional(),
+});
+
 export const tripReviewSchema = z.object({
   id: z.string(),
   customerName: z.string().min(1),
@@ -100,6 +106,8 @@ export const tripSchema = z.object({
     bookingAmount: z.number().min(0),
     currency: z.string().default("INR"),
   }),
+  circuitGroup: z.string().trim().optional(),
+  destinationRoutes: z.array(destinationRouteSchema).default([]),
   totalSeats: z.number().int().min(0),
   availableSeats: z.number().int().min(0),
   departureDates: z.array(departureDateSchema).default([]),

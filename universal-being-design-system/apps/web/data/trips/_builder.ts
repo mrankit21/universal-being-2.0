@@ -8,6 +8,7 @@ import type {
   AccommodationEntry,
   MealPlan,
   TripReview,
+  DestinationRoute,
 } from "@/types/trip";
 import type { ThemeKey } from "@/types/theme";
 import { placeholderImage } from "@/lib/image/resolve-image";
@@ -49,6 +50,13 @@ export interface TripSeedInput {
   reviews?: TripReview[];
   /** Optional Testimonial-collection review references (Step 7.6D §9). Defaults to none. */
   reviewIds?: string[];
+  /** Links this Trip to its sibling duration variants — see the doc comment
+   * on `Trip.circuitGroup` in `types/trip.ts`. Omit for trips that only
+   * ever offer the one fixed circuit above `durationDays`/`priceBase`. */
+  circuitGroup?: string;
+  /** "Destination Routes" list. Optional — omit when this destination has
+   * no other multi-stop route worth cross-promoting yet. */
+  destinationRoutes?: DestinationRoute[];
   priceBase: number;
   priceDiscounted?: number;
   bookingAmount: number;
@@ -139,6 +147,9 @@ export function buildTrip(input: TripSeedInput): Trip {
       bookingAmount: input.bookingAmount,
       currency: "INR",
     },
+
+    circuitGroup: input.circuitGroup,
+    destinationRoutes: input.destinationRoutes,
 
     totalSeats: input.totalSeats,
     availableSeats: input.availableSeats,

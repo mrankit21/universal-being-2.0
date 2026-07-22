@@ -17,6 +17,11 @@ export const udaipurTrip = buildTrip({
   groupSize: { min: 12, max: 18 },
   pickup: "Udaipur Railway Station / Airport",
   drop: "Udaipur Railway Station / Airport",
+  circuitGroup: "udaipur-circuit",
+  destinationRoutes: [
+    { id: "udaipur-route-1", stops: ["Udaipur", "Kumbhalgarh"] },
+    { id: "udaipur-route-2", stops: ["Udaipur", "Ranakpur", "Mount Abu"] },
+  ],
   priceBase: 9999,
   priceDiscounted: 8999,
   bookingAmount: 1500,

@@ -17,6 +17,11 @@ export const dharamshalaTrip = buildTrip({
   groupSize: { min: 10, max: 16 },
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
+  circuitGroup: "dharamshala-circuit",
+  destinationRoutes: [
+    { id: "dharamshala-route-1", stops: ["McLeod Ganj", "Triund", "Dharamshala"] },
+    { id: "dharamshala-route-2", stops: ["McLeod Ganj", "Bir Billing"] },
+  ],
   priceBase: 8499,
   priceDiscounted: 7499,
   bookingAmount: 1500,

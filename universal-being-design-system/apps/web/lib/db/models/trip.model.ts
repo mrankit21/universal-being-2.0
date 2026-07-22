@@ -73,6 +73,15 @@ const MealPlanSchema = new Schema(
   { _id: false }
 );
 
+const DestinationRouteSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    stops: { type: [String], default: [] },
+    href: { type: String },
+  },
+  { _id: false }
+);
+
 const TripReviewSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -114,6 +123,9 @@ export interface TripDocument extends Document {
   accommodation: unknown[];
   mealPlan: unknown;
   price: { base: number; discounted?: number; bookingAmount: number; currency: string };
+  /** See `Trip.circuitGroup` doc comment in `types/trip.ts`. */
+  circuitGroup?: string;
+  destinationRoutes?: unknown[];
   totalSeats: number;
   availableSeats: number;
   departureDates: unknown[];
@@ -197,6 +209,9 @@ const TripSchema = new Schema<TripDocument>(
       bookingAmount: { type: Number, required: true, default: 0 },
       currency: { type: String, required: true, default: "INR" },
     },
+
+    circuitGroup: { type: String, index: true, trim: true },
+    destinationRoutes: { type: [DestinationRouteSchema], default: [] },
 
     totalSeats: { type: Number, required: true, default: 0 },
     availableSeats: { type: Number, required: true, default: 0 },
