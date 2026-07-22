@@ -170,6 +170,43 @@ export async function getAllTrips(): Promise<Trip[]> {
   return applySharedCircuitImages(staticTrips());
 }
 
+/**
+ * Trip Architecture Fix (2026-07): the `/trips` listing must show one card
+ * per destination circuit ("Parent Trip"), not one card per duration
+ * variant — duration variants (2D/3D/4D siblings sharing a `circuitGroup`)
+ * stay reachable via `TripDurationSelector` on the Parent's own detail page
+ * (`getCircuitSiblings()`), unchanged.
+ *
+ * Picks a single representative per `circuitGroup`: the sibling flagged
+ * `isCircuitParent`, or — when none is flagged — the shortest-duration
+ * sibling, so this works with zero data migration on existing Trip
+ * documents. Trips with no `circuitGroup` (standalone destinations) pass
+ * through untouched, one card each, same as today.
+ */
+export async function getListedTrips(): Promise<Trip[]> {
+  const trips = await getAllTrips();
+
+  const byGroup = new Map<string, Trip[]>();
+  const standalone: Trip[] = [];
+  for (const t of trips) {
+    if (!t.circuitGroup) {
+      standalone.push(t);
+      continue;
+    }
+    const arr = byGroup.get(t.circuitGroup) ?? [];
+    arr.push(t);
+    byGroup.set(t.circuitGroup, arr);
+  }
+
+  const parents = Array.from(byGroup.values()).map((siblings) => {
+    const flagged = siblings.find((t) => t.isCircuitParent);
+    if (flagged) return flagged;
+    return siblings.reduce((shortest, t) => (t.duration.days < shortest.duration.days ? t : shortest));
+  });
+
+  return [...standalone, ...parents];
+}
+
 export const getTripBySlug = cache(async function getTripBySlug(slug: string): Promise<Trip | null> {
   if (isDatabaseConfigured()) {
     try {

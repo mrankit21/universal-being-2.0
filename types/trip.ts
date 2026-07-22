@@ -243,6 +243,18 @@ export interface Trip {
    * `TripDurationSelector` self-hides and the page renders exactly as it
    * did before this field existed. */
   circuitGroup?: string;
+  /** Marks this Trip as the representative "Parent Trip" card shown on the
+   * `/trips` listing page for its `circuitGroup` (Trip Architecture Fix,
+   * 2026-07). Every duration variant in a circuit remains a fully
+   * independent, independently-editable Trip document — this flag only
+   * decides which ONE of them surfaces on the listing grid; all siblings
+   * (this one included) still render inside `TripDurationSelector` on the
+   * detail page exactly as before. At most one Trip per `circuitGroup`
+   * should have this set `true`. Optional — when unset for every sibling in
+   * a group, `getListedTrips()` in `lib/api/trips.ts` falls back to the
+   * shortest-duration sibling, so this ships with zero required data
+   * migration on existing Trip documents. */
+  isCircuitParent?: boolean;
   /** "Destination Routes" list (see `DestinationRoute`). Optional — self-hides
    * when unset or empty, same backward-compatible pattern as everywhere else
    * in this file. */
