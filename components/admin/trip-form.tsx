@@ -7,7 +7,8 @@
  * matching Architecture §7's TripEditor).
  */
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,6 +115,9 @@ function normalize(v: TripFormValue): TripFormValue {
 
 export function TripForm({ tripId, initialValue }: { tripId?: string; initialValue?: TripFormValue }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") ?? "basic";
+
   const [value, setValue] = useState<TripFormValue>(initialValue ? normalize(initialValue) : blank());
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]> | null>(null);
@@ -175,7 +179,7 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
         </Select>
       </div>
 
-      <Tabs defaultValue="basic">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="pricing">Pricing & Batches</TabsTrigger>
@@ -483,7 +487,8 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                 onChange={(v) => set("itinerary", v)}
                 addLabel="Add day"
                 emptyMessage="No itinerary days yet."
-                createItem={() => ({ day: value.itinerary.length + 1, title: "", description: "", activities: [], meals: [], images: [] })}
+                createItem={() => ({ day: value.itinerary.length + 1, title: "", description: "", activities: [], meals: [], location: "", images: [] })}
+
                 draggable
                 renderItem={(day, _i, update) => (
                   <div className="space-y-3">
@@ -495,6 +500,12 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                         <Input value={day.title} onChange={(e) => update({ title: e.target.value })} />
                       </FormField>
                     </div>
+                    <FormField
+                      label="Location"
+                      hint='Destination for this day (e.g. "Old Manali", "Kaza"). Consecutive days with the same Location are grouped under one photo banner on the Trip page. Leave blank on pure travel/transit days.'
+                    >
+                      <Input value={day.location ?? ""} onChange={(e) => update({ location: e.target.value })} placeholder="e.g. Old Manali" />
+                    </FormField>
                     <FormField label="Description">
                       <Textarea rows={2} value={day.description} onChange={(e) => update({ description: e.target.value })} />
                     </FormField>
@@ -504,6 +515,7 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                     <FormField label="Stay">
                       <Input value={day.stay ?? ""} onChange={(e) => update({ stay: e.target.value })} placeholder="e.g. Riverside camp" />
                     </FormField>
+
                     <FormField label="Day Images" hint="Optional — photos specific to this day">
                       <ArrayFieldEditor
                         items={day.images}

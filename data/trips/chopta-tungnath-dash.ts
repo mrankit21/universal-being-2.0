@@ -51,7 +51,7 @@ export const choptaTungnathDashTrip = buildTrip({
     "Compact single-weekend format",
   ],
   itinerary: [
-    { day: 1, title: "Delhi to Chopta, Tungnath trek", description: "Overnight travel from Delhi, arrive at Chopta base early morning, then trek up to Tungnath temple and back the same day.", activities: ["Overnight shared-vehicle journey", "Trek to Tungnath temple", "Return to base camp"], meals: ["dinner"], stay: "Guesthouse/camp at Chopta" },
+    { day: 1, title: "Delhi to Chopta, Tungnath trek", location: "Tungnath", description: "Overnight travel from Delhi, arrive at Chopta base early morning, then trek up to Tungnath temple and back the same day.", activities: ["Overnight shared-vehicle journey", "Trek to Tungnath temple", "Return to base camp"], meals: ["dinner"], stay: "Guesthouse/camp at Chopta" },
     { day: 2, title: "Chopta to Delhi", description: "Morning at leisure, then begin the return journey to Delhi, arriving late night.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

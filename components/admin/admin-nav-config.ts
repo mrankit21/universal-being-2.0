@@ -15,6 +15,8 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "LayoutDashboard", permission: "dashboard:view" },
   { label: "Destinations", href: "/admin/destinations", icon: "MapPin", permission: "destinations:read" },
   { label: "Trips", href: "/admin/trips", icon: "Compass", permission: "trips:read" },
+  { label: "Itinerary", href: "/admin/itinerary", icon: "MapPinned", permission: "trips:read" },
+
   { label: "Themes", href: "/admin/themes", icon: "Palette", permission: "themes:read" },
   { label: "Homepage", href: "/admin/homepage", icon: "LayoutTemplate", permission: "homepage:read" },
   { label: "Testimonials", href: "/admin/testimonials", icon: "MessageSquareQuote", permission: "homepage:read" },

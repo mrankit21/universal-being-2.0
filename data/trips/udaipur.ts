@@ -49,9 +49,9 @@ export const udaipurTrip = buildTrip({
     "Saheliyon ki Bari gardens",
   ],
   itinerary: [
-    { day: 1, title: "Arrival, Lake Pichola", description: "Arrive in Udaipur, check in, then an evening boat ride on Lake Pichola followed by a rooftop dinner.", activities: ["Hotel check-in", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
-    { day: 2, title: "City Palace & old city", description: "Full day covering the City Palace, Jagdish Temple, and the old-city lanes, with time for local shopping.", activities: ["City Palace guided walk", "Jagdish Temple", "Old-city lane walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
-    { day: 3, title: "Saheliyon ki Bari, departure", description: "Morning visit to Saheliyon ki Bari gardens, then checkout and drop.", activities: ["Saheliyon ki Bari gardens", "Checkout and drop"], meals: ["breakfast"] },
+    { day: 1, title: "Arrival, Lake Pichola", location: "Udaipur", description: "Arrive in Udaipur, check in, then an evening boat ride on Lake Pichola followed by a rooftop dinner.", activities: ["Hotel check-in", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
+    { day: 2, title: "City Palace & old city", location: "Udaipur", description: "Full day covering the City Palace, Jagdish Temple, and the old-city lanes, with time for local shopping.", activities: ["City Palace guided walk", "Jagdish Temple", "Old-city lane walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
+    { day: 3, title: "Saheliyon ki Bari, departure", location: "Udaipur", description: "Morning visit to Saheliyon ki Bari gardens, then checkout and drop.", activities: ["Saheliyon ki Bari gardens", "Checkout and drop"], meals: ["breakfast"] },
   ],
   faqs: [
     { id: "udaipur-faq-1", question: "Is this trip family-friendly?", answer: "It's primarily run as a mixed-group trip for solo/young travellers; families are welcome to check with the team before booking." },

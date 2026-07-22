@@ -50,7 +50,7 @@ export const udaipurFlyingVisitTrip = buildTrip({
     "Fits inside a single overnight stay",
   ],
   itinerary: [
-    { day: 1, title: "Arrival, City Palace & Lake Pichola", description: "Arrive in Udaipur, check in, then cover the City Palace and old-city lanes before an evening boat ride on Lake Pichola and a rooftop dinner.", activities: ["Hotel check-in", "City Palace guided walk", "Jagdish Temple", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
+    { day: 1, title: "Arrival, City Palace & Lake Pichola", location: "Udaipur", description: "Arrive in Udaipur, check in, then cover the City Palace and old-city lanes before an evening boat ride on Lake Pichola and a rooftop dinner.", activities: ["Hotel check-in", "City Palace guided walk", "Jagdish Temple", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
     { day: 2, title: "Departure", description: "Morning at leisure, then checkout and drop.", activities: ["Morning leisure time", "Checkout and drop"], meals: ["breakfast"] },
   ],
   faqs: [

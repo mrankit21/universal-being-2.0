@@ -12,6 +12,7 @@ export const dayPlanSchema = z.object({
   activities: z.array(z.string()).default([]),
   meals: z.array(z.enum(["breakfast", "lunch", "dinner"])).default([]),
   stay: z.string().optional(),
+  location: z.string().optional(),
   images: z.array(imageAssetSchema).default([]),
 });
 

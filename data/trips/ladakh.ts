@@ -52,12 +52,12 @@ export const ladakhTrip = buildTrip({
     "Magnetic Hill and Sangam viewpoint",
   ],
   itinerary: [
-    { day: 1, title: "Arrival in Leh", description: "Arrive Leh, check in, and rest through the day for acclimatisation.", activities: ["Airport pickup", "Rest and hydration", "Evening market walk (easy pace)"], meals: ["dinner"], stay: "Hotel in Leh" },
-    { day: 2, title: "Leh local sightseeing", description: "Easy sightseeing day around Leh to continue acclimatising.", activities: ["Shanti Stupa", "Leh Palace", "Local market"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
-    { day: 3, title: "Leh to Nubra Valley via Khardung La", description: "Cross Khardung La into the Nubra Valley, visiting the sand dunes at Hunder.", activities: ["Khardung La photo stop", "Hunder sand dunes", "Camel ride (optional, paid)"], meals: ["breakfast", "dinner"], stay: "Camp/guesthouse in Nubra" },
-    { day: 4, title: "Nubra to Pangong Lake", description: "Drive from Nubra to Pangong via Shyok route, reaching the lake by evening.", activities: ["Shyok river route drive", "Pangong Lake sunset"], meals: ["breakfast", "dinner"], stay: "Camp near Pangong" },
-    { day: 5, title: "Pangong to Leh", description: "Sunrise at Pangong, then drive back to Leh via Chang La.", activities: ["Pangong sunrise", "Chang La pass", "Return to Leh"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
-    { day: 6, title: "Magnetic Hill, Sangam & Monasteries", description: "Cover Magnetic Hill, the Indus-Zanskar Sangam, and nearby monasteries.", activities: ["Magnetic Hill", "Sangam viewpoint", "Hall of Fame museum"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
+    { day: 1, title: "Arrival in Leh", location: "Leh", description: "Arrive Leh, check in, and rest through the day for acclimatisation.", activities: ["Airport pickup", "Rest and hydration", "Evening market walk (easy pace)"], meals: ["dinner"], stay: "Hotel in Leh" },
+    { day: 2, title: "Leh local sightseeing", location: "Leh", description: "Easy sightseeing day around Leh to continue acclimatising.", activities: ["Shanti Stupa", "Leh Palace", "Local market"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
+    { day: 3, title: "Leh to Nubra Valley via Khardung La", location: "Nubra Valley", description: "Cross Khardung La into the Nubra Valley, visiting the sand dunes at Hunder.", activities: ["Khardung La photo stop", "Hunder sand dunes", "Camel ride (optional, paid)"], meals: ["breakfast", "dinner"], stay: "Camp/guesthouse in Nubra" },
+    { day: 4, title: "Nubra to Pangong Lake", location: "Pangong Lake", description: "Drive from Nubra to Pangong via Shyok route, reaching the lake by evening.", activities: ["Shyok river route drive", "Pangong Lake sunset"], meals: ["breakfast", "dinner"], stay: "Camp near Pangong" },
+    { day: 5, title: "Pangong to Leh", location: "Leh", description: "Sunrise at Pangong, then drive back to Leh via Chang La.", activities: ["Pangong sunrise", "Chang La pass", "Return to Leh"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
+    { day: 6, title: "Magnetic Hill, Sangam & Monasteries", location: "Leh", description: "Cover Magnetic Hill, the Indus-Zanskar Sangam, and nearby monasteries.", activities: ["Magnetic Hill", "Sangam viewpoint", "Hall of Fame museum"], meals: ["breakfast", "dinner"], stay: "Hotel in Leh" },
     { day: 7, title: "Departure from Leh", description: "Checkout and airport/hotel drop as per flight timing.", activities: ["Final checkout", "Airport transfer"], meals: ["breakfast"] },
   ],
   faqs: [

@@ -53,8 +53,8 @@ export const choptaDeoriatalExtensionTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Chopta", description: "Overnight travel from Delhi towards Chopta base.", activities: ["Overnight shared-vehicle journey"], meals: [] },
-    { day: 2, title: "Arrival, trek to Tungnath & Chandrashila", description: "Arrive at Chopta base, rest briefly, then trek up to Tungnath temple and continue to the Chandrashila summit for sunset.", activities: ["Trek to Tungnath temple", "Chandrashila summit push", "Return to base camp"], meals: ["breakfast", "dinner"], stay: "Guesthouse/camp at Chopta" },
-    { day: 3, title: "Deoriatal Lake day trek", description: "A moderate day hike to Deoriatal, known for its mirror-like reflection of the Chaukhamba range.", activities: ["Deoriatal Lake trek", "Photography at the reflection point"], meals: ["breakfast", "dinner"], stay: "Guesthouse/camp at Chopta" },
+    { day: 2, title: "Arrival, trek to Tungnath & Chandrashila", location: "Tungnath", description: "Arrive at Chopta base, rest briefly, then trek up to Tungnath temple and continue to the Chandrashila summit for sunset.", activities: ["Trek to Tungnath temple", "Chandrashila summit push", "Return to base camp"], meals: ["breakfast", "dinner"], stay: "Guesthouse/camp at Chopta" },
+    { day: 3, title: "Deoriatal Lake day trek", location: "Deoriatal", description: "A moderate day hike to Deoriatal, known for its mirror-like reflection of the Chaukhamba range.", activities: ["Deoriatal Lake trek", "Photography at the reflection point"], meals: ["breakfast", "dinner"], stay: "Guesthouse/camp at Chopta" },
     { day: 4, title: "Chopta to Delhi", description: "Morning at leisure, then begin the return journey to Delhi, arriving late night.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

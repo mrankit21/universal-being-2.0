@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   MapPin,
+  MapPinned,
   Compass,
   Palette,
   LayoutTemplate,
@@ -28,6 +29,7 @@ import type { Permission } from "@/lib/auth/rbac";
 const ICONS: Record<string, LucideIcon> = {
   LayoutDashboard,
   MapPin,
+  MapPinned,
   Compass,
   Palette,
   LayoutTemplate,

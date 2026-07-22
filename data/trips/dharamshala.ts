@@ -50,8 +50,8 @@ export const dharamshalaTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Dharamshala", description: "Overnight journey from Delhi towards McLeod Ganj.", activities: ["Overnight shared-vehicle journey"], meals: [] },
-    { day: 2, title: "Arrival, McLeod Ganj monasteries", description: "Check in, then explore Namgyal Monastery, the Tsuglagkhang complex and McLeod Ganj market.", activities: ["Namgyal Monastery visit", "Market walk"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
-    { day: 3, title: "Triund day hike", description: "Full-day hike up to Triund for Dhauladhar views, returning to McLeod Ganj by evening.", activities: ["Triund ridge trek", "Bhagsu waterfall (time permitting)"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
+    { day: 2, title: "Arrival, McLeod Ganj monasteries", location: "McLeod Ganj", description: "Check in, then explore Namgyal Monastery, the Tsuglagkhang complex and McLeod Ganj market.", activities: ["Namgyal Monastery visit", "Market walk"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
+    { day: 3, title: "Triund day hike", location: "Triund", description: "Full-day hike up to Triund for Dhauladhar views, returning to McLeod Ganj by evening.", activities: ["Triund ridge trek", "Bhagsu waterfall (time permitting)"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
     { day: 4, title: "Dharamshala to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

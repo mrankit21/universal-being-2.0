@@ -16,6 +16,7 @@ const DayPlanSchema = new Schema(
     activities: { type: [String], default: [] },
     meals: { type: [String], enum: ["breakfast", "lunch", "dinner"], default: [] },
     stay: { type: String },
+    location: { type: String },
     images: { type: [ImageAssetSchema], default: [] },
   },
   { _id: false }

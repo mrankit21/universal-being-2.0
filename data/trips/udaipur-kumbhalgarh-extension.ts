@@ -53,10 +53,10 @@ export const udaipurKumbhalgarhExtensionTrip = buildTrip({
     "Rooftop café evening overlooking the lake",
   ],
   itinerary: [
-    { day: 1, title: "Arrival, Lake Pichola", description: "Arrive in Udaipur, check in, then an evening boat ride on Lake Pichola followed by a rooftop dinner.", activities: ["Hotel check-in", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
-    { day: 2, title: "City Palace & old city", description: "Full day covering the City Palace, Jagdish Temple, and the old-city lanes, with time for local shopping.", activities: ["City Palace guided walk", "Jagdish Temple", "Old-city lane walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
-    { day: 3, title: "Kumbhalgarh Fort day trip", description: "Full day trip to Kumbhalgarh Fort, including the fortified wall and the Badal Mahal palace within it.", activities: ["Kumbhalgarh Fort visit", "Badal Mahal palace", "Fortified wall walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
-    { day: 4, title: "Saheliyon ki Bari, departure", description: "Morning visit to Saheliyon ki Bari gardens, then checkout and drop.", activities: ["Saheliyon ki Bari gardens", "Checkout and drop"], meals: ["breakfast"] },
+    { day: 1, title: "Arrival, Lake Pichola", location: "Udaipur", description: "Arrive in Udaipur, check in, then an evening boat ride on Lake Pichola followed by a rooftop dinner.", activities: ["Hotel check-in", "Lake Pichola boat ride", "Rooftop dinner"], meals: ["dinner"], stay: "Hotel in Udaipur" },
+    { day: 2, title: "City Palace & old city", location: "Udaipur", description: "Full day covering the City Palace, Jagdish Temple, and the old-city lanes, with time for local shopping.", activities: ["City Palace guided walk", "Jagdish Temple", "Old-city lane walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
+    { day: 3, title: "Kumbhalgarh Fort day trip", location: "Kumbhalgarh", description: "Full day trip to Kumbhalgarh Fort, including the fortified wall and the Badal Mahal palace within it.", activities: ["Kumbhalgarh Fort visit", "Badal Mahal palace", "Fortified wall walk"], meals: ["breakfast", "dinner"], stay: "Hotel in Udaipur" },
+    { day: 4, title: "Saheliyon ki Bari, departure", location: "Udaipur", description: "Morning visit to Saheliyon ki Bari gardens, then checkout and drop.", activities: ["Saheliyon ki Bari gardens", "Checkout and drop"], meals: ["breakfast"] },
   ],
   faqs: [
     { id: "udaipur-kumbhalgarh-faq-1", question: "How far is Kumbhalgarh from Udaipur?", answer: "It's roughly a 2 hour drive each way, covered as a full day trip with transfers and entry included." },

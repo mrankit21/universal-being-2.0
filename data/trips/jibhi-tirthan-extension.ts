@@ -52,9 +52,9 @@ export const jibhiTirthanExtensionTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Jibhi", description: "Overnight journey from Delhi towards Jibhi.", activities: ["Overnight shared-vehicle journey"], meals: [] },
-    { day: 2, title: "Arrival, Jibhi waterfall & Chehni Kothi", description: "Check in, then a gentle walk to Jibhi waterfall and the ancient Chehni Kothi tower.", activities: ["Jibhi waterfall walk", "Chehni Kothi tower visit"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
-    { day: 3, title: "Jalori Pass & Serolsar Lake", description: "Drive up to Jalori Pass, then a moderate hike through the forest to Serolsar Lake.", activities: ["Jalori Pass drive", "Serolsar Lake hike"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
-    { day: 4, title: "Tirthan riverside day", description: "A relaxed day by the Tirthan river and local cafés, with time for optional trout fishing.", activities: ["Tirthan riverside time", "Optional trout fishing"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 2, title: "Arrival, Jibhi waterfall & Chehni Kothi", location: "Jibhi", description: "Check in, then a gentle walk to Jibhi waterfall and the ancient Chehni Kothi tower.", activities: ["Jibhi waterfall walk", "Chehni Kothi tower visit"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 3, title: "Jalori Pass & Serolsar Lake", location: "Jalori Pass", description: "Drive up to Jalori Pass, then a moderate hike through the forest to Serolsar Lake.", activities: ["Jalori Pass drive", "Serolsar Lake hike"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 4, title: "Tirthan riverside day", location: "Tirthan Valley", description: "A relaxed day by the Tirthan river and local cafés, with time for optional trout fishing.", activities: ["Tirthan riverside time", "Optional trout fishing"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
     { day: 5, title: "Jibhi to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

@@ -54,8 +54,8 @@ export const manaliQuickTrailTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Manali", description: "Board the evening Volvo from Delhi and travel overnight into the mountains.", activities: ["Overnight Volvo journey", "Group icebreaker on WhatsApp before departure"], meals: [] },
-    { day: 2, title: "Arrival, Old Manali", description: "Arrive Manali by morning, check in, rest, then explore Old Manali and the Mall Road in the evening.", activities: ["Hotel check-in", "Hidimba Devi Temple", "Old Manali café walk", "Mall Road evening"], meals: ["breakfast", "dinner"], stay: "Hotel in Manali (or similar)" },
-    { day: 3, title: "Solang Valley", description: "Full day at Solang Valley for snow activities (paratrooping, ropeway, snow scooters — all paid at venue) followed by an evening bonfire.", activities: ["Solang Valley snow point", "Optional paid snow activities", "Evening bonfire"], meals: ["breakfast", "dinner"], stay: "Hotel in Manali (or similar)" },
+    { day: 2, title: "Arrival, Old Manali", location: "Old Manali", description: "Arrive Manali by morning, check in, rest, then explore Old Manali and the Mall Road in the evening.", activities: ["Hotel check-in", "Hidimba Devi Temple", "Old Manali café walk", "Mall Road evening"], meals: ["breakfast", "dinner"], stay: "Hotel in Manali (or similar)" },
+    { day: 3, title: "Solang Valley", location: "Solang Valley", description: "Full day at Solang Valley for snow activities (paratrooping, ropeway, snow scooters — all paid at venue) followed by an evening bonfire.", activities: ["Solang Valley snow point", "Optional paid snow activities", "Evening bonfire"], meals: ["breakfast", "dinner"], stay: "Hotel in Manali (or similar)" },
     { day: 4, title: "Manali to Delhi", description: "Checkout by late morning, free time on Mall Road, board the evening Volvo back to Delhi.", activities: ["Free time / last-minute shopping", "Evening Volvo departure"], meals: ["breakfast"] },
   ],
   faqs: [

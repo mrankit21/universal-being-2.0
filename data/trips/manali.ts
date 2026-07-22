@@ -65,7 +65,7 @@ export const manaliTrip = buildTrip({
     },
     {
       day: 2,
-      title: "Arrival, Old Manali",
+      title: "Arrival, Old Manali", location: "Old Manali",
       description: "Arrive Manali by morning, check in, rest, then explore Old Manali and the Mall Road in the evening.",
       activities: ["Hotel check-in", "Hidimba Devi Temple", "Old Manali café walk", "Mall Road evening"],
       meals: ["breakfast", "dinner"],
@@ -73,7 +73,7 @@ export const manaliTrip = buildTrip({
     },
     {
       day: 3,
-      title: "Solang Valley",
+      title: "Solang Valley", location: "Solang Valley",
       description: "Full day at Solang Valley for snow activities (paratrooping, ropeway, snow scooters — all paid at venue) followed by an evening bonfire.",
       activities: ["Solang Valley snow point", "Optional paid snow activities", "Evening bonfire"],
       meals: ["breakfast", "dinner"],
@@ -81,7 +81,7 @@ export const manaliTrip = buildTrip({
     },
     {
       day: 4,
-      title: "Atal Tunnel & Sissu",
+      title: "Atal Tunnel & Sissu", location: "Sissu",
       description: "Cross the Atal Tunnel into Lahaul valley, visit Sissu and its waterfall, return to Manali by evening.",
       activities: ["Atal Tunnel crossing", "Sissu village and waterfall", "Return drive to Manali"],
       meals: ["breakfast", "dinner"],

@@ -59,7 +59,7 @@ export const ladakhQuickLoopTrip = buildTrip({
   itinerary: [
     {
       day: 1,
-      title: "Arrival in Leh",
+      title: "Arrival in Leh", location: "Leh",
       description: "Arrive Leh, check in, and rest through the day for acclimatisation.",
       activities: ["Airport pickup", "Rest and hydration", "Evening market walk (easy pace)"],
       meals: ["dinner"],
@@ -67,7 +67,7 @@ export const ladakhQuickLoopTrip = buildTrip({
     },
     {
       day: 2,
-      title: "Leh local sightseeing",
+      title: "Leh local sightseeing", location: "Leh",
       description: "Easy sightseeing day around Leh to continue acclimatising before the pass crossing.",
       activities: ["Shanti Stupa", "Leh Palace", "Local market"],
       meals: ["breakfast", "dinner"],
@@ -75,7 +75,7 @@ export const ladakhQuickLoopTrip = buildTrip({
     },
     {
       day: 3,
-      title: "Leh to Nubra Valley via Khardung La",
+      title: "Leh to Nubra Valley via Khardung La", location: "Nubra Valley",
       description: "Cross Khardung La into the Nubra Valley, visiting the sand dunes at Hunder, then return to Leh.",
       activities: ["Khardung La photo stop", "Hunder sand dunes", "Camel ride (optional, paid)"],
       meals: ["breakfast", "dinner"],

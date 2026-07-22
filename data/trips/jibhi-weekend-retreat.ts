@@ -49,7 +49,7 @@ export const jibhiWeekendRetreatTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Jibhi", description: "Overnight journey from Delhi towards Jibhi.", activities: ["Overnight shared-vehicle journey"], meals: [] },
-    { day: 2, title: "Jibhi waterfall & Chehni Kothi", description: "Check in, then a gentle walk to Jibhi waterfall and the ancient Chehni Kothi tower, with the afternoon free by the Tirthan river.", activities: ["Jibhi waterfall walk", "Chehni Kothi tower visit", "Tirthan riverside time"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
+    { day: 2, title: "Jibhi waterfall & Chehni Kothi", location: "Jibhi", description: "Check in, then a gentle walk to Jibhi waterfall and the ancient Chehni Kothi tower, with the afternoon free by the Tirthan river.", activities: ["Jibhi waterfall walk", "Chehni Kothi tower visit", "Tirthan riverside time"], meals: ["breakfast", "dinner"], stay: "Cottage/homestay in Jibhi" },
     { day: 3, title: "Jibhi to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

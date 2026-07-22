@@ -51,6 +51,11 @@ export interface DayPlan {
    * a later Admin Panel addition once a Hotel collection exists — kept as
    * text now so this ships without inventing a hotel database. */
   stay?: string;
+  /** Destination/place name for this day (e.g. "Old Manali", "Kaza"). Used
+   * by `TripItinerary` to group consecutive same-location days under a
+   * shared photo banner ("2 Days in Gangtok" style). Left empty on pure
+   * transit/travel days so they render as plain cards. */
+  location?: string;
   /** Photos for this specific day (Step 7.6D §6 "Itinerary → Images").
    * Sourced from the Media Library like every other trip image slot. */
   images: ImageAsset[];

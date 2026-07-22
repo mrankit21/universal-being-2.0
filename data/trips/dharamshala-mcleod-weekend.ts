@@ -50,7 +50,7 @@ export const dharamshalaMcleodWeekendTrip = buildTrip({
   ],
   itinerary: [
     { day: 1, title: "Delhi to Dharamshala", description: "Overnight journey from Delhi towards McLeod Ganj.", activities: ["Overnight shared-vehicle journey"], meals: [] },
-    { day: 2, title: "McLeod Ganj monasteries & Bhagsu", description: "Check in, then explore Namgyal Monastery, the Tsuglagkhang complex, McLeod Ganj market, and the short walk to Bhagsu waterfall.", activities: ["Namgyal Monastery visit", "Market walk", "Bhagsu waterfall walk"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
+    { day: 2, title: "McLeod Ganj monasteries & Bhagsu", location: "McLeod Ganj", description: "Check in, then explore Namgyal Monastery, the Tsuglagkhang complex, McLeod Ganj market, and the short walk to Bhagsu waterfall.", activities: ["Namgyal Monastery visit", "Market walk", "Bhagsu waterfall walk"], meals: ["breakfast", "dinner"], stay: "Guesthouse in McLeod Ganj" },
     { day: 3, title: "Dharamshala to Delhi", description: "Morning at leisure, then the return journey to Delhi.", activities: ["Morning leisure time", "Return journey to Delhi"], meals: ["breakfast"] },
   ],
   faqs: [

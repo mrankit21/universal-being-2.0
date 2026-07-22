@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { TripModel } from "@/lib/db/models";
 import { TripForm } from "@/components/admin/trip-form";
@@ -22,8 +23,10 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
         <h1 className="text-2xl font-semibold tracking-tight">Edit Trip</h1>
         <p className="text-sm text-muted-foreground">{(trip as { title: string }).title}</p>
       </div>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <TripForm tripId={id} initialValue={rest as any} />
+      <Suspense fallback={null}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <TripForm tripId={id} initialValue={rest as any} />
+      </Suspense>
     </div>
   );
 }
