@@ -203,22 +203,14 @@ export async function getAllTrips(): Promise<Trip[]> {
   return applySharedCircuitImages(staticTrips());
 }
 
-/**
- * Trip Architecture Fix (2026-07): the `/trips` listing must show one card
- * per destination circuit ("Parent Trip"), not one card per duration
- * variant — duration variants (2D/3D/4D siblings sharing a `circuitGroup`)
- * stay reachable via `TripDurationSelector` on the Parent's own detail page
- * (`getCircuitSiblings()`), unchanged.
- *
- * Picks a single representative per `circuitGroup` via `pickCircuitParent`
- * (the sibling flagged `isCircuitParent`, or — when none is flagged — the
- * shortest-duration sibling), so this works with zero data migration on
- * existing Trip documents. Trips with no `circuitGroup` (standalone
- * destinations) pass through untouched, one card each, same as today.
- */
-export async function getListedTrips(): Promise<Trip[]> {
-  const trips = await getAllTrips();
-
+/** Splits a trip list into standalone trips and one Parent per
+ * `circuitGroup` (via `pickCircuitParent` — the flagged sibling, or the
+ * shortest-duration one as a fallback when nothing's flagged yet). Shared by
+ * `getListedTrips()` and `getRelatedTrips()` so both use the *exact same*
+ * "which trip represents this circuit" answer — a circuit whose Parent
+ * isn't flagged still gets a representative in both places, instead of one
+ * function silently dropping it. */
+function splitStandaloneAndParents(trips: Trip[]): { standalone: Trip[]; parents: Trip[] } {
   const byGroup = new Map<string, Trip[]>();
   const standalone: Trip[] = [];
   for (const t of trips) {
@@ -235,6 +227,25 @@ export async function getListedTrips(): Promise<Trip[]> {
     .map((siblings) => pickCircuitParent(siblings))
     .filter((t): t is Trip => Boolean(t));
 
+  return { standalone, parents };
+}
+
+/**
+ * Trip Architecture Fix (2026-07): the `/trips` listing must show one card
+ * per destination circuit ("Parent Trip"), not one card per duration
+ * variant — duration variants (2D/3D/4D siblings sharing a `circuitGroup`)
+ * stay reachable via `TripDurationSelector` on the Parent's own detail page
+ * (`getCircuitSiblings()`), unchanged.
+ *
+ * Picks a single representative per `circuitGroup` via `pickCircuitParent`
+ * (the sibling flagged `isCircuitParent`, or — when none is flagged — the
+ * shortest-duration sibling), so this works with zero data migration on
+ * existing Trip documents. Trips with no `circuitGroup` (standalone
+ * destinations) pass through untouched, one card each, same as today.
+ */
+export async function getListedTrips(): Promise<Trip[]> {
+  const trips = await getAllTrips();
+  const { standalone, parents } = splitStandaloneAndParents(trips);
   return [...standalone, ...parents];
 }
 
@@ -348,15 +359,25 @@ export async function getCircuitSiblings(trip: Trip): Promise<Trip[]> {
  * curated per trip, and never a hardcoded array.
  *
  * Candidates are restricted to standalone trips and circuit Parents only
- * (same rule as `getListedTrips()`) — a circuit's non-parent duration
- * variants (e.g. Udaipur's Flying Visit / Kumbhalgarh Extension children)
- * never appear here, even though they'd otherwise score highest for
- * sharing the same destination. They stay reachable via the Parent's own
- * `TripDurationSelector` (`getCircuitSiblings()`), not as a separate
- * "related" card. */
+ * (same `splitStandaloneAndParents()` used by `getListedTrips()`) — a
+ * circuit's non-parent duration variants (e.g. Udaipur's Flying Visit /
+ * Kumbhalgarh Extension children) never appear here, even though they'd
+ * otherwise score highest for sharing the same destination. They stay
+ * reachable via the Parent's own `TripDurationSelector`
+ * (`getCircuitSiblings()`), not as a separate "related" card.
+ *
+ * Bug fix (2026-07): this used to filter raw trips by `!t.circuitGroup ||
+ * t.isCircuitParent` directly — on a circuit where nobody's been flagged
+ * `isCircuitParent` yet (e.g. DB records written before that field
+ * existed), that dropped *every* trip in the circuit with no fallback,
+ * which could empty out "You might also like" entirely instead of just
+ * hiding the child variants. Reusing `splitStandaloneAndParents()` (same
+ * flagged-or-shortest-duration fallback as the listing page) guarantees a
+ * Parent is always resolved for every circuit. */
 export async function getRelatedTrips(trip: Trip, limit = 3): Promise<Trip[]> {
   const all = await getAllTrips();
-  const others = all.filter((t) => t.slug !== trip.slug && (!t.circuitGroup || t.isCircuitParent));
+  const { standalone, parents } = splitStandaloneAndParents(all);
+  const others = [...standalone, ...parents].filter((t) => t.slug !== trip.slug);
 
   const scored = others.map((t) => {
     let score = 0;

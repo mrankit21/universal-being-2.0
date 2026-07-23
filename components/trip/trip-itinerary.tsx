@@ -7,7 +7,6 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { Tag } from "@/components/primitives/tag";
 import { TripImage } from "@/components/trip/trip-image";
-import { placeholderImage } from "@/lib/image/resolve-image";
 import { themeRegistry } from "@/data/themes";
 import type { ThemeConfig } from "@/types/theme";
 
@@ -32,13 +31,24 @@ function getDestinationName(day: DayPlan, trip: Trip): string {
   return trip.destinationName;
 }
 
-/** Part 1 — the always-visible destination image card. Shows the day's own
- * photo (first uploaded image) with a bottom-left overlay: day number, "Day
- * in", destination name. Not part of the accordion trigger — only the
- * header row below it toggles the expanded content. */
+/** True only for an admin-uploaded image — mirrors `hasRealImage()` in
+ * `lib/api/trips.ts`: a day's `images[0]` can be an unset/placeholder asset
+ * (`isPlaceholder: true`, empty `url`) when nothing's been uploaded from
+ * admin yet, and that's not "a photo" for display purposes. */
+function hasRealDayImage(day: DayPlan): boolean {
+  const img = day.images[0];
+  return !!img && !img.isPlaceholder && !!img.url;
+}
+
+/** Part 1 — the destination image card, shown ONLY once a real photo has
+ * been uploaded for this day from admin. No placeholder/blank image is
+ * ever rendered here — until then, the day just shows the normal accordion
+ * header below with no image card at all. Not part of the accordion
+ * trigger — only the header row below it toggles the expanded content. */
 function DayImageCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: ThemeConfig }) {
   const destination = getDestinationName(day, trip);
-  const cover = day.images[0] ?? placeholderImage(destination);
+  // Non-null: caller (`DayCard`) only renders this when `hasRealDayImage(day)` is true.
+  const cover = day.images[0]!;
 
   return (
     <div className="relative overflow-hidden rounded-[20px]">
@@ -63,11 +73,11 @@ function DayImageCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: T
 }
 
 /** Part 2 — the compact accordion header + expandable detail content. The
- * image card above stays put; only this part toggles. */
+ * image card above (when present) stays put; only this part toggles. */
 function DayCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: ThemeConfig }) {
   return (
     <AccordionItem value={`day-${day.day}`} className="flex flex-col gap-3 rounded-lg border border-border bg-card px-5">
-      <DayImageCard day={day} trip={trip} theme={theme} />
+      {hasRealDayImage(day) && <DayImageCard day={day} trip={trip} theme={theme} />}
 
       <AccordionTrigger>
         <span className="flex items-center gap-3 text-left">
@@ -121,9 +131,10 @@ function DayCard({ day, trip, theme }: { day: DayPlan; trip: Trip; theme: ThemeC
  * TripItinerary — Architecture §2/§5: "renders `itinerary[]` — day accordion
  * / swipe-through on mobile ... same data, one component."
  *
- * Each day is its own browsable unit: a destination image card (day number +
- * "Day in <place>" overlay) is always visible, with a compact accordion
- * header immediately below it. All days start collapsed — nobody auto-opens
+ * Each day is its own browsable unit: once a real photo is uploaded from
+ * admin, a destination image card (day number + "Day in <place>" overlay)
+ * appears above it; until then the day shows just the plain accordion
+ * header — never a blank/placeholder photo. All days start collapsed — nobody auto-opens
  * — and only one day's detail content can be open at a time
  * (`Accordion type="single" collapsible`, no `defaultValue`).
  */
