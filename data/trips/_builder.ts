@@ -54,6 +54,11 @@ export interface TripSeedInput {
    * on `Trip.circuitGroup` in `types/trip.ts`. Omit for trips that only
    * ever offer the one fixed circuit above `durationDays`/`priceBase`. */
   circuitGroup?: string;
+  /** Marks this Trip as the Parent of its `circuitGroup` — see the doc
+   * comment on `Trip.isCircuitParent` in `types/trip.ts`. Omit (or leave
+   * `false`) for every sibling except the one intended as the shared image
+   * source / `/trips` listing card. */
+  isCircuitParent?: boolean;
   /** "Destination Routes" list. Optional — omit when this destination has
    * no other multi-stop route worth cross-promoting yet. */
   destinationRoutes?: DestinationRoute[];
@@ -149,6 +154,7 @@ export function buildTrip(input: TripSeedInput): Trip {
     },
 
     circuitGroup: input.circuitGroup,
+    isCircuitParent: input.isCircuitParent ?? false,
     destinationRoutes: input.destinationRoutes,
 
     totalSeats: input.totalSeats,

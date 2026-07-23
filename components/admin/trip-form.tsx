@@ -69,6 +69,7 @@ function blank(): TripFormValue {
     mealPlan: { breakfast: false, lunch: false, dinner: false, snacks: false, description: "" },
     price: { base: 0, bookingAmount: 0, currency: "INR" },
     circuitGroup: "",
+    isCircuitParent: false,
     destinationRoutes: [],
     totalSeats: 0,
     availableSeats: 0,
@@ -107,6 +108,7 @@ function normalize(v: TripFormValue): TripFormValue {
     mealPlan: { ...v.mealPlan, snacks: v.mealPlan.snacks ?? false },
     reviewIds: v.reviewIds ?? [],
     circuitGroup: v.circuitGroup ?? "",
+    isCircuitParent: v.isCircuitParent ?? false,
     destinationRoutes: v.destinationRoutes ?? [],
     seo: { ...v.seo, keywords: v.seo.keywords ?? [] },
     departureDates: v.departureDates.map((batch) => ({ ...batch, isPublished: batch.isPublished ?? true })),
@@ -219,6 +221,30 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
                   placeholder="e.g. ladakh-circuit"
                 />
               </FormField>
+              {value.circuitGroup?.trim() && (
+                <FormField
+                  label=""
+                  className="md:col-span-2 flex flex-row items-center gap-2 space-y-0 rounded-lg border border-border bg-muted/30 p-3"
+                >
+                  <Switch
+                    checked={value.isCircuitParent ?? false}
+                    onCheckedChange={(v) => set("isCircuitParent", v)}
+                    id="isCircuitParent"
+                  />
+                  <div>
+                    <label htmlFor="isCircuitParent" className="text-sm font-medium">
+                      Mark as Circuit Parent
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      This Trip&apos;s Hero, Cover, and Gallery images become the shared source for every
+                      other Trip in the same Circuit Group (its siblings only borrow images for fields
+                      they haven&apos;t uploaded their own for) and for the linked Destination page. Only
+                      ONE Trip per Circuit Group should be flagged — if none is flagged, the shortest
+                      duration Trip is used as a fallback.
+                    </p>
+                  </div>
+                </FormField>
+              )}
               <FormField label="Theme">
                 <Select value={value.themeKey} onValueChange={(v) => set("themeKey", v as ThemeKey)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>

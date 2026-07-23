@@ -18,6 +18,7 @@ export const udaipurTrip = buildTrip({
   pickup: "Udaipur Railway Station / Airport",
   drop: "Udaipur Railway Station / Airport",
   circuitGroup: "udaipur-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "udaipur-route-1", stops: ["Udaipur", "Kumbhalgarh"] },
     { id: "udaipur-route-2", stops: ["Udaipur", "Ranakpur", "Mount Abu"] },

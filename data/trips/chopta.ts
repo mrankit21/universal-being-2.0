@@ -18,6 +18,7 @@ export const choptaTrip = buildTrip({
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
   circuitGroup: "chopta-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "chopta-route-1", stops: ["Chopta", "Tungnath", "Chandrashila"] },
     { id: "chopta-route-2", stops: ["Chopta", "Deoriatal"] },

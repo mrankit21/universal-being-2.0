@@ -126,6 +126,11 @@ export interface TripDocument extends Document {
   price: { base: number; discounted?: number; bookingAmount: number; currency: string };
   /** See `Trip.circuitGroup` doc comment in `types/trip.ts`. */
   circuitGroup?: string;
+  /** See `Trip.isCircuitParent` doc comment in `types/trip.ts`. Now wired
+   * end-to-end (schema/validator/admin form) — an admin explicitly marks
+   * ONE Trip per `circuitGroup` as the parent instead of the old implicit
+   * "shortest duration wins" guess. */
+  isCircuitParent?: boolean;
   destinationRoutes?: unknown[];
   totalSeats: number;
   availableSeats: number;
@@ -212,6 +217,7 @@ const TripSchema = new Schema<TripDocument>(
     },
 
     circuitGroup: { type: String, index: true, trim: true },
+    isCircuitParent: { type: Boolean, default: false, index: true },
     destinationRoutes: { type: [DestinationRouteSchema], default: [] },
 
     totalSeats: { type: Number, required: true, default: 0 },

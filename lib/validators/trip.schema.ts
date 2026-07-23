@@ -108,6 +108,7 @@ export const tripSchema = z.object({
     currency: z.string().default("INR"),
   }),
   circuitGroup: z.string().trim().optional(),
+  isCircuitParent: z.boolean().optional().default(false),
   destinationRoutes: z.array(destinationRouteSchema).default([]),
   totalSeats: z.number().int().min(0),
   availableSeats: z.number().int().min(0),

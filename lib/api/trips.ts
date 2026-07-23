@@ -45,36 +45,69 @@ function hasRealGallery(gallery?: ImageAsset[] | null): boolean {
   return !!gallery && gallery.some(hasRealImage);
 }
 
-/** Circuit Group Shared Media: a duration variant (4D/5D/6D...) that hasn't
- * had its own hero/cover/gallery images uploaded yet borrows them from
- * whichever sibling in the same `circuitGroup` DOES have real images — so
- * an admin only has to upload photos once per circuit, not once per
- * duration variant. The moment a variant gets its own real image uploaded,
- * that field always wins over any sibling's. Purely a read-time fallback —
- * nothing is written back to the DB, so this never risks another
- * overwrite-style data loss. */
-function withSharedCircuitImages(trip: Trip, siblings: Trip[]): Trip {
+/** Single source of truth for "which Trip is the Parent of this
+ * `circuitGroup`" — shared by `getListedTrips()` (which sibling gets the
+ * `/trips` listing card) and `withSharedCircuitImages()` (whose images
+ * cascade to the rest of the circuit). `group` must include every Trip
+ * sharing that `circuitGroup`, this Trip included. Picks the Trip flagged
+ * `isCircuitParent` (admin's explicit choice, Trip Editor → Basic Info);
+ * when nobody in the group is flagged, falls back to the shortest-duration
+ * sibling — this exists purely so a circuit with zero data migration still
+ * behaves sensibly, NOT as a substitute for flagging a real parent. Example:
+ * Udaipur's 2D Flying Visit / 3D Heritage Walk / 4D Kumbhalgarh Extension —
+ * without a flag, the 2D (shortest) would silently become "parent" even
+ * though the 3D is the intended one; flagging the 3D fixes that. */
+function pickCircuitParent(group: Trip[]): Trip | undefined {
+  if (group.length === 0) return undefined;
+  const flagged = group.find((t) => t.isCircuitParent);
+  if (flagged) return flagged;
+  return group.reduce((shortest, t) => (t.duration.days < shortest.duration.days ? t : shortest));
+}
+
+/** Circuit Group Shared Media: every duration variant in a circuit shows
+ * the Parent Trip's Hero/Cover/Thumbnail/Gallery (see `pickCircuitParent`)
+ * — an admin uploads photos once, on the Parent, and every sibling (child)
+ * Trip page shows them too. Only the images move; everything else
+ * (itinerary, routes, pricing, batches, FAQs...) stays that Trip's own.
+ *
+ * Hero/Cover/Thumbnail are single-image slots: a child's own real upload
+ * always wins over the Parent's for that field. Gallery is additive
+ * instead — the Parent's gallery is the shared base, and any extra photos
+ * a child has uploaded directly onto itself are appended after (deduped by
+ * `publicId`/`url`), so a child can add its own bonus photos on top of the
+ * inherited set without losing them. The Parent Trip itself is returned
+ * completely untouched (nothing to inherit from itself).
+ *
+ * Purely a read-time fallback — nothing is written back to the DB, so this
+ * never risks an overwrite-style data loss, and unflagging/reflagging the
+ * parent takes effect immediately on next read. */
+function withSharedCircuitImages(trip: Trip, group: Trip[]): Trip {
+  const parent = pickCircuitParent(group);
+  if (!parent || parent.slug === trip.slug) return trip;
+
   const ownHasHero = hasRealImage(trip.heroImage);
   const ownHasCover = hasRealImage(trip.coverImage);
+  const ownHasThumbnail = hasRealImage(trip.thumbnail);
   const ownHasGallery = hasRealGallery(trip.gallery);
-  if (ownHasHero && ownHasCover && ownHasGallery) return trip;
 
-  const source = siblings.find(
-    (s) =>
-      s.slug !== trip.slug &&
-      (hasRealImage(s.heroImage) || hasRealImage(s.coverImage) || hasRealGallery(s.gallery))
-  );
-  if (!source) return trip;
-
-  return {
+  const resolved: Trip = {
     ...trip,
-    heroImage: ownHasHero ? trip.heroImage : source.heroImage,
+    heroImage: ownHasHero ? trip.heroImage : parent.heroImage,
     heroImageMobile: hasRealImage(trip.heroImageMobile)
       ? trip.heroImageMobile
-      : (source.heroImageMobile ?? source.heroImage),
-    coverImage: ownHasCover ? trip.coverImage : source.coverImage,
-    gallery: ownHasGallery ? trip.gallery : source.gallery,
+      : (parent.heroImageMobile ?? parent.heroImage),
+    coverImage: ownHasCover ? trip.coverImage : parent.coverImage,
+    thumbnail: ownHasThumbnail ? trip.thumbnail : parent.thumbnail,
   };
+
+  const parentGallery = parent.gallery ?? [];
+  if (parentGallery.length > 0) {
+    const seen = new Set(parentGallery.map((img) => img.publicId ?? img.url));
+    const ownExtra = ownHasGallery ? (trip.gallery ?? []).filter((img) => !seen.has(img.publicId ?? img.url)) : [];
+    resolved.gallery = [...parentGallery, ...ownExtra];
+  }
+
+  return resolved;
 }
 
 /** Applies `withSharedCircuitImages` across a whole trip list by grouping
@@ -177,11 +210,11 @@ export async function getAllTrips(): Promise<Trip[]> {
  * stay reachable via `TripDurationSelector` on the Parent's own detail page
  * (`getCircuitSiblings()`), unchanged.
  *
- * Picks a single representative per `circuitGroup`: the sibling flagged
- * `isCircuitParent`, or — when none is flagged — the shortest-duration
- * sibling, so this works with zero data migration on existing Trip
- * documents. Trips with no `circuitGroup` (standalone destinations) pass
- * through untouched, one card each, same as today.
+ * Picks a single representative per `circuitGroup` via `pickCircuitParent`
+ * (the sibling flagged `isCircuitParent`, or — when none is flagged — the
+ * shortest-duration sibling), so this works with zero data migration on
+ * existing Trip documents. Trips with no `circuitGroup` (standalone
+ * destinations) pass through untouched, one card each, same as today.
  */
 export async function getListedTrips(): Promise<Trip[]> {
   const trips = await getAllTrips();
@@ -198,11 +231,9 @@ export async function getListedTrips(): Promise<Trip[]> {
     byGroup.set(t.circuitGroup, arr);
   }
 
-  const parents = Array.from(byGroup.values()).map((siblings) => {
-    const flagged = siblings.find((t) => t.isCircuitParent);
-    if (flagged) return flagged;
-    return siblings.reduce((shortest, t) => (t.duration.days < shortest.duration.days ? t : shortest));
-  });
+  const parents = Array.from(byGroup.values())
+    .map((siblings) => pickCircuitParent(siblings))
+    .filter((t): t is Trip => Boolean(t));
 
   return [...standalone, ...parents];
 }
@@ -314,10 +345,18 @@ export async function getCircuitSiblings(trip: Trip): Promise<Trip[]> {
 /** "You might also like" — Step 7.6E Part 5: scored by destination, theme,
  * difficulty, and duration proximity (highest score first), excluding the
  * current trip. Server-computed per Architecture §5 rather than manually
- * curated per trip, and never a hardcoded array. */
+ * curated per trip, and never a hardcoded array.
+ *
+ * Candidates are restricted to standalone trips and circuit Parents only
+ * (same rule as `getListedTrips()`) — a circuit's non-parent duration
+ * variants (e.g. Udaipur's Flying Visit / Kumbhalgarh Extension children)
+ * never appear here, even though they'd otherwise score highest for
+ * sharing the same destination. They stay reachable via the Parent's own
+ * `TripDurationSelector` (`getCircuitSiblings()`), not as a separate
+ * "related" card. */
 export async function getRelatedTrips(trip: Trip, limit = 3): Promise<Trip[]> {
   const all = await getAllTrips();
-  const others = all.filter((t) => t.slug !== trip.slug);
+  const others = all.filter((t) => t.slug !== trip.slug && (!t.circuitGroup || t.isCircuitParent));
 
   const scored = others.map((t) => {
     let score = 0;

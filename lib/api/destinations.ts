@@ -43,15 +43,24 @@ function normalizeDestination(destination: Destination): Destination {
 }
 
 /** The trip whose images stand in for a destination's still-placeholder
- * image slots: the one flagged "Featured" within this destination (Display
- * Order §3), falling back to the first trip in the given order, then any
- * globally-featured trip, then simply the first trip returned. Kept as one
- * small helper so every fallback slot below picks the same trip, instead of
- * each image field independently guessing which trip "represents" the
- * destination. */
+ * image slots. Priority order: (1) the trip flagged "Featured" *within this
+ * destination* (Display Order §3, an explicit per-destination override —
+ * `destination-trip-assignment-field.tsx`), (2) the trip flagged
+ * `isCircuitParent` (Trip Editor's "Mark as Circuit Parent" — the same flag
+ * `lib/api/trips.ts` uses to cascade images down to sibling/child Trips, so
+ * a destination's imagery and its Trips' imagery come from the same single
+ * source by default), (3) any globally-featured trip, (4) simply the first
+ * trip returned. Kept as one small helper so every fallback slot below
+ * picks the same trip, instead of each image field independently guessing
+ * which trip "represents" the destination. */
 function pickRepresentativeTrip(trips: (Trip & { destinationFeatured?: boolean })[]): Trip | undefined {
   if (trips.length === 0) return undefined;
-  return trips.find((t) => t.destinationFeatured) ?? trips.find((t) => t.featured) ?? trips[0];
+  return (
+    trips.find((t) => t.destinationFeatured) ??
+    trips.find((t) => t.isCircuitParent) ??
+    trips.find((t) => t.featured) ??
+    trips[0]
+  );
 }
 
 /** Borrows imagery from this destination's trips wherever the destination

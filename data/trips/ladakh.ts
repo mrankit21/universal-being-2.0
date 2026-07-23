@@ -18,6 +18,7 @@ export const ladakhTrip = buildTrip({
   pickup: "Leh Airport / Leh city hotel",
   drop: "Leh Airport / Leh city hotel",
   circuitGroup: "ladakh-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "ladakh-route-1", stops: ["Leh", "Nubra Valley", "Pangong"] },
     { id: "ladakh-route-2", stops: ["Leh", "Tso Moriri", "Pangong"] },

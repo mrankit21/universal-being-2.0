@@ -18,6 +18,7 @@ export const dharamshalaTrip = buildTrip({
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
   circuitGroup: "dharamshala-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "dharamshala-route-1", stops: ["McLeod Ganj", "Triund", "Dharamshala"] },
     { id: "dharamshala-route-2", stops: ["McLeod Ganj", "Bir Billing"] },

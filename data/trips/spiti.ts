@@ -18,6 +18,7 @@ export const spitiTrip = buildTrip({
   pickup: "Manali (meeting point) or Shimla",
   drop: "Manali or Shimla",
   circuitGroup: "spiti-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "spiti-route-1", stops: ["Kaza", "Key Monastery", "Kibber"] },
     { id: "spiti-route-2", stops: ["Kaza", "Chandratal"] },

@@ -18,6 +18,7 @@ export const jibhiTrip = buildTrip({
   pickup: "Delhi (overnight bus pickup point)",
   drop: "Delhi (overnight bus drop point)",
   circuitGroup: "jibhi-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "jibhi-route-1", stops: ["Jibhi", "Tirthan Valley"] },
     { id: "jibhi-route-2", stops: ["Jibhi", "Jalori Pass", "Serolsar Lake"] },

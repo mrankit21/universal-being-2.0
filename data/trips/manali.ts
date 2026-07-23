@@ -23,6 +23,7 @@ export const manaliTrip = buildTrip({
   pickup: "Delhi (Volvo pickup point)",
   drop: "Delhi (Volvo drop point)",
   circuitGroup: "manali-circuit",
+  isCircuitParent: true,
   destinationRoutes: [
     { id: "manali-route-1", stops: ["Manali", "Solang", "Sissu"] },
     { id: "manali-route-2", stops: ["Manali", "Kasol", "Tosh"] },
