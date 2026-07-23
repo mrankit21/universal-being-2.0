@@ -12,14 +12,20 @@ export interface TripBookingCardProps {
   trip: Trip;
 }
 
-const statusVariant: Record<Trip["departureDates"][number]["status"], "success" | "warning" | "destructive" | "muted"> = {
+const statusVariant: Record<
+  Trip["departureDates"][number]["status"],
+  "success" | "warning" | "destructive" | "muted"
+> = {
   open: "success",
   "filling-fast": "warning",
   "sold-out": "destructive",
   closed: "muted",
 };
 
-const statusLabel: Record<Trip["departureDates"][number]["status"], string> = {
+const statusLabel: Record<
+  Trip["departureDates"][number]["status"],
+  string
+> = {
   open: "Open",
   "filling-fast": "Filling fast",
   "sold-out": "Sold out",
@@ -27,79 +33,126 @@ const statusLabel: Record<Trip["departureDates"][number]["status"], string> = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-/**
- * TripBookingCard — Step 7.6E Part 4. The persistent booking summary: offer
- * price, original price, discount, booking amount, live seats left, and
- * the next departure — always computed via `getTripAvailability`, never
- * hardcoded, so it stays in sync with MongoDB the moment an admin edits a
- * batch. `sticky top-20` keeps it in view as the page scrolls past it
- * without touching the page's single-column layout (requirement: don't
- * redesign the UI).
- *
- * "Book Now" links to the batch list on this same page (`#trip-batches`)
- * rather than a checkout flow — the actual Booking & Payment System is
- * explicitly out of scope for this step and is what this card is
- * preparing the page for. WhatsApp mirrors the same contact number
- * `TripStickyActions` already uses, so both CTAs stay consistent.
- */
 export function TripBookingCard({ trip }: TripBookingCardProps) {
-  const { nextDeparture, seatsLeft, isAvailable } = getTripAvailability(trip);
+  const { nextDeparture, seatsLeft, isAvailable } =
+    getTripAvailability(trip);
 
   const offerPrice = trip.price.discounted ?? trip.price.base;
-  const originalPrice = trip.price.discounted ? trip.price.base : undefined;
+  const originalPrice = trip.price.discounted
+    ? trip.price.base
+    : undefined;
+
   const discountPercent = originalPrice
     ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100)
     : null;
 
-  const whatsappMessage = encodeURIComponent(`Hi! I'm interested in booking the ${trip.title} trip.`);
+  const whatsappMessage = encodeURIComponent(
+    `Hi! I'm interested in booking the ${trip.title} trip.`
+  );
 
   return (
     <div className="sticky top-20 z-10">
-      <Card>
-        <CardContent className="flex flex-col gap-3 pt-6">
-          <div className="flex items-start justify-between gap-3">
-            <Price amount={offerPrice} originalAmount={originalPrice} size="lg" suffix="/ person" />
-            {discountPercent ? <Badge variant="success">{discountPercent}% off</Badge> : null}
+      <Card className="overflow-hidden rounded-2xl border border-border/60 bg-card/95 shadow-xl">
+        <CardContent className="flex flex-col gap-5 p-6">
+          {/* Price */}
+          <div className="flex items-start justify-between gap-4">
+            <Price
+              amount={offerPrice}
+              originalAmount={originalPrice}
+              size="lg"
+              suffix="/ person"
+            />
+
+            {discountPercent ? (
+              <Badge
+                variant="success"
+                className="rounded-xl px-3 py-2 text-sm"
+              >
+                {discountPercent}% off
+              </Badge>
+            ) : null}
           </div>
 
+          {/* Booking Amount */}
           <p className="text-sm text-muted-foreground">
-            Book Your Slot amount: <span className="font-medium text-foreground">₹{trip.price.bookingAmount.toLocaleString("en-IN")}</span>
+            Book Your Slot amount:{" "}
+            <span className="font-semibold text-foreground">
+              ₹{trip.price.bookingAmount.toLocaleString("en-IN")}
+            </span>
           </p>
 
-          <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Seats left</span>
-            <span className="font-medium text-foreground">{seatsLeft}</span>
+          {/* Seats */}
+          <div className="flex h-12 items-center justify-between rounded-xl bg-emerald-900/30 px-4">
+            <span className="text-sm text-muted-foreground">
+              Seats left
+            </span>
+
+            <span className="text-lg font-semibold text-foreground">
+              {seatsLeft}
+            </span>
           </div>
 
+          {/* Date */}
           {nextDeparture ? (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <CalendarDays className="size-4" aria-hidden="true" />
+            <div className="flex h-12 items-center justify-between rounded-xl border border-border/60 px-4">
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CalendarDays className="size-4" />
                 {formatDate(nextDeparture.startDate)}
               </span>
-              <Badge variant={statusVariant[nextDeparture.status]}>{statusLabel[nextDeparture.status]}</Badge>
+
+              <Badge
+                variant={statusVariant[nextDeparture.status]}
+                className="rounded-full px-3"
+              >
+                {statusLabel[nextDeparture.status]}
+              </Badge>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No upcoming batches yet — check back soon.</p>
+            <p className="text-sm text-muted-foreground">
+              No upcoming batches yet — check back soon.
+            </p>
           )}
 
-          <div className="flex flex-col gap-2 pt-1">
-            <Button asChild>
-              <a href={isAvailable ? `/trips/${trip.slug}/book${nextDeparture ? `?departure=${nextDeparture.id}` : ""}` : "#trip-batches"}>
-                <Ticket className="size-4" aria-hidden="true" />
+          {/* Buttons */}
+          <div className="flex flex-col gap-3">
+            <Button
+              asChild
+              className="h-12 rounded-xl text-base font-semibold"
+            >
+              <a
+                href={
+                  isAvailable
+                    ? `/trips/${trip.slug}/book${
+                        nextDeparture
+                          ? `?departure=${nextDeparture.id}`
+                          : ""
+                      }`
+                    : "#trip-batches"
+                }
+              >
+                <Ticket className="size-4" />
                 {isAvailable ? "Book Now" : "View Batches"}
               </a>
             </Button>
-            <Button asChild variant="outline">
+
+            <Button
+              asChild
+              variant="outline"
+              className="h-12 rounded-xl text-base"
+            >
               <a
                 href={`${siteConfig.contact.whatsappHref}?text=${whatsappMessage}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <MessageCircle className="size-4" aria-hidden="true" />
+                <MessageCircle className="size-4" />
                 WhatsApp us
               </a>
             </Button>

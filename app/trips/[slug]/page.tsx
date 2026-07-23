@@ -66,9 +66,10 @@ export async function generateMetadata({ params }: TripPageProps): Promise<Metad
 
 /**
  * Trip Details Page — requirement #6, the full Architecture §2 composition:
- * TripHero → TripGallery → TripHighlights → TripItinerary → TripInclusions
- * → TripPricingTable → TripMap → TripFAQ → TripTerms → RelatedTrips, plus
- * `TripStickyActions` mounting the persistent WhatsApp/Call bar. Every
+ * TripHero → TripBookingCard → TripDurationSelector → TripPricingTable →
+ * TripGallery → TripHighlights → TripItinerary → TripInclusions → TripMap →
+ * TripFAQ → TripTerms → RelatedTrips, plus `TripStickyActions` mounting the
+ * persistent WhatsApp/Call bar. Every
  * section is optional and self-hides when its data is empty, so a
  * partially-filled Admin Panel entry still renders a coherent page instead
  * of empty section shells.
@@ -93,6 +94,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
         </div>
       </div>
       <TripDurationSelector trip={trip} siblings={circuitSiblings} />
+      <TripPricingTable trip={trip} />
       <TripGallery trip={trip} />
       <TripHighlights trip={trip} />
       <TripItinerary trip={trip} />
@@ -100,7 +102,6 @@ export default async function TripDetailPage({ params }: TripPageProps) {
       <TripMeals trip={trip} />
       <TripTransportation trip={trip} />
       <TripInclusions trip={trip} />
-      <TripPricingTable trip={trip} />
       <TripDestinationRoutes trip={trip} />
       <TripMap trip={trip} />
       <TripReviews trip={trip} assignedReviews={assignedReviews} />

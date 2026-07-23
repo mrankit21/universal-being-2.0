@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   /**
+   * Dev is tested from a phone over LAN (e.g. http://192.168.x.x:3000),
+   * which Next.js 15 flags as a cross-origin dev request unless the
+   * origin is explicitly allowlisted. This only affects `next dev`; it's
+   * a no-op in production builds.
+   */
+  allowedDevOrigins: ["192.168.201.237"],
+  /**
    * Brand/media assets (logo, favicon, trip photos) are picked from the
    * Media Library or pasted via "Add by URL", so their host isn't known
    * ahead of time — it's whatever ImageKit endpoint or external URL an
