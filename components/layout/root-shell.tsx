@@ -22,10 +22,13 @@ import { SavedProvider } from "@/components/saved/saved-context";
  * global search — with zero per-page wiring, per the Phase 4 rule "future
  * pages must automatically inherit this layout."
  *
- * `/admin/**` keeps the public header/announcement/bottom-nav/sticky-CTA
- * (useful for jumping over to the live site while working in admin) but
- * skips the public footer — it's public-site marketing chrome (nav links,
- * socials, newsletter) with no purpose inside the admin panel. That check
+ * `/admin/**` renders none of this public chrome (announcement bar,
+ * header, mobile bottom nav, sticky CTA bar, footer) — the admin panel has
+ * its own navigation (`AdminHeader`/`AdminSidebar`). Stacking both used to
+ * leave a dead gap between the public mobile header and `AdminHeader` on
+ * small screens, and the floating `BottomNav` pill overlapped/cropped the
+ * last row of admin tables — hiding all of it (same rule footer already
+ * followed) fixes both. That check
  * needs `usePathname`, which only works in a Client Component — so it's
  * isolated in `<HideOnAdmin>` rather than making this whole file a client
  * component. SiteFooter fetches from MongoDB via mongoose; if this file
@@ -63,8 +66,10 @@ export function RootShell({
             >
               Skip to content
             </a>
-            <AnnouncementBar config={announcement} />
-            <SiteHeader />
+            <HideOnAdmin>
+              <AnnouncementBar config={announcement} />
+              <SiteHeader />
+            </HideOnAdmin>
 
             <main id="main-content" className="min-h-[60vh]">
               {children}
@@ -74,9 +79,9 @@ export function RootShell({
               <ThemedFooterBand>
                 <SiteFooter />
               </ThemedFooterBand>
+              <BottomNav />
+              <StickyCtaBar />
             </HideOnAdmin>
-            <BottomNav />
-            <StickyCtaBar />
             <GlobalSearchModal />
             <CustomerAuthModal />
           </StickyCtaProvider>
