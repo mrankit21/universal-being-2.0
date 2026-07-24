@@ -23,6 +23,8 @@ interface TripRow {
   featured: boolean;
   price: { base: number; currency: string };
   availableSeats: number;
+  circuitGroup?: string;
+  isCircuitParent?: boolean;
 }
 
 export default function TripsListPage() {
@@ -30,23 +32,39 @@ export default function TripsListPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 50;
 
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (status !== "all") params.set("status", status);
+    params.set("page", String(page));
+    params.set("limit", String(limit));
     const res = await fetch(`/api/admin/trips?${params.toString()}`);
     const json = await res.json();
-    if (json.success) setTrips(json.data.trips);
-    else toast.error(json.error);
+    if (json.success) {
+      setTrips(json.data.trips);
+      setTotalPages(Math.max(1, json.data.totalPages ?? 1));
+      setTotal(json.data.total ?? json.data.trips.length);
+    } else toast.error(json.error);
     setLoading(false);
-  }, [query, status]);
+  }, [query, status, page]);
 
   useEffect(() => {
     const timeout = setTimeout(load, 300);
     return () => clearTimeout(timeout);
   }, [load]);
+
+  // A new search/status filter always restarts from page 1 — otherwise
+  // "page 3" of an old filter could silently return zero rows under a new,
+  // shorter-result-set filter and look like every trip vanished.
+  useEffect(() => {
+    setPage(1);
+  }, [query, status]);
 
   async function handleDelete(id: string, force = false) {
     const url = force ? `/api/admin/trips/${id}?force=true` : `/api/admin/trips/${id}`;
@@ -69,6 +87,25 @@ export default function TripsListPage() {
 
   async function togglePublish(trip: TripRow) {
     const nextStatus = trip.status === "published" ? "draft" : "published";
+
+    // Unpublishing a circuit's flagged Parent cascades the same status to
+    // every sibling Trip in its `circuitGroup` (server-side rule, see
+    // `/api/admin/trips/[id]/publish`). Warn up front with exactly which
+    // trips that'll affect — otherwise it looks like those trips "went to
+    // draft on their own" with no explanation.
+    if (nextStatus !== "published" && trip.isCircuitParent && trip.circuitGroup) {
+      const affectedSiblings = trips.filter(
+        (t) => t._id !== trip._id && t.circuitGroup === trip.circuitGroup && t.status === "published"
+      );
+      if (affectedSiblings.length > 0) {
+        const names = affectedSiblings.map((t) => t.title).join(", ");
+        const proceed = window.confirm(
+          `"${trip.title}" is the Parent trip for this circuit. Unpublishing it will also move these linked trips to Draft: ${names}.\n\nContinue?`
+        );
+        if (!proceed) return;
+      }
+    }
+
     const res = await fetch(`/api/admin/trips/${trip._id}/publish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -76,8 +113,20 @@ export default function TripsListPage() {
     });
     const json = await res.json();
     if (json.success) {
-      toast.success(nextStatus === "published" ? "Trip published" : "Trip moved to draft");
-      setTrips((prev) => prev.map((t) => (t._id === trip._id ? { ...t, status: nextStatus } : t)));
+      const cascaded: { _id: string; title: string }[] = json.data.cascaded ?? [];
+      const cascadedIds = new Set(cascaded.map((c) => c._id));
+      setTrips((prev) =>
+        prev.map((t) =>
+          t._id === trip._id || cascadedIds.has(t._id) ? { ...t, status: nextStatus } : t
+        )
+      );
+      if (cascaded.length > 0) {
+        toast.success(
+          `"${trip.title}" moved to Draft — also unpublished ${cascaded.length} linked trip${cascaded.length > 1 ? "s" : ""}: ${cascaded.map((c) => c.title).join(", ")}`
+        );
+      } else {
+        toast.success(nextStatus === "published" ? "Trip published" : "Trip moved to draft");
+      }
     } else {
       toast.error(json.error);
     }
@@ -102,7 +151,25 @@ export default function TripsListPage() {
       header: "Trip",
       cell: (t) => (
         <div>
-          <p className="font-medium">{t.title}</p>
+          <p className="flex items-center gap-1.5 font-medium">
+            {t.title}
+            {t.isCircuitParent && (
+              <span
+                title="Unpublishing this trip also unpublishes its linked sibling trips"
+                className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
+              >
+                Parent
+              </span>
+            )}
+            {!t.isCircuitParent && t.circuitGroup && (
+              <span
+                title="Part of a circuit — linked to a Parent trip"
+                className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                Linked
+              </span>
+            )}
+          </p>
           <p className="text-xs text-muted-foreground">{t.destinationName}</p>
         </div>
       ),
@@ -169,6 +236,35 @@ export default function TripsListPage() {
       </div>
 
       <DataTable columns={columns} rows={trips} loading={loading} rowKey={(t) => t._id} emptyMessage="No trips yet." />
+
+      {!loading && total > 0 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <p>
+            Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} trips
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </Button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
