@@ -36,11 +36,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await requirePermission("destinations:write");
     await connectToDatabase();
     const { id } = await params;
-    const parsed = destinationUpdateSchema.parse(await req.json());
-    // Zod's `.partial()` keeps every shape key on the output, including
-    // fields the client never sent — those come back as an explicit
-    // `key: undefined` rather than being omitted.
-    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
+    const body = await req.json();
+    const parsed = destinationUpdateSchema.parse(body);
+    // Only forward keys the client actually sent in the RAW body. Filtering
+    // on `v !== undefined` is not enough: fields with a `.default()` (e.g.
+    // status/published flags) get that default silently applied by zod even
+    // when the client never sent the key, so they come back *defined* and
+    // slip through a definedness filter — overwriting the real value.
+    // Checking the pre-zod `body` for the key is the only reliable way to
+    // tell "client sent this" from "zod defaulted this".
+    const update = Object.fromEntries(
+      Object.entries(parsed).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
 
     if (parsed.slug) {
       const clash = await DestinationModel.findOne({ slug: parsed.slug, _id: { $ne: id } });

@@ -86,12 +86,19 @@ export async function PATCH(req: NextRequest) {
   try {
     const session = await requirePermission("homepage:write");
     await connectToDatabase();
-    const parsed = homepageUpdateSchema.parse(await req.json());
-    // See destinations/[id]/route.ts — `.partial()` leaves untouched fields
-    // as explicit `undefined` rather than omitting them. Object.assign
-    // copies those `undefined`s onto `doc` too, so a save() here could wipe
-    // fields the client never sent.
-    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
+    const body = await req.json();
+    const parsed = homepageUpdateSchema.parse(body);
+    // Only forward keys the client actually sent in the RAW body. Filtering
+    // on `v !== undefined` is not enough: fields with a `.default()` (e.g.
+    // `enabled`/`published`-style flags on slides) get that default
+    // silently applied by zod even when the client never sent the key, so
+    // they come back *defined* and slip through a definedness filter —
+    // Object.assign would then overwrite the real value on `doc`. Checking
+    // the pre-zod `body` for the key is the only reliable way to tell
+    // "client sent this" from "zod defaulted this".
+    const update = Object.fromEntries(
+      Object.entries(parsed).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
 
     const doc = await getOrCreateSingleton();
     Object.assign(doc, update, { updatedBy: session.email });

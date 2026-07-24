@@ -13,11 +13,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await requirePermission("announcements:write");
     await connectToDatabase();
     const { id } = await params;
-    const parsed = announcementUpdateSchema.parse(await req.json());
-    // See destinations/[id]/route.ts — `.partial()` leaves untouched fields
-    // as explicit `undefined` rather than omitting them, which Mongoose
-    // would otherwise $set (i.e. unset) on the document.
-    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
+    const body = await req.json();
+    const parsed = announcementUpdateSchema.parse(body);
+    // Only forward keys the client actually sent in the RAW body. Filtering
+    // on `v !== undefined` is not enough: fields with a `.default()` (e.g.
+    // published/enabled flags) get that default silently applied by zod
+    // even when the client never sent the key, so they come back *defined*
+    // and slip through a definedness filter — overwriting the real value.
+    // Checking the pre-zod `body` for the key is the only reliable way to
+    // tell "client sent this" from "zod defaulted this".
+    const update = Object.fromEntries(
+      Object.entries(parsed).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
     // Fetch as plain object, merge, write the whole document back — see
     // destinations/[id]/route.ts for why hydrate-then-save() wasn't
     // reliable enough here.

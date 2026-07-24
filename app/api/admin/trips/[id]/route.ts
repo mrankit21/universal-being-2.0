@@ -32,13 +32,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const body = await req.json();
     const parsed = tripUpdateSchema.parse(body);
-    // Zod's `.partial()` keeps every shape key on the output as an explicit
-    // `key: undefined` for fields the client didn't send, instead of
-    // omitting them. Passed straight to Mongoose those get $set anyway,
-    // which unsets the path — so a PATCH of one tab (e.g. just pricing)
-    // could wipe out required fields from other tabs. Only forward keys the
-    // client actually sent.
-    const update = Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined));
+    // Only forward keys the client actually sent in the RAW body. Filtering
+    // on `v !== undefined` is not enough: every field in this schema that
+    // has a `.default()` (status, featured, rating, reviewCount, ...) gets
+    // that default silently applied by zod even when the client never sent
+    // the key, so it comes back *defined* (e.g. status: "draft") and slips
+    // straight through a definedness filter — overwriting whatever the
+    // field actually held. Checking the pre-zod `body` for the key is the
+    // only reliable way to tell "client sent this" from "zod defaulted this".
+    const update = Object.fromEntries(
+      Object.entries(parsed).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
 
     if (parsed.slug) {
       const clash = await TripModel.findOne({ slug: parsed.slug, _id: { $ne: id } });
