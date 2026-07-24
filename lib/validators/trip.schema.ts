@@ -81,6 +81,7 @@ export const tripSchema = z.object({
   heroImage: imageAssetSchema,
   heroImageMobile: imageAssetSchema.optional(),
   coverImage: imageAssetSchema,
+  thumbnail: imageAssetSchema,
   homepageHeroImage: imageAssetSchema,
   gallery: z.array(imageAssetSchema).default([]),
   duration: z.object({
