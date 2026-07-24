@@ -28,7 +28,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const user = await requirePermission("bookings:write");
     await connectToDatabase();
     const { id } = await params;
-    const parsed = bookingUpdateSchema.parse(await req.json());
+    const body = await req.json();
+    const parsed = bookingUpdateSchema.parse(body);
 
     const booking = await BookingModel.findById(id);
     if (!booking) return fail("Booking not found", 404);
@@ -82,7 +83,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const { statusNote: _statusNote, ...fields } = parsed;
     void _statusNote;
-    Object.assign(booking, fields);
+    // Only assign keys the client actually sent in the RAW body. Every
+    // field zod didn't get a value for still ends up on `parsed` as an
+    // explicit `key: undefined` (all of bookingUpdateSchema's fields are
+    // `.optional()`), and Object.assign onto a live Mongoose document
+    // treats an explicit `undefined` as "unset this path" — so patching
+    // just `{ status: "confirmed" }` was silently wiping paymentStatus,
+    // notes, amountPaid, remainingPaymentMethod, and remainingPaymentStatus
+    // on every booking edit. Checking the pre-zod `body` for the key is the
+    // only reliable way to tell "client sent this" from "zod left this
+    // undefined".
+    const safeFields = Object.fromEntries(
+      Object.entries(fields).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
+    Object.assign(booking, safeFields);
     await booking.save();
 
     return ok(booking);

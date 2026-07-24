@@ -13,13 +13,23 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const session = await requirePermission("users:write");
     await connectToDatabase();
     const { id } = await params;
-    const parsed = userUpdateSchema.parse(await req.json());
+    const body = await req.json();
+    const parsed = userUpdateSchema.parse(body);
 
     if (id === session.sub && parsed.active === false) {
       return fail("You cannot deactivate your own account", 400);
     }
 
-    const update: Record<string, unknown> = { ...parsed };
+    // Only forward keys the client actually sent in the RAW body. Every
+    // field userUpdateSchema didn't get a value for still ends up on
+    // `parsed` as an explicit `key: undefined` — spreading that straight
+    // into `update` and on to findByIdAndUpdate is relying on the Mongo
+    // driver's undefined-handling to quietly drop those keys, which isn't
+    // guaranteed. Checking the pre-zod `body` for the key is the reliable
+    // way to tell "client sent this" from "zod left this undefined".
+    const update: Record<string, unknown> = Object.fromEntries(
+      Object.entries(parsed).filter(([k]) => Object.prototype.hasOwnProperty.call(body, k))
+    );
     delete update.password;
     if (parsed.password) update.passwordHash = await hashPassword(parsed.password);
     if (parsed.email) update.email = parsed.email.toLowerCase();

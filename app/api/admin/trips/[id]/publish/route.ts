@@ -26,7 +26,7 @@ import { connectToDatabase } from "@/lib/db/mongoose";
 import { TripModel } from "@/lib/db/models";
 import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
-import { revalidateTripSurfaces } from "@/lib/api-helpers/revalidate";
+import { revalidateTripSurfaces, RevalidatableTrip } from "@/lib/api-helpers/revalidate";
 import { z } from "zod";
 
 const bodySchema = z.object({ status: z.enum(["draft", "published", "archived"]) });
@@ -61,7 +61,15 @@ export async function POST(req: NextRequest, { params }: Params) {
     );
     if (!trip) return fail("Trip not found", 404);
 
-    const affected = [trip];
+    // Typed as `RevalidatableTrip[]`, not `typeof trip[]` — this array only
+    // ever feeds `revalidateTripSurfaces`, which needs just `slug` /
+    // `destinationSlug`. Letting it infer from `trip` (a full Mongoose
+    // Hydrated Document) made every later push require a real Document —
+    // but the cascaded siblings come from a `.lean()` query, so
+    // `{ ...s, status }` is a plain object, not a Document, and TS
+    // rejected it. Both `trip` and the lean-spread objects satisfy this
+    // narrower interface structurally.
+    const affected: RevalidatableTrip[] = [trip];
 
     const cascaded: { _id: string; title: string }[] = [];
 
