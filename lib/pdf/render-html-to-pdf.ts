@@ -6,48 +6,62 @@
  * TICKET_HEIGHT below, matching lib/pdf/ticket-html.ts's <body> size).
  *
  * Two runtimes:
- *  - Production (Vercel/serverless): `puppeteer-core` + `@sparticuz/chromium`.
- *    Vercel's function containers ship a *minimal* Linux with none of the
- *    shared libraries (libnss3.so etc.) Chromium needs — @sparticuz/chromium
- *    bundles those libraries alongside the Chromium binary, but three things
- *    are required together for it to actually find them at runtime:
- *      1. `LD_LIBRARY_PATH` pointed at the extracted binary's own directory
- *         (this is the part most guides skip, and exactly what threw
- *         "libnss3.so: cannot open shared object file" here).
+ *  - Production (Vercel/serverless): `puppeteer-core` + `@sparticuz/chromium-min`.
+ *    We previously used the *full* `@sparticuz/chromium` package, which bundles
+ *    the Chromium binary + its .so files (libnss3.so etc.) inside node_modules
+ *    and extracts them to /tmp at runtime. That kept failing with
+ *    "libnss3.so: cannot open shared object file" even after LD_LIBRARY_PATH +
+ *    outputFileTracingIncludes fixes — Next.js's build-time file tracer
+ *    (@vercel/nft) and the package's runtime-extraction logic disagree about
+ *    which files survive into the deployed function, and the shared libs get
+ *    dropped regardless of how the tracer is told to include them.
+ *    `chromium-min` sidesteps this entirely: it ships NO binary in the npm
+ *    package, so there's nothing for the tracer to lose. Instead, at cold
+ *    start, `chromium.executablePath(packUrl)` downloads a prebuilt tar pack
+ *    (binary + all shared libs together) from a URL and extracts it straight
+ *    into /tmp — completely outside Next.js's bundling/tracing pipeline.
+ *      1. `CHROMIUM_PACK_URL` env var — the tar pack to download. Defaults to
+ *         Sparticuz's own GitHub release matching the installed
+ *         @sparticuz/chromium-min version (see package.json). Self-hosting
+ *         this on S3/R2 is faster + more reliable for prod; see note below.
  *      2. `chromium.setGraphicsMode = false` — serverless has no GPU; leaving
  *         graphics mode on causes launch failures/freezes on some regions.
- *      3. `serverExternalPackages` in next.config.ts (see that file) so
- *         Next.js doesn't try to bundle these two native packages.
+ *      3. `serverExternalPackages` in next.config.ts so Next.js doesn't try
+ *         to webpack-bundle these two native-facing packages at all.
  *  - Local dev: falls back to the full `puppeteer` package (bundles its own
  *    Chromium + all system libraries already present on a dev machine).
  */
-import path from "path";
 
 export const TICKET_WIDTH = 1120;
 export const TICKET_HEIGHT = 640;
+
+// Must match the installed @sparticuz/chromium-min version (package.json).
+// Sparticuz publishes a matching tar pack on GitHub Releases for every
+// version they ship — this is the "default" pack their own docs point to.
+// For production traffic, download this once and re-host it on your own
+// S3/R2 bucket (CHROMIUM_PACK_URL env var) — GitHub Releases isn't meant to
+// serve high-frequency cold-start downloads and can rate-limit under load.
+const DEFAULT_CHROMIUM_PACK_URL =
+  "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
 
 async function getBrowser() {
   const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 
   if (isServerless) {
-    const chromium = (await import("@sparticuz/chromium")).default;
+    const chromium = (await import("@sparticuz/chromium-min")).default;
     const puppeteer = await import("puppeteer-core");
 
     // No GPU in serverless — avoids the "freezes after Creating new page"
     // failure mode some regions hit with graphics mode left on.
-    // NOTE: this is a property assignment on @sparticuz/chromium's default
-    // export, not a method call — `chromium.setGraphicsMode(false)` is
-    // invalid and fails typecheck.
     chromium.setGraphicsMode = false;
 
-    const executablePath = await chromium.executablePath();
+    const packUrl = process.env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK_URL;
 
-    // THE FIX: point the dynamic linker at the directory @sparticuz/chromium
-    // extracted the Chromium binary + its .so files into. Without this,
-    // Chromium is on disk but can't find libnss3.so/libnspr4.so next to it.
-    process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
-      ? `${path.dirname(executablePath)}:${process.env.LD_LIBRARY_PATH}`
-      : path.dirname(executablePath);
+    // chromium-min downloads + extracts the tar pack (binary + .so files
+    // together) to /tmp on first call and caches it for the lifetime of the
+    // function container — no LD_LIBRARY_PATH juggling needed, the pack's
+    // own layout keeps the shared libs next to the binary.
+    const executablePath = await chromium.executablePath(packUrl);
 
     return puppeteer.launch({
       args: chromium.args,
