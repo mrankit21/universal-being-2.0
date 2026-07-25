@@ -96,6 +96,25 @@ function blank(): TripFormValue {
 let idCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now()}-${idCounter++}`;
 
+/** Returns only the top-level keys of `next` whose value actually differs
+ * from `original` (structural comparison via JSON, which is sufficient
+ * here — every TripFormValue field is plain data: strings, numbers,
+ * booleans, and arrays/objects of the same, no functions or Dates). Used
+ * so a Save from any one tab only PATCHes the fields that tab is
+ * responsible for, never the rest of the document. */
+function diffTripValue(
+  original: TripFormValue,
+  next: TripFormValue
+): Partial<TripFormValue> {
+  const changed: Partial<TripFormValue> = {};
+  for (const key of Object.keys(next) as (keyof TripFormValue)[]) {
+    if (JSON.stringify(next[key]) !== JSON.stringify(original[key])) {
+      (changed as Record<string, unknown>)[key] = next[key];
+    }
+  }
+  return changed;
+}
+
 /** Backfills fields added after some Trips were already saved (itinerary/
  * accommodation `images`, `seo.keywords`) so older documents still load
  * without crashing the form — same graceful-fallback rule the rest of the
@@ -143,10 +162,22 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
     try {
       const url = tripId ? `/api/admin/trips/${tripId}` : "/api/admin/trips";
       const method = tripId ? "PATCH" : "POST";
+      // On edit, only send fields that actually changed from what loaded.
+      // The whole `value` object used to be sent every time, and the API
+      // overwrites the full document on every PATCH — so saving from any
+      // one tab (e.g. just renaming the trip on Basic Info) silently wiped
+      // every other tab's data (itinerary, isCircuitParent, etc.) if that
+      // tab's client-side state was ever out of sync. Diffing against
+      // `initialValue` means an untouched tab's fields are simply never
+      // part of the request, so they can't be clobbered no matter what
+      // that tab's local state looks like. New trips (no tripId) still
+      // send everything since there's nothing on the server yet to diff
+      // against.
+      const payload = tripId && initialValue ? diffTripValue(initialValue, value) : value;
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(value),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!json.success) {

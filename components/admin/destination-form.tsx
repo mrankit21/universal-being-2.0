@@ -92,6 +92,24 @@ export function DestinationForm({
     setValue((prev) => ({ ...prev, [key]: val }));
   }
 
+  /** Returns only the top-level keys of `next` whose value actually
+   * differs from `original` — same rationale as trip-form.tsx's version.
+   * Structural JSON comparison is sufficient since every field here is
+   * plain data (strings/numbers/booleans/arrays/objects), no functions or
+   * Dates. */
+  function diffDestinationValue(
+    original: DestinationFormValue,
+    next: DestinationFormValue
+  ): Partial<DestinationFormValue> {
+    const changed: Partial<DestinationFormValue> = {};
+    for (const key of Object.keys(next) as (keyof DestinationFormValue)[]) {
+      if (JSON.stringify(next[key]) !== JSON.stringify(original[key])) {
+        (changed as Record<string, unknown>)[key] = next[key];
+      }
+    }
+    return changed;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -99,10 +117,15 @@ export function DestinationForm({
     try {
       const url = destinationId ? `/api/admin/destinations/${destinationId}` : "/api/admin/destinations";
       const method = destinationId ? "PATCH" : "POST";
+      // Same fix as trip-form.tsx: on edit, only send fields that actually
+      // changed vs what loaded, so saving from one section of this
+      // multi-part editor never overwrites another section's data if that
+      // section's client state happened to be stale/empty.
+      const payload = destinationId && initialValue ? diffDestinationValue(initialValue, value) : value;
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(value),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!json.success) {
