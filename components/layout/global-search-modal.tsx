@@ -20,17 +20,31 @@ export interface SearchResult {
 export type SearchFn = (query: string) => Promise<SearchResult[]> | SearchResult[];
 
 /**
- * Local stub search — filters the site's own nav so the modal is fully
- * functional today. A real trips/destinations API replaces just this
- * function later (pass it via the `search` prop); GlobalSearchModal's
- * contract (query in, SearchResult[] out) never changes.
+ * Default search — matches the site's own nav locally (instant, no network)
+ * and, in parallel, hits `/api/trips/search` so trips/destinations (e.g.
+ * "manali") show up as real suggestions. Nav matches are shown first since
+ * they resolve synchronously; trip results are appended once the request
+ * returns. GlobalSearchModal's contract (query in, SearchResult[] out)
+ * never changes, so this can still be swapped via the `search` prop.
  */
-const defaultSearch: SearchFn = (query) => {
+const defaultSearch: SearchFn = async (query) => {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  return siteConfig.primaryNav
+
+  const navResults: SearchResult[] = siteConfig.primaryNav
     .filter((item) => item.label.toLowerCase().includes(q))
     .map((item) => ({ id: item.href, title: item.label, href: item.href }));
+
+  try {
+    const res = await fetch(`/api/trips/search?q=${encodeURIComponent(query.trim())}`);
+    const json = await res.json();
+    const tripResults: SearchResult[] = json.success ? json.data : [];
+    return [...navResults, ...tripResults];
+  } catch {
+    // Network hiccup — still show whatever nav matches we found locally
+    // rather than surfacing an empty state for a working query.
+    return navResults;
+  }
 };
 
 export interface GlobalSearchModalProps {
