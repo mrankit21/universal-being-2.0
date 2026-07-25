@@ -6,16 +6,22 @@
  * TICKET_HEIGHT below, matching lib/pdf/ticket-html.ts's <body> size).
  *
  * Two runtimes:
- *  - Production (Vercel/serverless): `puppeteer-core` + `@sparticuz/chromium`,
- *    the standard combo for running headless Chrome inside a serverless
- *    function without shipping a full Chromium binary in the deployment.
- *  - Local dev: falls back to the full `puppeteer` package (bundles its
- *    own Chromium), so `npm run dev` works without extra setup.
- *
- * Run once after pulling this change:
- *   npm install puppeteer-core @sparticuz/chromium
- *   npm install -D puppeteer   (dev-only fallback)
+ *  - Production (Vercel/serverless): `puppeteer-core` + `@sparticuz/chromium`.
+ *    Vercel's function containers ship a *minimal* Linux with none of the
+ *    shared libraries (libnss3.so etc.) Chromium needs — @sparticuz/chromium
+ *    bundles those libraries alongside the Chromium binary, but three things
+ *    are required together for it to actually find them at runtime:
+ *      1. `LD_LIBRARY_PATH` pointed at the extracted binary's own directory
+ *         (this is the part most guides skip, and exactly what threw
+ *         "libnss3.so: cannot open shared object file" here).
+ *      2. `chromium.setGraphicsMode(false)` — serverless has no GPU; leaving
+ *         graphics mode on causes launch failures/freezes on some regions.
+ *      3. `serverExternalPackages` in next.config.ts (see that file) so
+ *         Next.js doesn't try to bundle these two native packages.
+ *  - Local dev: falls back to the full `puppeteer` package (bundles its own
+ *    Chromium + all system libraries already present on a dev machine).
  */
+import path from "path";
 
 export const TICKET_WIDTH = 1120;
 export const TICKET_HEIGHT = 640;
@@ -26,9 +32,25 @@ async function getBrowser() {
   if (isServerless) {
     const chromium = (await import("@sparticuz/chromium")).default;
     const puppeteer = await import("puppeteer-core");
+
+    // No GPU in serverless — avoids the "freezes after Creating new page"
+    // failure mode some regions hit with graphics mode left on.
+    if (typeof chromium.setGraphicsMode === "function") {
+      chromium.setGraphicsMode(false);
+    }
+
+    const executablePath = await chromium.executablePath();
+
+    // THE FIX: point the dynamic linker at the directory @sparticuz/chromium
+    // extracted the Chromium binary + its .so files into. Without this,
+    // Chromium is on disk but can't find libnss3.so/libnspr4.so next to it.
+    process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH
+      ? `${path.dirname(executablePath)}:${process.env.LD_LIBRARY_PATH}`
+      : path.dirname(executablePath);
+
     return puppeteer.launch({
       args: chromium.args,
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: true,
     });
   }
