@@ -14,6 +14,7 @@
  */
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,7 +27,6 @@ function loadEnvFile(filename) {
     return true;
   } catch {
     try {
-      const fs = require("node:fs");
       const lines = fs.readFileSync(envPath, "utf8").split("\n");
       for (const line of lines) {
         const trimmed = line.trim();
