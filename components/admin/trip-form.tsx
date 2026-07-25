@@ -150,8 +150,14 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
       });
       const json = await res.json();
       if (!json.success) {
-        if (json.details?.fieldErrors) setErrors(json.details.fieldErrors);
-        toast.error(json.error ?? "Something went wrong");
+        const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
+        if (fieldErrors) setErrors(fieldErrors);
+        // Surface exactly which field(s) failed instead of a bare generic
+        // toast — "Validation failed" alone is undebuggable on mobile
+        // where there's no DevTools/terminal to check.
+        const fieldNames = fieldErrors ? Object.keys(fieldErrors) : [];
+        const detail = fieldNames.length ? `: ${fieldNames.join(", ")}` : "";
+        toast.error(`${json.error ?? "Something went wrong"}${detail}`);
         return;
       }
       toast.success(tripId ? "Trip updated" : "Trip created");
