@@ -34,7 +34,7 @@
     "@radix-ui/react-switch": "^1.1.2",
     "@radix-ui/react-tabs": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.6",
-    "@sparticuz/chromium-min": "^131.0.1",
+    "@sparticuz/chromium-min": "^143.0.4",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "bcryptjs": "^3.0.3",

@@ -35,14 +35,15 @@
 export const TICKET_WIDTH = 1120;
 export const TICKET_HEIGHT = 640;
 
-// Must match the installed @sparticuz/chromium-min version (package.json).
-// Sparticuz publishes a matching tar pack on GitHub Releases for every
-// version they ship — this is the "default" pack their own docs point to.
-// For production traffic, download this once and re-host it on your own
-// S3/R2 bucket (CHROMIUM_PACK_URL env var) — GitHub Releases isn't meant to
-// serve high-frequency cold-start downloads and can rate-limit under load.
+// Must match the installed @sparticuz/chromium-min version EXACTLY (see
+// package.json — pinned with no ^, since a mismatched pack/package version
+// pairing is its own source of "chromium won't launch" failures).
+// Vercel's default serverless function architecture is x64, so the pack
+// filename must include ".x64." — Sparticuz also publishes ".arm64." packs;
+// only switch to that if this Vercel project is explicitly configured for
+// arm64 functions (Project Settings → Functions → Architecture).
 const DEFAULT_CHROMIUM_PACK_URL =
-  "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
+  "https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.x64.tar";
 
 async function getBrowser() {
   const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
@@ -61,12 +62,30 @@ async function getBrowser() {
     // together) to /tmp on first call and caches it for the lifetime of the
     // function container — no LD_LIBRARY_PATH juggling needed, the pack's
     // own layout keeps the shared libs next to the binary.
-    const executablePath = await chromium.executablePath(packUrl);
+    let executablePath: string;
+    try {
+      executablePath = await chromium.executablePath(packUrl);
+    } catch (err) {
+      // Distinguishes "couldn't download/extract the pack" (bad URL, network,
+      // version mismatch) from "downloaded fine but Chromium won't launch"
+      // (the libnss3.so case) — the two need completely different fixes, and
+      // puppeteer's own error message can't tell them apart on its own.
+      throw new Error(
+        `[render-html-to-pdf] Failed to resolve Chromium from pack URL ${packUrl}: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+    }
 
     return puppeteer.launch({
       args: chromium.args,
       executablePath,
-      headless: chromium.headless,
+      // NOTE: @sparticuz/chromium-min v143 removed the `.headless` property
+      // entirely (confirmed against its shipped .d.ts — the Chromium class
+      // now only exposes `args`, `executablePath`, and graphics-mode
+      // controls). The bundled binary is `headless_shell`, which is
+      // headless-only by definition, so this is always true regardless.
+      headless: true,
     });
   }
 
