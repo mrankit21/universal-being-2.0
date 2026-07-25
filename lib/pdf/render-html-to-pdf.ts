@@ -14,7 +14,7 @@
  *      1. `LD_LIBRARY_PATH` pointed at the extracted binary's own directory
  *         (this is the part most guides skip, and exactly what threw
  *         "libnss3.so: cannot open shared object file" here).
- *      2. `chromium.setGraphicsMode(false)` — serverless has no GPU; leaving
+ *      2. `chromium.setGraphicsMode = false` — serverless has no GPU; leaving
  *         graphics mode on causes launch failures/freezes on some regions.
  *      3. `serverExternalPackages` in next.config.ts (see that file) so
  *         Next.js doesn't try to bundle these two native packages.
@@ -35,9 +35,10 @@ async function getBrowser() {
 
     // No GPU in serverless — avoids the "freezes after Creating new page"
     // failure mode some regions hit with graphics mode left on.
-    if (typeof chromium.setGraphicsMode === "function") {
-      chromium.setGraphicsMode(false);
-    }
+    // NOTE: this is a property assignment on @sparticuz/chromium's default
+    // export, not a method call — `chromium.setGraphicsMode(false)` is
+    // invalid and fails typecheck.
+    chromium.setGraphicsMode = false;
 
     const executablePath = await chromium.executablePath();
 
@@ -51,7 +52,7 @@ async function getBrowser() {
     return puppeteer.launch({
       args: chromium.args,
       executablePath,
-      headless: true,
+      headless: chromium.headless,
     });
   }
 
