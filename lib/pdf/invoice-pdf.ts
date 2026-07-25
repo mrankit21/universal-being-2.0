@@ -10,7 +10,19 @@ import type { InvoiceDocument } from "@/lib/db/models/invoice.model";
 import { getGstConfig } from "@/lib/config/payment-config";
 
 function money(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
+  // currencyDisplay: "narrowSymbol"/"symbol" (the default) renders "₹" for
+  // INR — pdf-lib's built-in Helvetica only supports WinAnsi encoding,
+  // which has no glyph for ₹ (U+20B9) and throws at doc.save(). "code"
+  // renders "INR 1,234.00" instead — same information, all ASCII, safe
+  // with the standard font. (If a proper ₹ glyph is wanted later, that
+  // requires embedding a Unicode-capable TTF via pdf-lib's fontkit
+  // instead of a StandardFonts.* font — a bigger change than this fix.)
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    currencyDisplay: "code",
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export async function generateInvoicePdf(invoice: InvoiceDocument): Promise<Buffer> {
