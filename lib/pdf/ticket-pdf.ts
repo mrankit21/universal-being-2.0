@@ -1,77 +1,118 @@
 /**
- * E-Ticket PDF (Step 8C, Part 8). Includes a QR code encoding the booking
- * id + trip slug (JSON) so a staff member scanning it at departure can
- * look the booking up instantly — the QR payload is deliberately just an
- * identifier, not sensitive traveller data, since printed/forwarded
- * tickets aren't a secure channel.
+ * E-Ticket PDF — premium HTML-rendered design (replaces the pdf-lib
+ * drawText version). Every booking's ticket pulls that booking's OWN
+ * trip's hero image via `booking.tripSlug` — nothing here is hardcoded to
+ * any one destination; Udaipur was only ever the example while the design
+ * was being approved.
+ *
+ * The Universal Being logo (`public/brand/logo.png`) is the one asset
+ * that's always the same, on every ticket, regardless of trip.
  */
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import QRCode from "qrcode";
+import { connectToDatabase, isDatabaseConfigured } from "@/lib/db/mongoose";
+import { TripModel } from "@/lib/db/models";
+import { toEntity } from "@/lib/api/db-mappers";
+import { tripRegistry } from "@/data/trips";
+import { resolveImage } from "@/lib/image/resolve-image";
+import type { Trip } from "@/types/trip";
 import type { BookingDocument } from "@/lib/db/models/booking.model";
+import QRCode from "qrcode";
+import { buildTicketHtml } from "./ticket-html";
+import { renderHtmlToPdf } from "./render-html-to-pdf";
+import { localImageToDataUri, remoteImageToDataUri } from "./asset-utils";
 
-export async function generateTicketPdf(booking: BookingDocument): Promise<Buffer> {
-  const doc = await PDFDocument.create();
-  const page = doc.addPage([595.28, 400]);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending: "PENDING",
+  "slot-reserved": "SLOT RESERVED",
+  "slot-paid": "SLOT-PAID",
+  "remaining-payment-pending": "REMAINING DUE",
+  "remaining-payment-received": "PAID IN FULL",
+  confirmed: "CONFIRMED",
+  completed: "COMPLETED",
+  cancelled: "CANCELLED",
+  expired: "EXPIRED",
+  refunded: "REFUNDED",
+};
 
-  const qrPayload = JSON.stringify({ bookingId: String(booking._id), tripSlug: booking.tripSlug });
-  const qrDataUrl = await QRCode.toDataURL(qrPayload, { margin: 1, width: 220 });
-  const qrPng = await doc.embedPng(qrDataUrl);
+const PAYMENT_STATUS_LABELS: Record<string, { label: string; variant: "paid" | "pending" | "refunded" | "failed" }> = {
+  "not-applicable": { label: "N/A", variant: "pending" },
+  pending: { label: "PENDING", variant: "pending" },
+  paid: { label: "PAID", variant: "paid" },
+  refunded: { label: "REFUNDED", variant: "refunded" },
+  failed: { label: "FAILED", variant: "failed" },
+};
 
-  let y = 360;
-  const left = 40;
-  const draw = (text: string, opts: { x?: number; size?: number; f?: typeof font; color?: [number, number, number] } = {}) => {
-    page.drawText(text, {
-      x: opts.x ?? left,
-      y,
-      size: opts.size ?? 10,
-      font: opts.f ?? font,
-      color: rgb(...(opts.color ?? [0.1, 0.1, 0.1])),
-    });
-  };
-  const gap = (n = 16) => (y -= n);
-
-  draw("UNIVERSAL BEING — E-TICKET", { size: 16, f: bold });
-  gap(24);
-  draw(booking.tripTitle, { size: 13, f: bold });
-  gap(20);
-  draw(`Booking ID: ${String(booking._id)}`);
-  gap(14);
-  if (booking.departureStartDate) {
-    draw(
-      `Departure: ${new Date(booking.departureStartDate).toLocaleDateString("en-IN")}` +
-        (booking.departureEndDate ? ` – ${new Date(booking.departureEndDate).toLocaleDateString("en-IN")}` : "")
-    );
-    gap(14);
-  }
-  draw(`Traveller: ${booking.customerName}`);
-  gap(14);
-  draw(`Seats: ${booking.seatsBooked}`);
-  gap(14);
-  if (booking.emergencyContactName) {
-    draw(
-      `Emergency Contact: ${booking.emergencyContactName}${booking.emergencyContactPhone ? ` (${booking.emergencyContactPhone})` : ""}`
-    );
-    gap(14);
-  }
-  draw(`Booking Status: ${booking.status}`);
-  gap(14);
-  draw(`Payment Status: ${booking.paymentStatus}`);
-  gap(20);
-
-  if (booking.travelers?.length) {
-    draw("Travellers:", { f: bold });
-    gap(14);
-    for (const t of booking.travelers) {
-      draw(`• ${t.fullName}${t.age ? `, ${t.age}y` : ""}`, { size: 9 });
-      gap(12);
+/** Looks up the trip regardless of its current published status — an
+ * older booking must still be able to produce a ticket even if the trip
+ * was later archived. Falls back to the static trip registry the same
+ * way the rest of lib/api/trips.ts does when the DB is unavailable. */
+async function getTripForTicket(tripSlug: string): Promise<Trip | null> {
+  if (isDatabaseConfigured()) {
+    try {
+      await connectToDatabase();
+      const doc = await TripModel.findOne({ slug: tripSlug }).lean();
+      if (doc) return toEntity(doc) as unknown as Trip;
+    } catch (err) {
+      console.error("[ticket-pdf] MongoDB unreachable, falling back to static trip registry:", err);
     }
   }
+  return tripRegistry[tripSlug] ?? null;
+}
 
-  page.drawImage(qrPng, { x: 420, y: 150, width: 130, height: 130 });
-  page.drawText("Scan at departure", { x: 425, y: 138, size: 8, font, color: rgb(0.4, 0.4, 0.4) });
+function formatDepartureLabel(booking: BookingDocument): string {
+  if (!booking.departureStartDate) return "—";
+  const start = new Date(booking.departureStartDate).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  if (!booking.departureEndDate) return start;
+  const end = new Date(booking.departureEndDate).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${start} – ${end}`;
+}
 
-  const bytes = await doc.save();
-  return Buffer.from(bytes);
+export async function generateTicketPdf(booking: BookingDocument): Promise<Buffer> {
+  const trip = await getTripForTicket(booking.tripSlug);
+
+  // Logo: always the fixed Universal Being brand mark, never per-trip.
+  const logoDataUri = await localImageToDataUri("brand/logo.png");
+
+  // Hero photo: THIS booking's trip, not a hardcoded example. Falls back
+  // to a navy gradient (handled in the template) if the trip has no
+  // uploaded hero image yet, or the fetch fails.
+  let destinationImageDataUri: string | null = null;
+  if (trip?.heroImage) {
+    const resolved = resolveImage(trip.heroImage, "hero");
+    if (resolved.src) destinationImageDataUri = await remoteImageToDataUri(resolved.src);
+  }
+
+  const qrPayload = JSON.stringify({ bookingId: String(booking._id), tripSlug: booking.tripSlug });
+  const qrDataUri = await QRCode.toDataURL(qrPayload, { margin: 1, width: 300 });
+
+  const paymentInfo = PAYMENT_STATUS_LABELS[booking.paymentStatus] ?? { label: booking.paymentStatus.toUpperCase(), variant: "pending" as const };
+
+  const html = buildTicketHtml({
+    logoDataUri,
+    destinationImageDataUri,
+    destinationName: trip?.destinationName ?? booking.tripTitle,
+    tripTagline: trip?.title ?? booking.tripTitle,
+    heroCaption: trip?.shortDescription ?? "",
+    bookingId: String(booking._id),
+    departureLabel: formatDepartureLabel(booking),
+    travellerName: booking.customerName,
+    seats: booking.seatsBooked,
+    emergencyContact: booking.emergencyContactName
+      ? `${booking.emergencyContactName}${booking.emergencyContactPhone ? ` (${booking.emergencyContactPhone})` : ""}`
+      : null,
+    bookingStatusLabel: BOOKING_STATUS_LABELS[booking.status] ?? booking.status.toUpperCase(),
+    paymentStatusLabel: paymentInfo.label,
+    paymentStatusVariant: paymentInfo.variant,
+    travellers: (booking.travelers ?? []).map((t) => ({ name: t.fullName, age: t.age })),
+    qrDataUri,
+  });
+
+  return renderHtmlToPdf(html);
 }

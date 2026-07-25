@@ -8,6 +8,12 @@ import { BookingModel } from "@/lib/db/models/booking.model";
 import { generateTicketPdf } from "@/lib/pdf/ticket-pdf";
 import { fail, handleApiError } from "@/lib/api-helpers/respond";
 
+// The ticket is now rendered via headless Chrome (see lib/pdf/render-html-to-pdf.ts),
+// which needs Node.js APIs (fs, child_process) unavailable on the Edge runtime,
+// and can take a few seconds longer than a default serverless function allows.
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: NextRequest, { params }: Params) {

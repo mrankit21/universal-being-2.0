@@ -23,6 +23,11 @@ import {
 import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
 
+// Ticket PDFs render via headless Chrome (lib/pdf/render-html-to-pdf.ts),
+// which needs the Node.js runtime and more time than the default limit.
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 type Params = { params: Promise<{ id: string }> };
 
 const notifySchema = z.object({
