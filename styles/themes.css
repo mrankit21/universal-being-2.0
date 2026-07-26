@@ -49,6 +49,24 @@
   --ub-theme-glass-intensity: 0.12;
   --ub-theme-particle-color: #c9a15a;
 }
+/* Every OTHER named theme below ships a matching `.dark [data-theme="x"]`
+   block; "brand" (the default, used on any page that hasn't set a themed
+   destination/trip mood) was missing its counterpart. Without it,
+   `--ub-theme-surface` stayed `#ffffff` even with `.dark` active, so every
+   `.ub-glass` element on a brand-themed page (the sticky WhatsApp/Call
+   us/Share bar, the header) rendered a near-white glass panel behind the
+   dark-mode `--foreground` text color — text and background both light,
+   so the sticky CTA bar effectively disappeared in dark mode. */
+:where(.dark [data-theme="brand"]) {
+  --background: #15130f;
+  --primary: #c9a15a;
+  --secondary: #3f7d76;
+  --ub-theme-background: #15130f;
+  --ub-theme-surface: #201d17;
+  --ub-theme-primary: #c9a15a;
+  --ub-theme-secondary: #3f7d76;
+  --ub-theme-particle-color: #e8d3a0;
+}
 
 /* ---------------------------------------------------------------------- */
 /* Rajasthan — warm desert gold                                          */

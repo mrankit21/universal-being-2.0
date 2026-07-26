@@ -102,25 +102,40 @@ function withTripImageFallback(
   }
 
   // Gallery is additive, not all-or-nothing: the destination's own photos
-  // always show, and the trip's gallery is appended after them (deduped by
-  // url/publicId) — so uploading a photo directly on the destination adds a
-  // 7th photo alongside the 6 borrowed ones instead of replacing them.
-  // (hero/cover/thumbnail stay replace-only above — there's only one slot,
-  // nothing to "merge" a second image into.)
+  // always show, and every assigned trip's gallery is appended after them
+  // (deduped by url/publicId) — so uploading a photo directly on the
+  // destination adds photos alongside the borrowed ones instead of
+  // replacing them. (hero/cover/thumbnail stay replace-only above, and stay
+  // sourced from just the single `trip` representative — there's only one
+  // slot each, nothing to "merge" a second image into.)
+  //
+  // Deliberately pulled from ALL `trips` here, not just the representative
+  // one above: a destination can have several trips, and whichever one gets
+  // picked as "representative" (Featured -> Circuit Parent -> globally
+  // featured -> first) is often not the trip an admin actually uploaded
+  // gallery photos to. Restricting the gallery merge to that one trip made
+  // a destination's gallery look empty/missing the moment its
+  // representative trip happened to have no gallery of its own, even
+  // though its *other* assigned trips had full galleries saved.
   //
   // `trip.gallery` and `destination.gallery` fall back to `[]` here because
   // the Mongoose schema `default: []` only fills in the field for documents
   // created *after* it was added — a trip or destination saved to MongoDB
   // before then still comes back from `.lean()` with `gallery: undefined`,
   // which previously crashed this whole page during `next build`.
-  const tripGallery = trip.gallery ?? [];
   const destinationGallery = destination.gallery ?? [];
-  if (tripGallery.length > 0) {
-    const seen = new Set(destinationGallery.map((img) => img.publicId ?? img.url));
-    const extra = tripGallery.filter((img) => !seen.has(img.publicId ?? img.url));
-    if (extra.length > 0) {
-      resolved.gallery = [...destinationGallery, ...extra];
+  const seen = new Set(destinationGallery.map((img) => img.publicId ?? img.url));
+  const extra: typeof destinationGallery = [];
+  for (const t of trips) {
+    for (const img of t.gallery ?? []) {
+      const key = img.publicId ?? img.url;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      extra.push(img);
     }
+  }
+  if (extra.length > 0) {
+    resolved.gallery = [...destinationGallery, ...extra];
   }
 
   return resolved;
@@ -211,7 +226,7 @@ export async function getDestinationSlugs(): Promise<string[]> {
  * `withTripImageFallback` here since the trips are already fetched for the
  * count -- so listing cards get the same borrowed imagery as the detail
  * page, not just the hero/gallery. */
-export async function getDestinationsWithTripCounts(): Promise<
+export async function getDestinationsWithTripCounts(): Promise
   (Destination & { tripCount: number })[]
 > {
   const destinations = await getAllDestinations();

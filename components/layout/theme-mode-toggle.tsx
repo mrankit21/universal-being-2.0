@@ -16,10 +16,17 @@ const STORAGE_KEY = "ub-color-scheme";
  * provider.tsx), which governs *which trip mood* is active, not light/dark.
  *
  * Hydration safety: the toggle renders a neutral, non-committal icon until
- * mounted, then reads localStorage/prefers-color-scheme client-side only —
- * so server HTML and first client paint always match (no mismatch
- * warning), at the cost of one intentional icon "pop-in" after mount,
- * which is the standard, accepted trade-off for this pattern.
+ * mounted, then reads localStorage client-side only — so server HTML and
+ * first client paint always match (no mismatch warning), at the cost of
+ * one intentional icon "pop-in" after mount, which is the standard,
+ * accepted trade-off for this pattern.
+ *
+ * Default is always light for a first-time visitor (no stored choice yet)
+ * — deliberately NOT following `prefers-color-scheme`, since many phones
+ * ship with system dark mode on by default and that shouldn't silently
+ * override the site's own light-first design. Once someone taps this
+ * toggle, their explicit choice is remembered via localStorage and wins
+ * on every later visit.
  */
 export function ThemeModeToggle({ className }: { className?: string }) {
   const [mounted, setMounted] = React.useState(false);
@@ -27,8 +34,7 @@ export function ThemeModeToggle({ className }: { className?: string }) {
 
   React.useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const dark = stored ? stored === "dark" : prefersDark;
+    const dark = stored === "dark";
     document.documentElement.classList.toggle("dark", dark);
     setIsDark(dark);
     setMounted(true);
