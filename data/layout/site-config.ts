@@ -55,6 +55,7 @@ export const siteConfig: SiteConfig = {
 
   socialLinks: [
     { platform: "instagram", href: socialLinksContent.instagram, label: "Instagram" },
+    { platform: "facebook", href: socialLinksContent.facebook, label: "Facebook" },
     { platform: "whatsapp", href: "https://wa.me/919354085668", label: "WhatsApp" },
   ],
 

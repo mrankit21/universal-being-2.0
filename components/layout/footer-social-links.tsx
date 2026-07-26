@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import { Globe } from "lucide-react";
 
@@ -47,6 +48,7 @@ export function FooterSocialLinks({ links, className }: FooterSocialLinksProps) 
     <ul className={cn("flex flex-wrap items-center gap-3", className)}>
       {links.map((social, i) => {
         const Icon = PLATFORM_ICON[social.platform.trim().toLowerCase()] ?? Globe;
+        const customIcon = social.icon?.url;
         return (
           <li key={`${social.platform}-${i}`}>
             <a
@@ -55,11 +57,15 @@ export function FooterSocialLinks({ links, className }: FooterSocialLinksProps) 
               rel="noopener noreferrer"
               aria-label={social.label}
               className={cn(
-                "inline-flex size-11 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white shadow-lg backdrop-blur-md transition-colors",
-                "hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
+                "inline-flex size-11 items-center justify-center overflow-hidden rounded-full shadow-lg transition-transform",
+                "hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-0"
               )}
             >
-              <Icon className="size-5" aria-hidden="true" />
+              {customIcon ? (
+                <Image src={customIcon} alt={social.icon?.alt || social.label} width={44} height={44} className="size-11 object-cover" unoptimized />
+              ) : (
+                <Icon className="size-11" aria-hidden="true" />
+              )}
             </a>
           </li>
         );

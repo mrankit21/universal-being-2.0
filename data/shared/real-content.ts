@@ -28,6 +28,7 @@ export const contactContent = {
 
 export const socialLinksContent = {
   instagram: "https://instagram.com/universalbeing_07",
+  facebook: "https://www.facebook.com/share/19reS7JRAs/",
 };
 
 /** Cancellation Policy — every trip's `cancellationPolicy` field defaults to

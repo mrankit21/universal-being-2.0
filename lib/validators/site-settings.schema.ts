@@ -12,7 +12,7 @@ export const siteSettingsSchema = z.object({
     address: z.string().default(""),
   }),
   socialLinks: z
-    .array(z.object({ platform: z.string(), href: z.string(), label: z.string() }))
+    .array(z.object({ platform: z.string(), href: z.string(), label: z.string(), icon: imageAssetSchema.optional() }))
     .default([]),
   seoDefaults: z.object({
     title: z.string().default(""),

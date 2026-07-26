@@ -148,25 +148,50 @@ export default function SiteSettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Social Links</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
+        <CardHeader>
+          <CardTitle className="text-base">Social Links</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Add Instagram, Facebook, WhatsApp, etc. Upload a picture for each one — the footer shows that image
+            instead of the built-in icon whenever one is uploaded.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
           {data.socialLinks.map((link: any, i: number) => (
-            <div key={i} className="grid grid-cols-[1fr_2fr_1fr_auto] gap-2">
-              <Input value={link.platform} placeholder="Platform" onChange={(e) => {
-                const next = [...data.socialLinks]; next[i] = { ...link, platform: e.target.value }; set(["socialLinks"], next);
-              }} />
-              <Input value={link.href} placeholder="URL" onChange={(e) => {
-                const next = [...data.socialLinks]; next[i] = { ...link, href: e.target.value }; set(["socialLinks"], next);
-              }} />
-              <Input value={link.label} placeholder="Label" onChange={(e) => {
-                const next = [...data.socialLinks]; next[i] = { ...link, label: e.target.value }; set(["socialLinks"], next);
-              }} />
-              <Button variant="ghost" size="icon" onClick={() => set(["socialLinks"], data.socialLinks.filter((_: any, idx: number) => idx !== i))}>
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
+            <div key={i} className="space-y-3 rounded-lg border border-border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <ImageAssetField
+                  label="Icon"
+                  hint="Upload the logo picture for this platform (square works best)."
+                  value={link.icon ?? emptyImage()}
+                  onChange={(v) => {
+                    const next = [...data.socialLinks];
+                    next[i] = { ...link, icon: v };
+                    set(["socialLinks"], next);
+                  }}
+                  category="icons"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => set(["socialLinks"], data.socialLinks.filter((_: any, idx: number) => idx !== i))}
+                >
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Input value={link.platform} placeholder="Platform (e.g. facebook)" onChange={(e) => {
+                  const next = [...data.socialLinks]; next[i] = { ...link, platform: e.target.value }; set(["socialLinks"], next);
+                }} />
+                <Input value={link.href} placeholder="URL" onChange={(e) => {
+                  const next = [...data.socialLinks]; next[i] = { ...link, href: e.target.value }; set(["socialLinks"], next);
+                }} />
+                <Input value={link.label} placeholder="Label" onChange={(e) => {
+                  const next = [...data.socialLinks]; next[i] = { ...link, label: e.target.value }; set(["socialLinks"], next);
+                }} />
+              </div>
             </div>
           ))}
-          <Button variant="outline" size="sm" onClick={() => set(["socialLinks"], [...data.socialLinks, { platform: "", href: "", label: "" }])}>
+          <Button variant="outline" size="sm" onClick={() => set(["socialLinks"], [...data.socialLinks, { platform: "", href: "", label: "", icon: emptyImage() }])}>
             <Plus className="size-4" /> Add Social Link
           </Button>
         </CardContent>

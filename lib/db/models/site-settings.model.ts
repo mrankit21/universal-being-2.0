@@ -17,7 +17,7 @@ export interface SiteSettingsDocument extends Document {
     email: string;
     address: string;
   };
-  socialLinks: { platform: string; href: string; label: string }[];
+  socialLinks: { platform: string; href: string; label: string; icon?: unknown }[];
   seoDefaults: { title: string; description: string; ogImageUrl?: string };
   /** Brand assets — Step 7.6B §7, all chosen from the Media Library. */
   logo?: unknown;
@@ -60,6 +60,7 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
           platform: { type: String },
           href: { type: String },
           label: { type: String },
+          icon: { type: ImageAssetSchema },
         },
       ],
       default: [],

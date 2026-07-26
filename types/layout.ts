@@ -52,6 +52,10 @@ export interface SocialLink {
   platform: string;
   href: string;
   label: string;
+  /** Optional custom icon uploaded in the Admin Panel (Social Links →
+   * Icons). When set, the footer renders this image instead of the
+   * built-in brand-colour SVG for that platform. */
+  icon?: { url: string; alt: string };
 }
 
 export type AnnouncementKind = "trip" | "offer" | "coupon" | "limited-seats" | "festival";

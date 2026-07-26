@@ -19,7 +19,7 @@ import { contactContent } from "@/data/shared/real-content";
 export interface ResolvedSiteSettings {
   brandStory: string;
   contact: { whatsappHref: string; phoneHref: string; email: string; address: string };
-  socialLinks: { platform: string; href: string; label: string }[];
+  socialLinks: { platform: string; href: string; label: string; icon?: { url: string; alt: string } }[];
   footerColumns: { title: string; links: { label: string; href: string }[] }[];
   copyrightHolder: string;
   footerBackground: {
@@ -85,7 +85,17 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
         email: doc.contact?.email || staticSiteConfig.contact.email,
         address: doc.contact?.address || contactContent.officeAddress,
       },
-      socialLinks: doc.socialLinks?.length ? doc.socialLinks : staticSiteConfig.socialLinks,
+      socialLinks: doc.socialLinks?.length
+        ? doc.socialLinks.map((link) => {
+            const iconAsset = link.icon as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+            return {
+              platform: link.platform,
+              href: link.href,
+              label: link.label,
+              icon: iconAsset?.url && !iconAsset.isPlaceholder ? { url: iconAsset.url, alt: iconAsset.alt ?? "" } : undefined,
+            };
+          })
+        : staticSiteConfig.socialLinks,
       footerColumns: doc.footer?.columns?.length ? doc.footer.columns : staticSiteConfig.footerColumns,
       copyrightHolder: doc.footer?.copyrightHolder || staticSiteConfig.copyrightHolder,
       footerBackground: {
