@@ -226,7 +226,7 @@ export async function getDestinationSlugs(): Promise<string[]> {
  * `withTripImageFallback` here since the trips are already fetched for the
  * count -- so listing cards get the same borrowed imagery as the detail
  * page, not just the hero/gallery. */
-export async function getDestinationsWithTripCounts(): Promise
+export async function getDestinationsWithTripCounts(): Promise<
   (Destination & { tripCount: number })[]
 > {
   const destinations = await getAllDestinations();
