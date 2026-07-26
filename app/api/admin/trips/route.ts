@@ -56,6 +56,20 @@ export async function POST(req: NextRequest) {
     const existing = await TripModel.findOne({ slug: parsed.slug });
     if (existing) return fail(`A trip with slug "${parsed.slug}" already exists`, 409);
 
+    if (parsed.isCircuitParent && parsed.circuitGroup?.trim()) {
+      const conflict = await TripModel.findOne({
+        circuitGroup: parsed.circuitGroup,
+        isCircuitParent: true,
+      }).select("title slug");
+      if (conflict && !body.confirmDuplicateParent) {
+        return fail(
+          `"${conflict.title}" is already the Circuit Parent for "${parsed.circuitGroup}". Only one Trip per Circuit Group should be flagged.`,
+          409,
+          { requiresConfirmation: true, conflictTitle: conflict.title, conflictSlug: conflict.slug }
+        );
+      }
+    }
+
     const trip = await TripModel.create({
       ...parsed,
       createdBy: session.email,

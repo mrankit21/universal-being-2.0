@@ -58,6 +58,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const beforeSlug = existing.slug;
     const beforeDestinationSlug = existing.destinationSlug;
 
+    // Guard: two Trips in the same Circuit Group both flagged as parent
+    // caused images to randomly disappear (25-26 Jul 2026 incident).
+    // Require password re-confirmation before allowing a second parent.
+    const wantsParent = update.isCircuitParent === true;
+    const targetCircuitGroup = (update.circuitGroup ?? existing.circuitGroup) as string | undefined;
+    if (wantsParent && targetCircuitGroup?.trim()) {
+      const conflict = await TripModel.findOne({
+        circuitGroup: targetCircuitGroup,
+        isCircuitParent: true,
+        _id: { $ne: id },
+      }).select("title slug");
+      if (conflict && !body.confirmDuplicateParent) {
+        return fail(
+          `"${conflict.title}" is already the Circuit Parent for "${targetCircuitGroup}". Only one Trip per Circuit Group should be flagged.`,
+          409,
+          { requiresConfirmation: true, conflictTitle: conflict.title, conflictSlug: conflict.slug }
+        );
+      }
+    }
+
     const merged = { ...existing, ...update, updatedBy: session.email };
     delete (merged as Record<string, unknown>)._id;
     delete (merged as Record<string, unknown>).__v;

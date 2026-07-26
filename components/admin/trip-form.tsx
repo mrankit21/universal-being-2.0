@@ -23,6 +23,15 @@ import { TripGalleryUploadField } from "./trip-gallery-upload-field";
 import { StringListEditor } from "./string-list-editor";
 import { ArrayFieldEditor } from "./array-field-editor";
 import { TestimonialPickerField } from "./testimonial-picker-field";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview, DestinationRoute } from "@/types/trip";
 import type { ThemeKey } from "@/types/theme";
 
@@ -151,8 +160,45 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
   const tripSlug = value.slug?.trim() || undefined;
   const tripTitle = value.title?.trim() || undefined;
 
+  // Circuit Parent conflict — set when the server reports another Trip in
+  // the same Circuit Group is already flagged. Requires the admin's
+  // password (same flow as Delete) before letting a second parent be set.
+  const [parentConflict, setParentConflict] = useState<{ title: string; payload: Record<string, unknown> } | null>(null);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
   function set<K extends keyof TripFormValue>(key: K, val: TripFormValue[K]) {
     setValue((prev) => ({ ...prev, [key]: val }));
+  }
+
+  async function submitTrip(payload: Record<string, unknown>) {
+    const url = tripId ? `/api/admin/trips/${tripId}` : "/api/admin/trips";
+    const method = tripId ? "PATCH" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.success) {
+      if (json.details?.requiresConfirmation && json.details?.conflictTitle) {
+        setParentConflict({ title: json.details.conflictTitle as string, payload });
+        return;
+      }
+      const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
+      if (fieldErrors) setErrors(fieldErrors);
+      // Surface exactly which field(s) failed instead of a bare generic
+      // toast — "Validation failed" alone is undebuggable on mobile
+      // where there's no DevTools/terminal to check.
+      const fieldNames = fieldErrors ? Object.keys(fieldErrors) : [];
+      const detail = fieldNames.length ? `: ${fieldNames.join(", ")}` : "";
+      toast.error(`${json.error ?? "Something went wrong"}${detail}`);
+      return;
+    }
+    toast.success(tripId ? "Trip updated" : "Trip created");
+    router.push("/admin/trips");
+    router.refresh();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -160,8 +206,6 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
     setSaving(true);
     setErrors(null);
     try {
-      const url = tripId ? `/api/admin/trips/${tripId}` : "/api/admin/trips";
-      const method = tripId ? "PATCH" : "POST";
       // On edit, only send fields that actually changed from what loaded.
       // The whole `value` object used to be sent every time, and the API
       // overwrites the full document on every PATCH — so saving from any
@@ -174,27 +218,38 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
       // send everything since there's nothing on the server yet to diff
       // against.
       const payload = tripId && initialValue ? diffTripValue(initialValue, value) : value;
-      const res = await fetch(url, {
-        method,
+      await submitTrip(payload as Record<string, unknown>);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleConfirmParentOverride() {
+    if (!parentConflict) return;
+    setConfirmError(null);
+    if (!confirmPassword) {
+      setConfirmError("Enter your password to confirm.");
+      return;
+    }
+    setConfirmLoading(true);
+    try {
+      const verifyRes = await fetch("/api/admin/auth/verify-password", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ password: confirmPassword }),
       });
-      const json = await res.json();
-      if (!json.success) {
-        const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
-        if (fieldErrors) setErrors(fieldErrors);
-        // Surface exactly which field(s) failed instead of a bare generic
-        // toast — "Validation failed" alone is undebuggable on mobile
-        // where there's no DevTools/terminal to check.
-        const fieldNames = fieldErrors ? Object.keys(fieldErrors) : [];
-        const detail = fieldNames.length ? `: ${fieldNames.join(", ")}` : "";
-        toast.error(`${json.error ?? "Something went wrong"}${detail}`);
+      const verifyJson = await verifyRes.json();
+      if (!verifyJson.success) {
+        setConfirmError(verifyJson.error ?? "Password is incorrect");
         return;
       }
-      toast.success(tripId ? "Trip updated" : "Trip created");
-      router.push("/admin/trips");
-      router.refresh();
+      const payload = parentConflict.payload;
+      setParentConflict(null);
+      setConfirmPassword("");
+      setSaving(true);
+      await submitTrip({ ...payload, confirmDuplicateParent: true });
     } finally {
+      setConfirmLoading(false);
       setSaving(false);
     }
   }
@@ -908,6 +963,57 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : tripId ? "Save Changes" : "Create Trip"}</Button>
       </div>
+
+      <Dialog
+        open={!!parentConflict}
+        onOpenChange={(next) => {
+          if (!next) {
+            setParentConflict(null);
+            setConfirmPassword("");
+            setConfirmError(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Replace existing Circuit Parent?</DialogTitle>
+            <DialogDescription>
+              {`"${parentConflict?.title ?? ""}" is already the Circuit Parent for this Circuit Group. Making this Trip the parent too means two Trips will be flagged — the site could then show the wrong images. Enter your password to confirm you want to do this anyway.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="parent-conflict-password">Enter your password to confirm</Label>
+            <Input
+              id="parent-conflict-password"
+              type="password"
+              autoComplete="current-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !confirmLoading) handleConfirmParentOverride();
+              }}
+              autoFocus
+            />
+          </div>
+          {confirmError ? <p className="text-sm text-destructive">{confirmError}</p> : null}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setParentConflict(null);
+                setConfirmPassword("");
+                setConfirmError(null);
+              }}
+              disabled={confirmLoading}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmParentOverride} disabled={confirmLoading}>
+              {confirmLoading ? "Working…" : "Yes, make it the parent"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

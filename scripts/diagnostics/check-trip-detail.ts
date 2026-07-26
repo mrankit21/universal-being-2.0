@@ -30,7 +30,7 @@ async function main() {
     console.log(`  circuitGroup: ${doc.circuitGroup ?? "—"}  |  isCircuitParent: ${doc.isCircuitParent ?? false}`);
     console.log(`  status: ${doc.status}`);
     console.log(`  updatedAt: ${doc.updatedAt ?? "—"}`);
-    console.log(`  updatedBy: ${(doc as Record<string, unknown>).updatedBy ?? "— (never PATCHed, or field not tracked at time of last save)"}`);
+    console.log(`  updatedBy: ${(doc as unknown as Record<string, unknown>).updatedBy ?? "— (never PATCHed, or field not tracked at time of last save)"}`);
     console.log(`  createdAt: ${doc.createdAt ?? "—"}`);
     const itin = Array.isArray(doc.itinerary) ? doc.itinerary : [];
     console.log(`  itinerary days: ${itin.length}`);

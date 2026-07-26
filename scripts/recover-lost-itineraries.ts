@@ -82,7 +82,25 @@ async function main() {
 
     if (apply) {
       doc.itinerary = source.itinerary as typeof doc.itinerary;
-      if (restoreCircuitParent) doc.isCircuitParent = true;
+      if (restoreCircuitParent) {
+        // Safety net added after this exact script created a duplicate
+        // Circuit Parent (25-26 Jul 2026 incident) by setting this flag
+        // blindly, without checking whether a sibling in the same
+        // circuitGroup was already flagged. Never repeat that — check
+        // first, and skip (don't guess) if there's a conflict.
+        const sibling = await TripModel.findOne({
+          circuitGroup: doc.circuitGroup,
+          isCircuitParent: true,
+          _id: { $ne: doc._id },
+        }).select("title slug");
+        if (sibling) {
+          console.log(
+            `  ⚠ SKIPPING isCircuitParent — "${sibling.title}" (${sibling.slug}) is already the parent for "${doc.circuitGroup}". Resolve manually in Admin Panel if this trip should be the parent instead.`
+          );
+        } else {
+          doc.isCircuitParent = true;
+        }
+      }
       try {
         await doc.save();
         console.log(`  ✔ Saved.`);

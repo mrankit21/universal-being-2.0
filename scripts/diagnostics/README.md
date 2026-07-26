@@ -46,6 +46,17 @@ Admin Panel around that time.
 
 Run with no arguments and it defaults to checking the Udaipur circuit.
 
+## 4. Check for duplicate Circuit Parents
+
+```
+npx tsx scripts/diagnostics/check-circuit-parents.ts
+```
+
+Flags any Circuit Group where more than one Trip is flagged as parent
+— this is what caused Udaipur/Ladakh cover images to randomly
+disappear on 25-26 Jul 2026. Run this if any parent/cover image looks
+wrong on the site.
+
 ---
 
 ## What "empty/missing" means when you see it
