@@ -101,10 +101,10 @@ function withTripImageFallback(
     resolved.thumbnail = trip.thumbnail;
   }
 
-  // Gallery is additive, not all-or-nothing: the destination's own photos
-  // always show, and every assigned trip's gallery is appended after them
-  // (deduped by url/publicId) — so uploading a photo directly on the
-  // destination adds photos alongside the borrowed ones instead of
+  // Gallery is additive, not all-or-nothing: the destination's own REAL
+  // photos always show, and every assigned trip's gallery is appended
+  // after them (deduped by url/publicId) — so uploading a photo directly
+  // on the destination adds photos alongside the borrowed ones instead of
   // replacing them. (hero/cover/thumbnail stay replace-only above, and stay
   // sourced from just the single `trip` representative — there's only one
   // slot each, nothing to "merge" a second image into.)
@@ -118,24 +118,42 @@ function withTripImageFallback(
   // representative trip happened to have no gallery of its own, even
   // though its *other* assigned trips had full galleries saved.
   //
+  // `destination.gallery` is filtered down to non-placeholder entries here:
+  // `buildGallery()` (the destination seeder) pre-fills every new
+  // destination with 6 `isPlaceholder: true` "photo coming soon" slots as
+  // a scaffold for the admin to eventually replace one by one. Any slot an
+  // admin hasn't gotten to yet is still sitting in the array, so showing
+  // `destination.gallery` as-is put empty "coming soon" cards *ahead of*
+  // real, useful trip photos in the carousel — the destination LOOKED like
+  // its gallery was missing even when real photos were one swipe away.
+  // Only actual uploads (real or trip-borrowed) belong in this list now.
+  //
   // `trip.gallery` and `destination.gallery` fall back to `[]` here because
   // the Mongoose schema `default: []` only fills in the field for documents
   // created *after* it was added — a trip or destination saved to MongoDB
   // before then still comes back from `.lean()` with `gallery: undefined`,
   // which previously crashed this whole page during `next build`.
-  const destinationGallery = destination.gallery ?? [];
+  const destinationGallery = (destination.gallery ?? []).filter((img) => !img.isPlaceholder);
   const seen = new Set(destinationGallery.map((img) => img.publicId ?? img.url));
   const extra: typeof destinationGallery = [];
   for (const t of trips) {
     for (const img of t.gallery ?? []) {
+      if (img.isPlaceholder) continue;
       const key = img.publicId ?? img.url;
       if (seen.has(key)) continue;
       seen.add(key);
       extra.push(img);
     }
   }
-  if (extra.length > 0) {
+  if (destinationGallery.length > 0 || extra.length > 0) {
     resolved.gallery = [...destinationGallery, ...extra];
+  } else {
+    // No real photos anywhere (destination or any assigned trip) — clear
+    // out to an empty array rather than leaving the original placeholder-
+    // filled `destination.gallery` in place, so `DestinationGallery`'s
+    // `gallery.length === 0` check correctly hides the whole "Photos"
+    // section instead of rendering a wall of "coming soon" cards.
+    resolved.gallery = [];
   }
 
   return resolved;
