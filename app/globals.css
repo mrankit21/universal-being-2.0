@@ -107,7 +107,7 @@
      shadcn/ui primitives read these standard variable names. We point every
      one of them at a `--ub-*` token above so there is exactly one source of
      truth and shadcn components need zero modification. Light mode. */
-  --background: var(--ub-color-stone-50);
+  --background: #f2ece1;
   --foreground: var(--ub-color-ink-900);
 
   --card: #ffffff;
@@ -475,4 +475,28 @@
   display: none;
   width: 0;
   height: 0;
+}
+
+/* ==========================================================================
+   NAV BAR — solid blue override (requested brand tweak).
+   Applied via a marker class on the header/bottom-nav elements so it wins
+   over `.ub-glass` / `bg-background` / any destination theme regardless of
+   stylesheet order, without touching the shared theme-engine surface color
+   used by cards elsewhere on the page. Re-points --foreground/--muted-
+   foreground/--primary/--border locally so text-foreground, text-muted-
+   foreground, bg-primary and border-border utilities already used inside
+   the header/nav automatically become legible on the blue fill.
+   ========================================================================== */
+.ub-nav-blue {
+  background-color: #0066ff !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+
+  --foreground: #ffffff;
+  --muted-foreground: rgba(255, 255, 255, 0.75);
+  --primary: #ffffff;
+  --primary-foreground: #0066ff;
+  --border: rgba(255, 255, 255, 0.2);
 }

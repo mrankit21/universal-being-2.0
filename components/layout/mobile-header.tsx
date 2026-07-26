@@ -10,7 +10,7 @@ import { GlobalSearchTrigger } from "@/components/layout/global-search-trigger";
  */
 export function MobileHeader() {
   return (
-    <header className="ub-glass sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border/60 px-4 md:hidden">
+    <header className="ub-glass ub-nav-blue sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border/60 px-4 md:hidden">
       <Logo />
       <div className="flex items-center gap-0.5">
         <GlobalSearchTrigger variant="icon" />

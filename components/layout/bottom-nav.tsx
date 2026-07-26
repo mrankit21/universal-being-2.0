@@ -26,7 +26,7 @@ export function BottomNav() {
     <nav
       aria-label="Primary"
       className={cn(
-        "ub-glass fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-full border border-border/60 py-1.5 shadow-ub-lg md:hidden",
+        "ub-glass ub-nav-blue fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-full border border-border/60 py-1.5 shadow-ub-lg md:hidden",
         "transition-transform duration-ub-base ease-ub-standard",
         direction === "down" ? "translate-y-24" : "translate-y-0"
       )}
