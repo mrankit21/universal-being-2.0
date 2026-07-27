@@ -13,16 +13,16 @@ export interface HomeTripCardProps {
   trip: HomeTripSummary;
 }
 
-function formatINR(amount: number) {
-  return `₹ ${amount.toLocaleString("en-IN")}/-`;
-}
-
 /**
- * HomeTripCard — deliberately minimal homepage presentation: image, price
- * overlaid on the photo, and the package name below. Everything else
- * (rating, duration, group size, seats-left) lives on the trip detail page
- * a click away — the homepage card is just a teaser, matching the reference
- * "India Tour Packages" style module (image + price + name only).
+ * HomeTripCard — deliberately minimal homepage presentation: image and the
+ * package name below it. Price is intentionally NOT shown here (it used to
+ * be overlaid on the photo) — the full price + batch dates already live on
+ * the trip detail page's "Pricing & batch dates" section, one click away,
+ * so repeating an MRP figure on the homepage teaser was redundant with
+ * that page. Everything else (rating, duration, group size, seats-left)
+ * also lives on the trip detail page — the homepage card is just a teaser,
+ * matching the reference "India Tour Packages" style module (image + name
+ * only, once price was pulled).
  */
 export function HomeTripCard({ trip }: HomeTripCardProps) {
   const theme = themeRegistry[trip.themeKey];
@@ -51,13 +51,6 @@ export function HomeTripCard({ trip }: HomeTripCardProps) {
                 <ThemeBackground theme={theme} area="section" className="h-full w-full" />
               )}
             </motion.div>
-
-            {/* Legibility scrim behind the price */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" aria-hidden="true" />
-
-            <span className="absolute inset-x-0 bottom-3 text-center text-xl font-semibold text-white drop-shadow-sm">
-              {formatINR(trip.price)}
-            </span>
           </div>
 
           <div className="px-3 py-3 text-center">
