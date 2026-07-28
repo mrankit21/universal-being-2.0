@@ -308,7 +308,7 @@
 
 @layer utilities {
   .animate-ub-marquee {
-    animation: ub-marquee var(--ub-marquee-duration, 22s) linear infinite;
+    animation: ub-marquee var(--ub-marquee-duration, 14s) linear infinite;
   }
 }
 
