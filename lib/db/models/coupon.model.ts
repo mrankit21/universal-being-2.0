@@ -26,6 +26,11 @@ export interface CouponDocument extends Document {
   perUserLimit?: number; // redemptions per customerEmail, undefined = unlimited
   tripIds: string[]; // empty = valid for every trip (global)
   active: boolean;
+  /** True for at most one coupon at a time — the admin toggle that decides
+   * "this is the code shown in the site-wide promo popup." Enforced in the
+   * PATCH route (setting this true on one coupon flips it false on every
+   * other), not here, since Mongoose has no cross-document constraint. */
+  showInPopup: boolean;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -46,6 +51,7 @@ const CouponSchema = new Schema<CouponDocument>(
     perUserLimit: { type: Number },
     tripIds: { type: [String], default: [] },
     active: { type: Boolean, default: true },
+    showInPopup: { type: Boolean, default: false, index: true },
     createdBy: { type: String },
   },
   { timestamps: true }

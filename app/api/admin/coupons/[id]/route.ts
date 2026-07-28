@@ -43,6 +43,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       if (dupe) return fail("A coupon with this code already exists.", 409);
     }
 
+    // Only one coupon can be "the" popup coupon at a time — the admin
+    // toggle reads as a single on/off switch per coupon, but under the
+    // hood turning it on here means turning it off everywhere else, so
+    // the popup never has two candidates to choose between.
+    if (update.showInPopup === true) {
+      await CouponModel.updateMany({ _id: { $ne: id }, showInPopup: true }, { showInPopup: false });
+    }
+
     const coupon = await CouponModel.findByIdAndUpdate(
       id,
       { ...update, ...(parsed.code ? { code: parsed.code.toUpperCase() } : {}) },

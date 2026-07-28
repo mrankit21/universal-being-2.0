@@ -32,11 +32,17 @@ export async function POST(req: NextRequest) {
     const existing = await CouponModel.findOne({ code: parsed.code.toUpperCase() }).lean();
     if (existing) return fail("A coupon with this code already exists.", 409);
 
+    // Same "only one popup coupon at a time" rule as the PATCH route.
+    if (parsed.showInPopup === true) {
+      await CouponModel.updateMany({ showInPopup: true }, { showInPopup: false });
+    }
+
     const coupon = await CouponModel.create({
       ...parsed,
       code: parsed.code.toUpperCase(),
       tripIds: parsed.tripIds ?? [],
       active: parsed.active ?? true,
+      showInPopup: parsed.showInPopup ?? false,
       createdBy: user.email,
     });
 

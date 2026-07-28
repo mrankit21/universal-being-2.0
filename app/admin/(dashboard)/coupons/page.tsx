@@ -8,9 +8,13 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { DataTable, type Column } from "@/components/admin/data-table";
+import { TripMultiSelect } from "@/components/admin/trip-multi-select";
+import { CouponScopeDialog } from "@/components/admin/coupon-scope-dialog";
 
 interface Coupon {
   _id: string;
@@ -24,6 +28,10 @@ interface Coupon {
   perUserLimit?: number;
   active: boolean;
   endDate?: string;
+  /** True for the one coupon currently shown in the site-wide promo popup. */
+  showInPopup: boolean;
+  /** Empty = valid for every trip. Non-empty = only these trip IDs. */
+  tripIds: string[];
 }
 
 const emptyForm = {
@@ -35,6 +43,9 @@ const emptyForm = {
   usageLimit: "",
   perUserLimit: "",
   endDate: "",
+  showInPopup: false,
+  scope: "all" as "all" | "specific",
+  tripIds: [] as string[],
 };
 
 export default function CouponsAdminPage() {
@@ -75,6 +86,8 @@ export default function CouponsAdminPage() {
           usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
           perUserLimit: form.perUserLimit ? Number(form.perUserLimit) : undefined,
           endDate: form.endDate || undefined,
+          showInPopup: form.showInPopup,
+          tripIds: form.scope === "specific" ? form.tripIds : [],
         }),
       });
       const json = await res.json();
@@ -101,6 +114,23 @@ export default function CouponsAdminPage() {
     else toast.error(json.error);
   }
 
+  async function togglePopup(coupon: Coupon) {
+    const res = await fetch(`/api/admin/coupons/${coupon._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showInPopup: !coupon.showInPopup }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      toast.success(json.data.showInPopup ? `${coupon.code} is now shown in the popup.` : `${coupon.code} removed from the popup.`);
+      load();
+    } else {
+      toast.error(json.error);
+    }
+  }
+
+  const [managingCoupon, setManagingCoupon] = useState<Coupon | null>(null);
+
   const columns: Column<Coupon>[] = [
     { header: "Code", cell: (c) => <span className="font-mono font-medium">{c.code}</span> },
     { header: "Type", cell: (c) => (c.type === "percentage" ? `${c.value}%` : `₹${c.value}`) },
@@ -109,12 +139,33 @@ export default function CouponsAdminPage() {
     { header: "Per User Limit", cell: (c) => c.perUserLimit ?? "—" },
     { header: "Expires", cell: (c) => (c.endDate ? new Date(c.endDate).toLocaleDateString("en-IN") : "—") },
     { header: "Status", cell: (c) => <Badge variant={c.active ? "success" : "muted"}>{c.active ? "Active" : "Disabled"}</Badge> },
+    { header: "Applies To", cell: (c) => (c.tripIds.length > 0 ? `${c.tripIds.length} trip${c.tripIds.length > 1 ? "s" : ""}` : "All trips") },
+    {
+      header: "Popup",
+      cell: (c) => (
+        <button
+          type="button"
+          onClick={() => togglePopup(c)}
+          className="inline-flex"
+          aria-label={c.showInPopup ? `Remove ${c.code} from popup` : `Show ${c.code} in popup`}
+        >
+          <Badge variant={c.showInPopup ? "success" : "muted"} className="cursor-pointer">
+            {c.showInPopup ? "Shown in popup" : "Off"}
+          </Badge>
+        </button>
+      ),
+    },
     {
       header: "",
       cell: (c) => (
-        <Button variant="ghost" size="sm" onClick={() => toggleActive(c)}>
-          {c.active ? "Disable" : "Enable"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setManagingCoupon(c)}>
+            Manage
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => toggleActive(c)}>
+            {c.active ? "Disable" : "Enable"}
+          </Button>
+        </div>
       ),
     },
   ];
@@ -145,6 +196,34 @@ export default function CouponsAdminPage() {
           <Input placeholder="Usage limit" type="number" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} />
           <Input placeholder="Per-user limit" type="number" value={form.perUserLimit} onChange={(e) => setForm({ ...form, perUserLimit: e.target.value })} />
           <Input placeholder="Expiry date" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+
+          <label className="col-span-2 flex cursor-pointer items-center gap-2 text-sm md:col-span-2">
+            <Checkbox
+              checked={form.showInPopup}
+              onCheckedChange={(checked) => setForm({ ...form, showInPopup: checked === true })}
+            />
+            Show in Popup
+          </label>
+
+          <div className="col-span-2 space-y-2 md:col-span-2">
+            <Label>Applies to</Label>
+            <Select value={form.scope} onValueChange={(v) => setForm({ ...form, scope: v as "all" | "specific" })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All trips</SelectItem>
+                <SelectItem value="specific">Specific trips</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {form.scope === "specific" ? (
+            <div className="col-span-2 md:col-span-4">
+              <TripMultiSelect value={form.tripIds} onChange={(tripIds) => setForm({ ...form, tripIds })} />
+            </div>
+          ) : null}
+
           <Button onClick={createCoupon} disabled={saving} className="col-span-2 md:col-span-1">
             Create coupon
           </Button>
@@ -152,6 +231,12 @@ export default function CouponsAdminPage() {
       </Card>
 
       <DataTable columns={columns} rows={coupons} loading={loading} rowKey={(c) => c._id} emptyMessage="No coupons yet." />
+
+      <CouponScopeDialog
+        coupon={managingCoupon}
+        onOpenChange={(open) => !open && setManagingCoupon(null)}
+        onSaved={load}
+      />
     </div>
   );
 }

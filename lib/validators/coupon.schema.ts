@@ -13,6 +13,7 @@ export const couponCreateSchema = z.object({
   perUserLimit: z.number().int().positive().optional(),
   tripIds: z.array(z.string()).optional(),
   active: z.boolean().optional(),
+  showInPopup: z.boolean().optional(),
 });
 export type CouponCreateInput = z.infer<typeof couponCreateSchema>;
 

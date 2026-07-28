@@ -14,6 +14,8 @@ import { HideOnAdmin } from "@/components/layout/admin-route-gate";
 import { CustomerAuthProvider } from "@/components/layout/customer-auth-context";
 import { CustomerAuthModal } from "@/components/layout/customer-auth-modal";
 import { SavedProvider } from "@/components/saved/saved-context";
+import { PromoOfferPopup } from "@/components/marketing/promo-offer-popup";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * RootShell — the complete Global Layout (Phase 4). Every page rendered
@@ -84,6 +86,8 @@ export function RootShell({
             </HideOnAdmin>
             <GlobalSearchModal />
             <CustomerAuthModal />
+            <PromoOfferPopup />
+            <Toaster />
           </StickyCtaProvider>
         </GlobalSearchProvider>
       </SavedProvider>
