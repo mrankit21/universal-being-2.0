@@ -287,6 +287,32 @@
 }
 
 /* ==========================================================================
+   ANNOUNCEMENT MARQUEE — continuous scrolling loop for AnnouncementBar
+   (components/layout/announcement-bar.tsx). The component renders the
+   message twice back-to-back with matching trailing padding on each copy,
+   then this animation translates the pair by exactly -50% — that's exactly
+   one copy's full width (text + padding), so the instant the first copy
+   scrolls offscreen the second is sitting exactly where the first started,
+   with no visible seam or jump. `animation-play-state` is toggled via a
+   Tailwind `group-hover` utility in the component, not here, so hovering
+   pauses it to keep the message/link readable and clickable.
+   ========================================================================== */
+@keyframes ub-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@layer utilities {
+  .animate-ub-marquee {
+    animation: ub-marquee var(--ub-marquee-duration, 22s) linear infinite;
+  }
+}
+
+/* ==========================================================================
    LUXURY DARK OVERRIDE — homepage closing sections only
    (About/Why Travel With Us, Newsletter/CTA, Testimonials, Footer).
 
