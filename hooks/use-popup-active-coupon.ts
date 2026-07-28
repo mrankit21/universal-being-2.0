@@ -10,6 +10,10 @@ export interface PopupActiveCoupon {
   /** Resolved trip titles (not IDs) when the coupon is trip-scoped; empty
    * array means the coupon is valid on every trip. */
   tripNames: string[];
+  /** Set only when the coupon is scoped to exactly one trip — lets the
+   * popup send the visitor straight to that trip's page after they claim
+   * the offer. `null` for all-trips or multi-trip coupons. */
+  singleTripSlug: string | null;
 }
 
 export interface UsePopupActiveCouponResult {

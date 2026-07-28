@@ -38,9 +38,17 @@ export async function GET() {
     // second round-trip (or ship raw Mongo IDs to a visitor) — the popup
     // only ever needs to display names, never the IDs themselves.
     let tripNames: string[] = [];
+    // Only set when the coupon is scoped to exactly one trip — that's the
+    // only case where "take the visitor straight to the trip" has an
+    // unambiguous destination. Multi-trip or all-trips coupons leave this
+    // `null` and the popup just closes on claim, same as before.
+    let singleTripSlug: string | null = null;
     if (coupon.tripIds.length > 0) {
-      const trips = await TripModel.find({ _id: { $in: coupon.tripIds } }, { title: 1 }).lean();
+      const trips = await TripModel.find({ _id: { $in: coupon.tripIds } }, { title: 1, slug: 1 }).lean();
       tripNames = trips.map((t) => t.title);
+      if (coupon.tripIds.length === 1 && trips[0]?.slug) {
+        singleTripSlug = trips[0].slug;
+      }
     }
 
     return ok({
@@ -49,6 +57,7 @@ export async function GET() {
       type: coupon.type,
       value: coupon.value,
       tripNames,
+      singleTripSlug,
     });
   } catch (err) {
     return handleApiError(err);

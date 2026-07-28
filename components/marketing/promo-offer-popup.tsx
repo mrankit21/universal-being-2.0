@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { DialogOverlay } from "@/components/ui/dialog";
 import { usePromoPopupTrigger } from "@/hooks/use-promo-popup-trigger";
@@ -30,6 +30,14 @@ export interface PromoOfferPopupProps {
  * off in the admin panel means this component renders nothing on the very
  * next page load — no code deploy needed to turn the popup off.
  *
+ * When the active coupon is scoped to exactly one trip, claiming the offer
+ * also navigates the visitor straight to that trip's page (`singleTripSlug`
+ * from the API) — the coupon code is already remembered client-side by
+ * `PromoOfferPopupForm` at that point, so `BookingForm` on the trip page
+ * finds and auto-applies it without the visitor retyping anything. For
+ * all-trips or multi-trip coupons there's no single unambiguous
+ * destination, so claiming just closes the popup, same as before.
+ *
  * Reuses `DialogOverlay` from `components/ui/dialog` (dark semi-transparent
  * background, already animated) but rolls its own `Dialog.Content` instead
  * of the shared `DialogContent` — this popup needs a different shell (a
@@ -45,6 +53,7 @@ export function PromoOfferPopup({
   delayMs = 12000,
 }: PromoOfferPopupProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAdminRoute = pathname?.startsWith("/admin") ?? false;
 
   const { coupon } = usePopupActiveCoupon();
@@ -65,6 +74,15 @@ export function PromoOfferPopup({
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (!next) close();
+  }
+
+  function handleClaimed() {
+    if (coupon?.singleTripSlug) {
+      handleOpenChange(false);
+      router.push(`/trips/${coupon.singleTripSlug}`);
+      return;
+    }
+    handleOpenChange(false);
   }
 
   return (
@@ -108,7 +126,7 @@ export function PromoOfferPopup({
               heading={heading}
               description={description}
               tripNames={coupon.tripNames}
-              onClaimed={() => handleOpenChange(false)}
+              onClaimed={handleClaimed}
             />
           </div>
         </DialogPrimitive.Content>
