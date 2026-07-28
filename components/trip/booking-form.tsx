@@ -18,18 +18,19 @@
  * countdown reaches zero before payment completes, the server has already
  * released the seat automatically; the UI just reflects that.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Loader2, Users } from "lucide-react";
+import { CalendarDays, Loader2, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Trip } from "@/types/trip";
 import { getTripAvailability } from "@/lib/trip/availability";
 import { computeBookingPricing } from "@/lib/trip/booking-pricing";
 import { bookingCreateSchema, type BookingCreateInput } from "@/lib/validators/booking.schema";
+import { getRememberedCoupon, forgetRememberedCoupon } from "@/lib/promo/coupon-storage";
 import { Price } from "@/components/primitives/price";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,8 @@ declare global {
     Razorpay?: new (options: Record<string, unknown>) => { open: () => void };
   }
 }
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ID_PROOF_TYPES = ["Aadhaar Card", "Passport", "Voter ID", "Driving Licence", "PAN Card"];
 const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
@@ -129,6 +132,8 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
     control,
     handleSubmit,
     watch,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<BookingCreateInput>({
     resolver: zodResolver(bookingCreateSchema),
@@ -151,12 +156,103 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
 
   const departureDateId = watch("departureDateId");
   const travelers = watch("travelers");
+  const customerEmail = watch("customerEmail");
   const selectedDeparture = bookableDepartures.find((d) => d.id === departureDateId) ?? null;
 
   const pricing = useMemo(
     () => computeBookingPricing(trip, selectedDeparture, travelers?.length || 1),
     [trip, selectedDeparture, travelers?.length]
   );
+
+  // --- Coupon: manual "Have a coupon code?" field + auto-prefill from a
+  // code the visitor copied out of the promo popup earlier
+  // (`lib/promo/coupon-storage.ts`). Auto-fill only ever fills the input;
+  // it never applies a discount without a round-trip to
+  // `/api/coupons/validate`, and that round-trip only fires once a valid
+  // email is present (the endpoint requires one for per-user-limit checks).
+  const [couponInput, setCouponInput] = useState("");
+  const [couponAutoFilled, setCouponAutoFilled] = useState(false);
+  const [couponStatus, setCouponStatus] = useState<"idle" | "checking" | "applied" | "error">("idle");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const autoApplyAttempted = useRef(false);
+
+  useEffect(() => {
+    const remembered = getRememberedCoupon();
+    if (remembered) {
+      setCouponInput(remembered);
+      setCouponAutoFilled(true);
+    }
+  }, []);
+
+  async function applyCoupon(rawCode: string, opts: { silent?: boolean } = {}) {
+    const code = rawCode.trim();
+    if (!code) return;
+    const email = getValues("customerEmail");
+    if (!email || !EMAIL_REGEX.test(email)) {
+      if (!opts.silent) toast.error("Enter your email above first, then apply the coupon.");
+      return;
+    }
+    setCouponStatus("checking");
+    setCouponError(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          tripId: trip.id,
+          customerEmail: email,
+          amount: pricing.bookingAmountDue,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success || !json.data.valid) {
+        setCouponStatus("error");
+        setCouponError(json.data?.reason ?? json.error ?? "This coupon isn't valid.");
+        setValue("couponCode", undefined);
+        return;
+      }
+      setCouponStatus("applied");
+      setAppliedCode(json.data.code ?? code.toUpperCase());
+      setAppliedDiscount(json.data.discountAmount ?? 0);
+      setValue("couponCode", json.data.code ?? code);
+      if (!opts.silent) toast.success("Coupon applied!");
+    } catch {
+      setCouponStatus("error");
+      setCouponError("Couldn't check this coupon right now — please try again.");
+    }
+  }
+
+  function removeCoupon() {
+    setCouponStatus("idle");
+    setCouponError(null);
+    setAppliedDiscount(0);
+    setAppliedCode(null);
+    setCouponInput("");
+    setCouponAutoFilled(false);
+    setValue("couponCode", undefined);
+    forgetRememberedCoupon();
+  }
+
+  // Fires once: the moment a prefilled code is present *and* the customer
+  // has typed a valid email, try it silently — "auto-prefill, user just
+  // confirms" rather than making them retype the code they already copied.
+  // A failure here just leaves the field editable with the error shown; it
+  // never blocks the booking.
+  useEffect(() => {
+    if (autoApplyAttempted.current) return;
+    if (!couponAutoFilled || !couponInput) return;
+    if (!customerEmail || !EMAIL_REGEX.test(customerEmail)) return;
+    autoApplyAttempted.current = true;
+    applyCoupon(couponInput, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerEmail, couponAutoFilled, couponInput]);
+
+  const effectiveCouponDiscount = couponStatus === "applied" ? appliedDiscount : 0;
+  const displayBookingAmountDue = Math.max(0, pricing.bookingAmountDue - effectiveCouponDiscount);
+  const displayRemainingAmount = Math.max(0, pricing.totalAmount - effectiveCouponDiscount - displayBookingAmountDue);
 
   const maxSeats = selectedDeparture?.seatsAvailable ?? trip.availableSeats ?? 1;
 
@@ -187,6 +283,7 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
         if (res.status === 409) router.refresh();
         return;
       }
+      if (data.couponCode) forgetRememberedCoupon();
       setConfirmation({
         id: json.data.id,
         totalAmount: json.data.totalAmount,
@@ -493,17 +590,76 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
                 </span>
               </div>
             ) : null}
+
+            <div className="space-y-2 border-t border-border pt-3">
+              <label htmlFor="booking-coupon-code" className="text-sm font-medium text-foreground">
+                Have a coupon code?
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="booking-coupon-code"
+                  placeholder="Enter coupon code"
+                  value={couponInput}
+                  disabled={couponStatus === "applied"}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value.toUpperCase());
+                    setCouponAutoFilled(false);
+                    if (couponStatus !== "idle") {
+                      setCouponStatus("idle");
+                      setCouponError(null);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                {couponStatus === "applied" ? (
+                  <Button type="button" variant="outline" size="sm" onClick={removeCoupon}>
+                    Remove
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={couponStatus === "checking" || !couponInput.trim()}
+                    onClick={() => applyCoupon(couponInput)}
+                  >
+                    {couponStatus === "checking" ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : "Apply"}
+                  </Button>
+                )}
+              </div>
+              {couponAutoFilled && couponStatus !== "applied" ? (
+                <p className="flex items-center gap-1 text-xs text-secondary">
+                  <Sparkles className="size-3.5" aria-hidden="true" />
+                  Filled in from the offer you copied earlier — enter your email above, then Apply.
+                </p>
+              ) : null}
+              {couponStatus === "applied" && appliedCode ? (
+                <p className="text-xs font-medium text-emerald-600">
+                  “{appliedCode}” applied — you&apos;re saving {formatMoney(appliedDiscount, pricing.currency)}.
+                </p>
+              ) : null}
+              {couponStatus === "error" && couponError ? (
+                <p className="text-xs text-destructive">{couponError}</p>
+              ) : null}
+            </div>
+
             <div className="flex items-center justify-between border-t border-border pt-3">
               <span className="text-muted-foreground">Total amount</span>
               <span className="font-semibold text-foreground">{formatMoney(pricing.totalAmount, pricing.currency)}</span>
             </div>
+            {effectiveCouponDiscount > 0 ? (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Coupon discount</span>
+                <span className="font-medium text-emerald-600">-{formatMoney(effectiveCouponDiscount, pricing.currency)}</span>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Book Your Slot amount (due now)</span>
-              <span className="font-medium text-foreground">{formatMoney(pricing.bookingAmountDue, pricing.currency)}</span>
+              <span className="font-medium text-foreground">{formatMoney(displayBookingAmountDue, pricing.currency)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Remaining amount (Cash During Trip)</span>
-              <span className="font-medium text-foreground">{formatMoney(pricing.remainingAmount, pricing.currency)}</span>
+              <span className="font-medium text-foreground">{formatMoney(displayRemainingAmount, pricing.currency)}</span>
             </div>
             {selectedDeparture ? (
               <div className="flex items-center justify-between border-t border-border pt-3">
@@ -514,6 +670,7 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
 
             <input type="hidden" {...register("tripId")} />
             <input type="hidden" {...register("tripSlug")} />
+            <input type="hidden" {...register("couponCode")} />
             <Button type="submit" className="w-full" disabled={submitting || !selectedDeparture}>
               {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               Book Now

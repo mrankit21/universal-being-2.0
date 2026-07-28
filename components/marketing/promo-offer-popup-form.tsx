@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { rememberCoupon } from "@/lib/promo/coupon-storage";
 
 const WHATSAPP_REGEX = /^[6-9]\d{9}$/;
 
@@ -39,6 +40,7 @@ export function PromoOfferPopupForm({ couponCode, heading, description, tripName
     try {
       await navigator.clipboard.writeText(couponCode);
       setCopied(true);
+      rememberCoupon(couponCode);
       toast.success("Coupon Copied!");
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -71,6 +73,7 @@ export function PromoOfferPopupForm({ couponCode, heading, description, tripName
         setSubmitError(json.error ?? "Something went wrong — please try again.");
         return;
       }
+      rememberCoupon(couponCode);
       toast.success("You're in! Your code is ready to use.");
       onClaimed();
     } catch {
