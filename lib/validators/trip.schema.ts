@@ -25,6 +25,41 @@ export const departureDateSchema = z.object({
   priceOverride: z.number().optional(),
   status: z.enum(["open", "filling-fast", "sold-out", "closed"]).default("open"),
   isPublished: z.boolean().default(true),
+  // Pickup Variant Architecture (2026-07) — see types/trip.ts DepartureDate doc.
+  pickupVariantId: z.string().optional(),
+  bookingAmountOverride: z.number().min(0).optional(),
+});
+
+export const pickupVariantSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  pickupCity: z.string().min(1),
+  dropCity: z.string().min(1),
+  route: z.array(z.string()).default([]),
+  duration: z.object({
+    days: z.number().int().positive(),
+    nights: z.number().int().min(0),
+    label: z.string(),
+  }),
+  startingPrice: z.number().min(0),
+  discountedPrice: z.number().min(0).optional(),
+  bookingAmount: z.number().min(0),
+  gstNote: z.string().optional(),
+  paymentNote: z.string().optional(),
+  itinerary: z.array(dayPlanSchema).default([]),
+  // Deprecated — kept for variants saved before `status` existed. `status`
+  // is the source of truth going forward (see lib/trip/pickup-variants.ts).
+  isPublished: z.boolean().default(true),
+  status: z.enum(["active", "draft", "archived"]).default("active"),
+  isDefault: z.boolean().default(false),
+});
+
+export const hotelCategorySchema = z.object({
+  id: z.string(),
+  stars: z.union([z.literal(0), z.literal(3), z.literal(4), z.literal(5)]),
+  title: z.string().min(1),
+  shortDescription: z.string().optional(),
+  isEnabled: z.boolean().default(true),
 });
 
 export const faqSchema = z.object({
@@ -111,6 +146,8 @@ export const tripSchema = z.object({
   circuitGroup: z.string().trim().optional(),
   isCircuitParent: z.boolean().optional().default(false),
   destinationRoutes: z.array(destinationRouteSchema).default([]),
+  pickupVariants: z.array(pickupVariantSchema).default([]),
+  hotelCategories: z.array(hotelCategorySchema).default([]),
   totalSeats: z.number().int().min(0),
   availableSeats: z.number().int().min(0),
   departureDates: z.array(departureDateSchema).default([]),

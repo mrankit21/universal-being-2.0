@@ -36,6 +36,49 @@ const DepartureDateSchema = new Schema(
       default: "open",
     },
     isPublished: { type: Boolean, default: true },
+    // Pickup Variant Architecture (2026-07) — see types/trip.ts DepartureDate doc.
+    pickupVariantId: { type: String },
+    bookingAmountOverride: { type: Number },
+  },
+  { _id: false }
+);
+
+const PickupVariantSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true, default: "" },
+    pickupCity: { type: String, required: true, default: "" },
+    dropCity: { type: String, required: true, default: "" },
+    route: { type: [String], default: [] },
+    duration: {
+      days: { type: Number, required: true, default: 1 },
+      nights: { type: Number, required: true, default: 0 },
+      label: { type: String, required: true, default: "" },
+    },
+    startingPrice: { type: Number, required: true, default: 0 },
+    discountedPrice: { type: Number },
+    bookingAmount: { type: Number, required: true, default: 0 },
+    gstNote: { type: String },
+    paymentNote: { type: String },
+    itinerary: { type: [DayPlanSchema], default: [] },
+    // Pickup Variant Architecture — Phase 1 completion (2026-07).
+    // `isPublished` kept (deprecated) for any variant saved before `status`
+    // existed; `status` is the source of truth going forward — see
+    // `getEffectiveVariantStatus` in lib/trip/pickup-variants.ts.
+    isPublished: { type: Boolean, default: true },
+    status: { type: String, enum: ["active", "draft", "archived"], default: "active" },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const HotelCategorySchema = new Schema(
+  {
+    id: { type: String, required: true },
+    stars: { type: Number, enum: [0, 3, 4, 5], required: true },
+    title: { type: String, required: true, default: "" },
+    shortDescription: { type: String },
+    isEnabled: { type: Boolean, default: true },
   },
   { _id: false }
 );
@@ -132,6 +175,8 @@ export interface TripDocument extends Document {
    * "shortest duration wins" guess. */
   isCircuitParent?: boolean;
   destinationRoutes?: unknown[];
+  pickupVariants?: unknown[];
+  hotelCategories?: unknown[];
   totalSeats: number;
   availableSeats: number;
   departureDates: unknown[];
@@ -219,6 +264,8 @@ const TripSchema = new Schema<TripDocument>(
     circuitGroup: { type: String, index: true, trim: true },
     isCircuitParent: { type: Boolean, default: false, index: true },
     destinationRoutes: { type: [DestinationRouteSchema], default: [] },
+    pickupVariants: { type: [PickupVariantSchema], default: [] },
+    hotelCategories: { type: [HotelCategorySchema], default: [] },
 
     totalSeats: { type: Number, required: true, default: 0 },
     availableSeats: { type: Number, required: true, default: 0 },

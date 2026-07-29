@@ -167,6 +167,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <CardHeader><CardTitle className="text-base">Booking</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p><span className="text-muted-foreground">Trip:</span> {booking.tripTitle}</p>
+            {booking.pickupVariantName ? (
+              <p><span className="text-muted-foreground">Pickup:</span> {booking.pickupVariantName}</p>
+            ) : null}
             {booking.departureStartDate ? (
               <p>
                 <span className="text-muted-foreground">Departure:</span>{" "}

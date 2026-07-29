@@ -32,7 +32,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview, DestinationRoute } from "@/types/trip";
+import type { Trip, DayPlan, DepartureDate, Faq, AccommodationEntry, TripReview, DestinationRoute, PickupVariant, HotelCategory } from "@/types/trip";
 import type { ThemeKey } from "@/types/theme";
 
 const THEME_KEYS: ThemeKey[] = ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"];
@@ -80,6 +80,8 @@ function blank(): TripFormValue {
     circuitGroup: "",
     isCircuitParent: false,
     destinationRoutes: [],
+    pickupVariants: [],
+    hotelCategories: [],
     totalSeats: 0,
     availableSeats: 0,
     departureDates: [],
@@ -140,7 +142,27 @@ function normalize(v: TripFormValue): TripFormValue {
     destinationRoutes: v.destinationRoutes ?? [],
     seo: { ...v.seo, keywords: v.seo.keywords ?? [] },
     departureDates: v.departureDates.map((batch) => ({ ...batch, isPublished: batch.isPublished ?? true })),
+    pickupVariants: normalizePickupVariants(v.pickupVariants ?? []),
+    hotelCategories: v.hotelCategories ?? [],
   };
+}
+
+/** Backfills `status` from the older `isPublished` flag for variants saved
+ * before `status` existed, and guarantees at most one `isDefault: true` —
+ * if legacy data has none (or, from a bad write, more than one), the first
+ * active variant in order is treated as the default without touching the
+ * saved data until the admin next hits Save. */
+function normalizePickupVariants(variants: PickupVariant[]): PickupVariant[] {
+  const withStatus = variants.map((variant) => ({
+    ...variant,
+    route: variant.route ?? [],
+    itinerary: (variant.itinerary ?? []).map((day) => ({ ...day, images: day.images ?? [] })),
+    status: variant.status ?? (variant.isPublished === false ? ("archived" as const) : ("active" as const)),
+  }));
+  const defaults = withStatus.filter((v) => v.isDefault);
+  if (defaults.length === 1) return withStatus;
+  const fallbackId = withStatus.find((v) => v.status === "active")?.id ?? withStatus[0]?.id;
+  return withStatus.map((v) => ({ ...v, isDefault: v.id === fallbackId }));
 }
 
 export function TripForm({ tripId, initialValue }: { tripId?: string; initialValue?: TripFormValue }) {
@@ -280,6 +302,7 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
           <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
           <TabsTrigger value="logistics">Logistics</TabsTrigger>
+          <TabsTrigger value="pickup-variants">Pickup Variants</TabsTrigger>
           <TabsTrigger value="inclusions">Inclusions</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="faqs">FAQs</TabsTrigger>
@@ -722,6 +745,70 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
           </Card>
 
           <Card>
+            <CardHeader><CardTitle className="text-base">Hotel Category</CardTitle></CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Informational only — no pricing, no specific hotel, no inventory. Our operations team
+                allocates the actual hotel manually after booking. Enable the tiers that apply to this
+                trip and edit their title/description; disabled tiers stay saved but won&apos;t show on
+                the Trip page.
+              </p>
+              <ArrayFieldEditor<HotelCategory>
+                items={value.hotelCategories ?? []}
+                onChange={(v) => set("hotelCategories", v)}
+                addLabel="Add hotel category"
+                emptyMessage="No hotel categories added yet."
+                createItem={() => {
+                  const used = new Set((value.hotelCategories ?? []).map((c) => c.stars));
+                  const stars = ([3, 4, 5, 0] as const).find((s) => !used.has(s)) ?? 3;
+                  const defaultTitle = stars === 0 ? "< 3 Star" : `${stars} Star`;
+                  return {
+                    id: nextId("hotel-category"),
+                    stars,
+                    title: defaultTitle,
+                    shortDescription: "",
+                    isEnabled: true,
+                  };
+                }}
+                renderItem={(category, _i, update) => (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField label="Stars">
+                      <Select
+                        value={String(category.stars)}
+                        onValueChange={(v) => update({ stars: Number(v) as HotelCategory["stars"] })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">{"< 3 Star"}</SelectItem>
+                          <SelectItem value="3">3 Star</SelectItem>
+                          <SelectItem value="4">4 Star</SelectItem>
+                          <SelectItem value="5">5 Star</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+                    <FormField label="Enable" hint="Hide from the public Trip page without deleting">
+                      <div className="flex h-9 items-center gap-2">
+                        <Switch checked={category.isEnabled} onCheckedChange={(v) => update({ isEnabled: v })} />
+                        <span className="text-sm text-muted-foreground">{category.isEnabled ? "Enabled" : "Disabled"}</span>
+                      </div>
+                    </FormField>
+                    <FormField label="Title" className="sm:col-span-2">
+                      <Input value={category.title} onChange={(e) => update({ title: e.target.value })} />
+                    </FormField>
+                    <FormField label="Short Description" hint="Optional" className="sm:col-span-2">
+                      <Textarea
+                        rows={2}
+                        value={category.shortDescription ?? ""}
+                        onChange={(e) => update({ shortDescription: e.target.value })}
+                      />
+                    </FormField>
+                  </div>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle className="text-base">Meals</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-6">
@@ -783,6 +870,269 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
               <FormField label="Travel Notes" className="md:col-span-2" hint="Optional — e.g. luggage limits, boarding instructions">
                 <Textarea rows={3} value={value.travelNotes ?? ""} onChange={(e) => set("travelNotes", e.target.value)} />
               </FormField>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pickup-variants" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Pickup Variants</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Unlimited pickup-city variants of this Parent Trip (e.g. Delhi Pickup, Jaipur Pickup, Udaipur
+                Pickup). Add as many as you need — no code change required. Drag to reorder; the order here is the
+                order shown on the Trip page&apos;s pickup selector.
+              </p>
+              <ArrayFieldEditor<PickupVariant>
+                items={value.pickupVariants ?? []}
+                onChange={(v) => set("pickupVariants", v)}
+                addLabel="Add pickup variant"
+                emptyMessage="No pickup variants yet — this trip shows its regular Pickup/Drop/Pricing fields until one is added."
+                draggable
+                createItem={() => ({
+                  id: nextId("pickup"),
+                  name: "",
+                  pickupCity: "",
+                  dropCity: "",
+                  route: [],
+                  duration: { ...value.duration },
+                  startingPrice: value.price.base,
+                  bookingAmount: value.price.bookingAmount,
+                  gstNote: "",
+                  paymentNote: "",
+                  itinerary: [],
+                  status: "active",
+                  // The first pickup variant added to a trip becomes its
+                  // Default Pickup Variant automatically, so every Parent
+                  // Trip with any variants always has exactly one default
+                  // without requiring an extra admin step.
+                  isDefault: (value.pickupVariants ?? []).length === 0,
+                })}
+                renderItem={(variant, _i, update) => {
+                  const batches = (value.departureDates ?? []).filter((d) => d.pickupVariantId === variant.id);
+                  const setBatches = (next: DepartureDate[]) => {
+                    const others = (value.departureDates ?? []).filter((d) => d.pickupVariantId !== variant.id);
+                    set("departureDates", [...others, ...next]);
+                  };
+                  const status = variant.status ?? (variant.isPublished === false ? "archived" : "active");
+                  const makeDefault = (checked: boolean) => {
+                    set(
+                      "pickupVariants",
+                      (value.pickupVariants ?? []).map((v) => ({ ...v, isDefault: checked && v.id === variant.id }))
+                    );
+                  };
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField label="Pickup Name" hint='e.g. "Delhi Pickup"'>
+                          <Input value={variant.name} onChange={(e) => update({ name: e.target.value })} />
+                        </FormField>
+                        <FormField label="Status" hint="Active: on the website. Draft: admin-only. Archived: hidden but kept for history.">
+                          <Select value={status} onValueChange={(v) => update({ status: v as PickupVariant["status"] })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="draft">Draft</SelectItem>
+                              <SelectItem value="archived">Archived</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                        <FormField label="Pickup City">
+                          <Input value={variant.pickupCity} onChange={(e) => update({ pickupCity: e.target.value })} placeholder="e.g. Delhi" />
+                        </FormField>
+                        <FormField label="Drop City">
+                          <Input value={variant.dropCity} onChange={(e) => update({ dropCity: e.target.value })} placeholder="e.g. Delhi" />
+                        </FormField>
+                        <FormField label="Default Pickup" hint="Selected automatically when a visitor lands on the Trip page">
+                          <div className="flex h-9 items-center gap-2">
+                            <Switch checked={variant.isDefault ?? false} onCheckedChange={makeDefault} />
+                            <span className="text-sm text-muted-foreground">
+                              {variant.isDefault ? "Default" : "Not default"}
+                            </span>
+                          </div>
+                        </FormField>
+                      </div>
+
+                      <FormField label="Route" hint='Ordered stops, e.g. "Delhi", "Jaipur", "Udaipur", "Delhi"'>
+                        <StringListEditor items={variant.route} onChange={(v) => update({ route: v })} placeholder="e.g. Jaipur" />
+                      </FormField>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <FormField label="Days">
+                          <Input
+                            type="number"
+                            min={1}
+                            value={variant.duration.days}
+                            onChange={(e) => update({ duration: { ...variant.duration, days: Number(e.target.value) } })}
+                          />
+                        </FormField>
+                        <FormField label="Nights">
+                          <Input
+                            type="number"
+                            min={0}
+                            value={variant.duration.nights}
+                            onChange={(e) => update({ duration: { ...variant.duration, nights: Number(e.target.value) } })}
+                          />
+                        </FormField>
+                        <FormField label="Duration Label" hint='e.g. "5D/4N"'>
+                          <Input
+                            value={variant.duration.label}
+                            onChange={(e) => update({ duration: { ...variant.duration, label: e.target.value } })}
+                          />
+                        </FormField>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField label="Starting Price (₹)">
+                          <Input type="number" min={0} value={variant.startingPrice} onChange={(e) => update({ startingPrice: Number(e.target.value) })} />
+                        </FormField>
+                        <FormField label="Booking Amount (₹)" hint="Default deposit for this pickup's batches">
+                          <Input type="number" min={0} value={variant.bookingAmount} onChange={(e) => update({ bookingAmount: Number(e.target.value) })} />
+                        </FormField>
+                      </div>
+
+                      <FormField label="GST Note" hint="Optional — shown next to this pickup's price">
+                        <Input value={variant.gstNote ?? ""} onChange={(e) => update({ gstNote: e.target.value })} placeholder="e.g. + 5% GST applicable" />
+                      </FormField>
+                      <FormField label="Payment Note" hint="Optional — shown next to this pickup's price">
+                        <Input value={variant.paymentNote ?? ""} onChange={(e) => update({ paymentNote: e.target.value })} placeholder="e.g. 50% advance, balance before departure" />
+                      </FormField>
+
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="mb-3 text-sm font-medium text-foreground">Batch Dates for this pickup</p>
+                        <ArrayFieldEditor<DepartureDate>
+                          items={batches}
+                          onChange={setBatches}
+                          addLabel="Add batch"
+                          emptyMessage="No batches scheduled for this pickup yet."
+                          createItem={() => ({
+                            id: nextId("batch"),
+                            startDate: "",
+                            endDate: "",
+                            seatsTotal: 0,
+                            seatsAvailable: 0,
+                            status: "open",
+                            isPublished: true,
+                            pickupVariantId: variant.id,
+                            priceOverride: variant.startingPrice || undefined,
+                            bookingAmountOverride: variant.bookingAmount || undefined,
+                          })}
+                          renderItem={(batch, _j, updateBatch) => (
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                              <FormField label="Start Date">
+                                <Input type="date" value={batch.startDate} onChange={(e) => updateBatch({ startDate: e.target.value })} />
+                              </FormField>
+                              <FormField label="End Date">
+                                <Input type="date" value={batch.endDate} onChange={(e) => updateBatch({ endDate: e.target.value })} />
+                              </FormField>
+                              <FormField label="Seats Total">
+                                <Input type="number" min={0} value={batch.seatsTotal} onChange={(e) => updateBatch({ seatsTotal: Number(e.target.value) })} />
+                              </FormField>
+                              <FormField label="Seats Available">
+                                <Input type="number" min={0} value={batch.seatsAvailable} onChange={(e) => updateBatch({ seatsAvailable: Number(e.target.value) })} />
+                              </FormField>
+                              <FormField label="Status">
+                                <Select value={batch.status} onValueChange={(v) => updateBatch({ status: v as DepartureDate["status"] })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="open">Open</SelectItem>
+                                    <SelectItem value="filling-fast">Filling Fast</SelectItem>
+                                    <SelectItem value="sold-out">Sold Out</SelectItem>
+                                    <SelectItem value="closed">Closed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormField>
+                              <FormField label="Price Override (₹)" hint="Optional — overrides Starting Price for this batch">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={batch.priceOverride ?? ""}
+                                  onChange={(e) => updateBatch({ priceOverride: e.target.value ? Number(e.target.value) : undefined })}
+                                />
+                              </FormField>
+                              <FormField label="Booking Amount Override (₹)" hint="Optional — overrides Booking Amount for this batch">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={batch.bookingAmountOverride ?? ""}
+                                  onChange={(e) => updateBatch({ bookingAmountOverride: e.target.value ? Number(e.target.value) : undefined })}
+                                />
+                              </FormField>
+                              <FormField label="Publish">
+                                <div className="flex h-9 items-center gap-2">
+                                  <Switch checked={batch.isPublished ?? true} onCheckedChange={(v) => updateBatch({ isPublished: v })} />
+                                  <span className="text-sm text-muted-foreground">{(batch.isPublished ?? true) ? "Published" : "Hidden"}</span>
+                                </div>
+                              </FormField>
+                            </div>
+                          )}
+                        />
+                      </div>
+
+                      <div className="rounded-lg border border-border p-3">
+                        <p className="mb-3 text-sm font-medium text-foreground">Itinerary for this pickup</p>
+                        <ArrayFieldEditor<DayPlan>
+                          items={variant.itinerary}
+                          onChange={(v) => update({ itinerary: v })}
+                          addLabel="Add day"
+                          emptyMessage="No itinerary days yet."
+                          draggable
+                          createItem={() => ({ day: variant.itinerary.length + 1, title: "", description: "", activities: [], meals: [], location: "", images: [] })}
+                          renderItem={(day, _j, updateDay) => (
+                            <div className="space-y-3">
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <FormField label="Day #">
+                                  <Input type="number" min={1} value={day.day} onChange={(e) => updateDay({ day: Number(e.target.value) })} />
+                                </FormField>
+                                <FormField label="Title">
+                                  <Input value={day.title} onChange={(e) => updateDay({ title: e.target.value })} />
+                                </FormField>
+                              </div>
+                              <FormField label="Location" hint="Optional">
+                                <Input value={day.location ?? ""} onChange={(e) => updateDay({ location: e.target.value })} placeholder="e.g. Old Manali" />
+                              </FormField>
+                              <FormField label="Description">
+                                <Textarea rows={2} value={day.description} onChange={(e) => updateDay({ description: e.target.value })} />
+                              </FormField>
+                              <FormField label="Activities">
+                                <StringListEditor items={day.activities} onChange={(v) => updateDay({ activities: v })} placeholder="e.g. Trek to base camp" />
+                              </FormField>
+                              <FormField label="Stay">
+                                <Input value={day.stay ?? ""} onChange={(e) => updateDay({ stay: e.target.value })} placeholder="e.g. Riverside camp" />
+                              </FormField>
+
+                              <FormField label="Day Images" hint="Optional — photos specific to this day. First image is used as the day's hero photo.">
+                                <ArrayFieldEditor
+                                  items={day.images}
+                                  onChange={(v) => updateDay({ images: v })}
+                                  addLabel="Add image"
+                                  emptyMessage="No images for this day yet."
+                                  createItem={emptyImage}
+                                  draggable
+                                  renderItem={(img, _k, updateImg) => (
+                                    <TripImageAssetField
+                                      label="Image"
+                                      value={img}
+                                      onChange={updateImg}
+                                      category="trip-gallery"
+                                      usage="gallery-image"
+                                      tripSlug={tripSlug}
+                                      tripTitle={tripTitle}
+                                    />
+                                  )}
+                                />
+                              </FormField>
+                            </div>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  );
+                }}
+              />
             </CardContent>
           </Card>
         </TabsContent>

@@ -78,6 +78,20 @@ export interface DepartureDate {
    * existed keep showing exactly as they did. Lets admins hide a batch from
    * the public Trip page (e.g. still being finalized) without deleting it. */
   isPublished?: boolean;
+  /** Pickup Variant Architecture (2026-07). Tags this batch as belonging to
+   * one entry in `Trip.pickupVariants`. Optional/backward-compatible — a
+   * batch with no tag is a plain trip-level batch exactly as before, still
+   * fully bookable through the unchanged booking flow. Per-variant helpers
+   * filter `Trip.departureDates` by this id; nothing about how
+   * `/api/bookings` looks up or reserves a batch changes. */
+  pickupVariantId?: string;
+  /** This batch's own "Book Your Slot" deposit amount, mirroring
+   * `priceOverride`'s existing per-batch override pattern. Optional — when
+   * unset, `computeBookingPricing` falls back to `Trip.price.bookingAmount`
+   * exactly as it always has. Lets each Pickup Variant's batches carry their
+   * own deposit amount without changing the booking pricing engine's
+   * signature or call sites. */
+  bookingAmountOverride?: number;
 }
 
 export interface TripPrice {
@@ -128,6 +142,32 @@ export interface MealPlan {
   description: string;
 }
 
+/**
+ * Hotel Category Architecture (2026-07). A purely informational "3 Star /
+ * 4 Star / 5 Star" card shown on the Trip page so visitors know roughly
+ * what tier of stay to expect. Deliberately NOT a hotel inventory system —
+ * no pricing, no specific property, no availability. The Operations team
+ * allocates the actual hotel manually after booking; this is just a
+ * lightweight, fully admin-editable label + blurb. A fixed set of up to
+ * four tiers (`stars` 0 = "< 3 Star", 3, 4, 5), each independently
+ * enabled/disabled and with editable copy — nothing about a category's
+ * identity (`stars`) is meant to change, only whether it's shown and what
+ * it says.
+ */
+export interface HotelCategory {
+  id: string;
+  /** 0 stands for "< 3 Star"; otherwise 3, 4, or 5. */
+  stars: 0 | 3 | 4 | 5;
+  /** Admin-editable heading, e.g. "3 Star". Defaults to the obvious label
+   * for `stars` but can be reworded freely. */
+  title: string;
+  /** Short admin-editable blurb, e.g. "Comfortable stays with all basic
+   * amenities." Optional — self-hides when empty. */
+  shortDescription?: string;
+  /** Hide this tier from the public Trip page without deleting it. */
+  isEnabled: boolean;
+}
+
 /** One customer review (Step 7.6C-A §12) — unlimited list, fully
  * admin-managed. Distinct from the site-wide `Testimonial` collection: this
  * is the trip's own review list rendered directly on its Trip Details page. */
@@ -167,6 +207,79 @@ export interface DestinationRoute {
   /** Ordered list of stop names, e.g. ["Leh", "Nubra Valley", "Pangong"]. */
   stops: string[];
   href?: string;
+}
+
+/**
+ * Pickup Variant Architecture (2026-07). One bookable "Delhi Pickup" /
+ * "Jaipur Pickup" / "Udaipur Pickup" — etc, unlimited — variant of a Parent
+ * Trip. Fully admin-managed (Trip Editor's "Pickup Variants" tab):
+ * add/edit/delete/reorder, no code change required to add a new pickup city.
+ *
+ * Deliberately does NOT carry its own price/departureDates arrays. Instead:
+ *   - its batches are ordinary `Trip.departureDates` entries tagged with
+ *     this variant's `id` via `DepartureDate.pickupVariantId`, each
+ *     optionally carrying its own `priceOverride` / `bookingAmountOverride`
+ *     (both pre-existing/mirrored per-batch override fields) — so every
+ *     batch, regardless of which pickup city it belongs to, flows through
+ *     the exact same booking/payment/seat-locking pipeline
+ *     (`/api/bookings`, `computeBookingPricing`) with zero changes to that
+ *     pipeline's logic.
+ *   - `startingPrice` / `bookingAmount` below are this variant's *defaults*
+ *     — shown on the pickup selector before a specific batch is chosen, and
+ *     used to prefill a new batch created under this variant in Admin.
+ */
+export type PickupVariantStatus = "active" | "draft" | "archived";
+
+export interface PickupVariant {
+  id: string;
+  /** "Delhi Pickup", "Jaipur Pickup", … — shown on the pickup selector. */
+  name: string;
+  pickupCity: string;
+  dropCity: string;
+  /** Ordered list of stop names for this pickup's route, e.g.
+   * ["Delhi", "Jaipur", "Udaipur", "Delhi"]. */
+  route: string[];
+  duration: { days: number; nights: number; label: string };
+  /** Default/display "starting from" price for this pickup, in `Trip.price.currency`. */
+  startingPrice: number;
+  discountedPrice?: number;
+  /** Default "Book Your Slot" deposit amount for this pickup's batches. */
+  bookingAmount: number;
+  gstNote?: string;
+  paymentNote?: string;
+  /** This pickup's own day-by-day itinerary (routes commonly differ by
+   * pickup city — e.g. a Delhi pickup adds a travel day a Jaipur pickup
+   * doesn't need). */
+  itinerary: DayPlan[];
+  /**
+   * Pickup Variant Architecture — Phase 1 completion (2026-07).
+   * - `active` — visible on the public Trip page's pickup selector.
+   * - `draft` — visible only in Admin; hidden from the website while it's
+   *   still being set up.
+   * - `archived` — hidden from the website but preserved in Admin for
+   *   historical/reporting purposes (e.g. a discontinued pickup city that
+   *   still has past bookings referencing it).
+   * Optional for backward compatibility with variants saved before this
+   * field existed — `getEffectiveVariantStatus` in `lib/trip/pickup-variants.ts`
+   * derives `active`/`archived` from the older `isPublished` flag when this
+   * is unset, so no data migration is required.
+   */
+  status?: PickupVariantStatus;
+  /** @deprecated Superseded by `status` (`isPublished === false` ⇒
+   * `archived`). Kept optional so variants saved before `status` existed
+   * keep resolving to the correct effective status — see
+   * `getEffectiveVariantStatus`. New code should read/write `status`. */
+  isPublished?: boolean;
+  /** Pickup Variant Architecture — Phase 1 completion (2026-07). Marks this
+   * as the Parent Trip's Default Pickup Variant — the one selected
+   * automatically when a visitor lands on the Trip page, before they've
+   * chosen a city themselves. Exactly one variant per Trip should have this
+   * set `true`; Admin enforces that by clearing it on every other variant
+   * whenever one is marked default. Optional/backward compatible — when no
+   * variant has this set (e.g. variants saved before this field existed),
+   * `getDefaultPickupVariant` falls back to the first active variant in
+   * admin-configured order, matching the previous behaviour exactly. */
+  isDefault?: boolean;
 }
 
 export interface Trip {
@@ -267,6 +380,24 @@ export interface Trip {
    * when unset or empty, same backward-compatible pattern as everywhere else
    * in this file. */
   destinationRoutes?: DestinationRoute[];
+
+  /** Pickup Variant Architecture (2026-07). Unlimited pickup-city variants
+   * of this Parent Trip — see `PickupVariant` doc comment. Optional/
+   * backward-compatible: empty or unset means this Trip has no pickup
+   * variants and the Trip page renders exactly as it always has, reading
+   * `pickup`/`drop`/`duration`/`price`/`departureDates`/`itinerary` above
+   * directly. When present, `TripPickupVariants` (Trip page) lets the
+   * visitor choose a pickup city and swaps those same fields for the
+   * selected variant's. Child Trips are not used in this phase. */
+  pickupVariants?: PickupVariant[];
+
+  /** Hotel Category Architecture (2026-07). Up to four informational
+   * "3 Star / 4 Star / 5 Star" cards — see `HotelCategory` doc comment.
+   * Optional/backward-compatible: empty or unset self-hides this section
+   * on the Trip page exactly like every other optional list here. Trip-
+   * level (not per Pickup Variant) since hotel tier is informational and
+   * doesn't vary by pickup city the way price/route/itinerary do. */
+  hotelCategories?: HotelCategory[];
 
   /** Convenience mirror of the next open batch — quick-editable in Admin
    * without opening the batch editor. `departureDates[]` remains the source

@@ -21,6 +21,13 @@ export const bookingCreateSchema = z
     tripId: z.string().min(1),
     tripSlug: z.string().min(1),
     departureDateId: z.string().min(1),
+    // Pickup Variant Architecture (2026-07). Purely informational — which
+    // pickup city the visitor picked, snapshotted onto the Booking for
+    // Admin's reference. Never trusted for price/seat resolution: the
+    // server still resolves those from `departureDateId` exactly as
+    // before, so an incorrect/missing value here can't affect what's
+    // charged or reserved.
+    pickupVariantId: z.string().optional(),
 
     customerName: z.string().min(2, "Full name is required"),
     customerEmail: z.string().email("Enter a valid email"),

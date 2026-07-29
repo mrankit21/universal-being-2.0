@@ -48,7 +48,11 @@ export function computeBookingPricing(
       ? trip.price.base
       : null;
 
-  const bookingAmountPerPerson = Math.min(trip.price.bookingAmount || 0, offerPrice);
+  // Pickup Variant Architecture (2026-07): a batch tagged to a pickup
+  // variant may carry its own deposit amount, mirroring `priceOverride`'s
+  // existing per-batch pattern. Falls back to the trip-level amount exactly
+  // as before when unset, so nothing changes for any trip without variants.
+  const bookingAmountPerPerson = Math.min(departure?.bookingAmountOverride ?? trip.price.bookingAmount ?? 0, offerPrice);
 
   const totalAmount = offerPrice * safeTravellers;
   const discountAmount = originalPrice ? (originalPrice - offerPrice) * safeTravellers : 0;

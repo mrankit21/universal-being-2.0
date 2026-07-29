@@ -239,6 +239,13 @@ export async function POST(req: NextRequest) {
         departureDateId: parsed.departureDateId,
         departureStartDate: departure.startDate,
         departureEndDate: departure.endDate,
+        // Pickup Variant Architecture (2026-07) — informational snapshot
+        // only; see `bookingCreateSchema` doc comment. Resolved server-side
+        // from the trip itself rather than trusting a client-supplied name.
+        pickupVariantId: parsed.pickupVariantId,
+        pickupVariantName: parsed.pickupVariantId
+          ? trip.pickupVariants?.find((v) => v.id === parsed.pickupVariantId)?.name
+          : undefined,
 
         customerName: parsed.customerName,
         customerEmail: parsed.customerEmail,

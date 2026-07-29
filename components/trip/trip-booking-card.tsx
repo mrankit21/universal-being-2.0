@@ -10,6 +10,13 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export interface TripBookingCardProps {
   trip: Trip;
+  /** Pickup Variant Architecture (2026-07). Optional — when the visitor has
+   * chosen a pickup city on `TripPickupVariants`, carries it through to the
+   * booking page via `?pickup=` so `BookingForm` narrows its departure
+   * dropdown to just this variant's batches. Omitted entirely for trips
+   * with no pickup variants, so the link is byte-for-byte what it always
+   * was. */
+  pickupVariantId?: string;
 }
 
 const statusVariant: Record<
@@ -40,7 +47,7 @@ function formatDate(iso: string) {
   });
 }
 
-export function TripBookingCard({ trip }: TripBookingCardProps) {
+export function TripBookingCard({ trip, pickupVariantId }: TripBookingCardProps) {
   const { nextDeparture, seatsLeft, isAvailable } =
     getTripAvailability(trip);
 
@@ -131,8 +138,10 @@ export function TripBookingCard({ trip }: TripBookingCardProps) {
                   isAvailable
                     ? `/trips/${trip.slug}/book${
                         nextDeparture
-                          ? `?departure=${nextDeparture.id}`
-                          : ""
+                          ? `?departure=${nextDeparture.id}${pickupVariantId ? `&pickup=${pickupVariantId}` : ""}`
+                          : pickupVariantId
+                            ? `?pickup=${pickupVariantId}`
+                            : ""
                       }`
                     : "#trip-batches"
                 }

@@ -148,6 +148,14 @@ function normalizeTrip(trip: Trip): Trip {
     departureDates: trip.departureDates ?? [],
     bestSeason: trip.bestSeason ?? [],
     destinationRoutes: trip.destinationRoutes ?? [],
+    // Pickup Variant Architecture (2026-07) — same missing-field guard.
+    pickupVariants: (trip.pickupVariants ?? []).map((v) => ({
+      ...v,
+      route: v.route ?? [],
+      itinerary: (v.itinerary ?? []).map((day) => ({ ...day, images: day.images ?? [] })),
+    })),
+    // Hotel Category Architecture (2026-07) — same missing-field guard.
+    hotelCategories: trip.hotelCategories ?? [],
   };
 }
 

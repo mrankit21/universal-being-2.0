@@ -13,6 +13,7 @@ import { TripBookingCard } from "@/components/trip/trip-booking-card";
 import { TripJsonLd } from "@/components/trip/trip-json-ld";
 import { TripItinerary } from "@/components/trip/trip-itinerary";
 import { TripAccommodation } from "@/components/trip/trip-accommodation";
+import { TripHotelCategories } from "@/components/trip/trip-hotel-categories";
 import { TripMeals } from "@/components/trip/trip-meals";
 import { TripTransportation } from "@/components/trip/trip-transportation";
 import { TripInclusions } from "@/components/trip/trip-inclusions";
@@ -23,6 +24,8 @@ import { TripFAQ } from "@/components/trip/trip-faq";
 import { TripTerms } from "@/components/trip/trip-terms";
 import { RelatedTrips } from "@/components/trip/related-trips";
 import { TripStickyActions } from "@/components/trip/trip-sticky-actions";
+import { TripPickupVariants } from "@/components/trip/trip-pickup-variants";
+import { getPublishedPickupVariants } from "@/lib/trip/pickup-variants";
 
 interface TripPageProps {
   params: Promise<{ slug: string }>;
@@ -83,27 +86,53 @@ export default async function TripDetailPage({ params }: TripPageProps) {
   const assignedReviews = await getTripReviewTestimonials(trip);
   const circuitSiblings = await getCircuitSiblings(trip);
 
+  // Pickup Variant Architecture (2026-07): a Trip with published pickup
+  // variants renders its booking card, pricing/batches, itinerary,
+  // transportation, and destination-route sections through
+  // `TripPickupVariants` instead — same components, driven by whichever
+  // pickup city the visitor picks. A Trip with no pickup variants (the
+  // default) falls through to the exact original composition below,
+  // byte-for-byte unchanged.
+  const hasPickupVariants = getPublishedPickupVariants(trip).length > 0;
+
   return (
     <div className="pb-16">
       <TripJsonLd trip={trip} />
       <TripStickyActions trip={trip} />
       <TripHero trip={trip} />
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="max-w-xs sm:max-w-[280px]">
-          <TripBookingCard trip={trip} />
-        </div>
-      </div>
-      <TripDurationSelector trip={trip} siblings={circuitSiblings} />
-      <TripPricingTable trip={trip} />
-      <TripGallery trip={trip} />
-      <TripHighlights trip={trip} />
-      <TripItinerary trip={trip} />
-      <TripAccommodation trip={trip} />
-      <TripMeals trip={trip} />
-      <TripTransportation trip={trip} />
-      <TripInclusions trip={trip} />
-      <TripDestinationRoutes trip={trip} />
-      <TripMap trip={trip} />
+      {hasPickupVariants ? (
+        <>
+          <TripPickupVariants trip={trip} />
+          <TripDurationSelector trip={trip} siblings={circuitSiblings} />
+          <TripGallery trip={trip} />
+          <TripHighlights trip={trip} />
+          <TripAccommodation trip={trip} />
+          <TripHotelCategories trip={trip} />
+          <TripMeals trip={trip} />
+          <TripInclusions trip={trip} />
+          <TripMap trip={trip} />
+        </>
+      ) : (
+        <>
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="max-w-xs sm:max-w-[280px]">
+              <TripBookingCard trip={trip} />
+            </div>
+          </div>
+          <TripDurationSelector trip={trip} siblings={circuitSiblings} />
+          <TripPricingTable trip={trip} />
+          <TripGallery trip={trip} />
+          <TripHighlights trip={trip} />
+          <TripItinerary trip={trip} />
+          <TripAccommodation trip={trip} />
+          <TripHotelCategories trip={trip} />
+          <TripMeals trip={trip} />
+          <TripTransportation trip={trip} />
+          <TripInclusions trip={trip} />
+          <TripDestinationRoutes trip={trip} />
+          <TripMap trip={trip} />
+        </>
+      )}
       <TripReviews trip={trip} assignedReviews={assignedReviews} />
       <TripFAQ trip={trip} />
       <TripTerms trip={trip} />

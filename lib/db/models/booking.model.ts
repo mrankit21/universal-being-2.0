@@ -71,6 +71,13 @@ export interface BookingDocument extends Document {
   departureDateId: string;
   departureStartDate?: string;
   departureEndDate?: string;
+  /** Pickup Variant Architecture (2026-07). Snapshotted at booking time
+   * (never a live lookup) so this stays accurate even if the variant is
+   * later renamed or deleted — same rationale as `tripTitle`/price fields
+   * below. Optional — bookings made before this existed, or on trips with
+   * no pickup variants, simply omit both. */
+  pickupVariantId?: string;
+  pickupVariantName?: string;
 
   customerName: string;
   customerEmail: string;
@@ -203,6 +210,8 @@ const BookingSchema = new Schema<BookingDocument>(
     departureDateId: { type: String, required: true },
     departureStartDate: { type: String },
     departureEndDate: { type: String },
+    pickupVariantId: { type: String },
+    pickupVariantName: { type: String },
 
     customerName: { type: String, required: true },
     customerEmail: { type: String, required: true, index: true },

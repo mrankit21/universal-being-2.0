@@ -63,14 +63,21 @@ function formatMoney(amount: number, currency: string) {
 export interface BookingFormProps {
   trip: Trip;
   initialDepartureId?: string;
+  /** Pickup Variant Architecture (2026-07). Optional — when the visitor
+   * arrived via a specific pickup city (`TripBookingCard`/`TripPricingTable`
+   * pass this through as `?pickup=`), narrows the departure dropdown to
+   * just that variant's own batches so a Delhi-pickup batch can't get mixed
+   * up with a Jaipur-pickup one. Omitted entirely, this shows every
+   * upcoming batch exactly as it always has. */
+  pickupVariantId?: string;
 }
 
-export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
+export function BookingForm({ trip, initialDepartureId, pickupVariantId }: BookingFormProps) {
   const router = useRouter();
   const { upcomingDepartures } = getTripAvailability(trip);
-  const bookableDepartures = upcomingDepartures.filter(
-    (d) => d.status === "open" || d.status === "filling-fast"
-  );
+  const bookableDepartures = upcomingDepartures
+    .filter((d) => d.status === "open" || d.status === "filling-fast")
+    .filter((d) => !pickupVariantId || d.pickupVariantId === pickupVariantId);
 
   const defaultDepartureId =
     (initialDepartureId && bookableDepartures.some((d) => d.id === initialDepartureId)
@@ -141,6 +148,7 @@ export function BookingForm({ trip, initialDepartureId }: BookingFormProps) {
       tripId: trip.id,
       tripSlug: trip.slug,
       departureDateId: defaultDepartureId,
+      pickupVariantId: pickupVariantId,
       customerName: "",
       customerEmail: "",
       customerPhone: "",

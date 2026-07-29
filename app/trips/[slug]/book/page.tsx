@@ -7,7 +7,7 @@ import { SectionHeading } from "@/components/primitives/section-heading";
 
 interface BookTripPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ departure?: string }>;
+  searchParams: Promise<{ departure?: string; pickup?: string }>;
 }
 
 export async function generateStaticParams() {
@@ -32,18 +32,24 @@ export async function generateMetadata({ params }: BookTripPageProps): Promise<M
  */
 export default async function BookTripPage({ params, searchParams }: BookTripPageProps) {
   const { slug } = await params;
-  const { departure } = await searchParams;
+  const { departure, pickup } = await searchParams;
   const trip = await getTripBySlug(slug);
   if (!trip) notFound();
+
+  // Pickup Variant Architecture (2026-07): shown only when the visitor
+  // arrived via a specific pickup city, so trips with no pickup variants
+  // render this heading exactly as they always have.
+  const pickupVariant = pickup ? trip.pickupVariants?.find((v) => v.id === pickup) : undefined;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <SectionHeading
         eyebrow={trip.destinationName}
         title={`Book ${trip.title}`}
+        description={pickupVariant ? `${pickupVariant.name} — ${pickupVariant.pickupCity} to ${pickupVariant.dropCity}` : undefined}
         className="mb-6"
       />
-      <BookingForm trip={trip} initialDepartureId={departure} />
+      <BookingForm trip={trip} initialDepartureId={departure} pickupVariantId={pickupVariant?.id} />
     </div>
   );
 }

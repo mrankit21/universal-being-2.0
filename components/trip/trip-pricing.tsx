@@ -11,6 +11,8 @@ import { getTripAvailability } from "@/lib/trip/availability";
 
 export interface TripPricingTableProps {
   trip: Trip;
+  /** Pickup Variant Architecture (2026-07) — see `TripBookingCardProps`. */
+  pickupVariantId?: string;
 }
 
 const statusVariant: Record<Trip["departureDates"][number]["status"], "success" | "warning" | "destructive" | "muted"> = {
@@ -38,7 +40,7 @@ function formatDate(iso: string) {
  * yet). Shows the price, booking amount, and every batch with live seat
  * status — the actual "Book" action lives in `TripStickyActions`.
  */
-export function TripPricingTable({ trip }: TripPricingTableProps) {
+export function TripPricingTable({ trip, pickupVariantId }: TripPricingTableProps) {
   const { publishedDepartures, seatsLeft } = getTripAvailability(trip);
 
   return (
@@ -78,7 +80,11 @@ export function TripPricingTable({ trip }: TripPricingTableProps) {
                 <Badge variant={statusVariant[batch.status]}>{statusLabel[batch.status]}</Badge>
                 {batch.status === "open" || batch.status === "filling-fast" ? (
                   <Button asChild size="sm" variant="outline">
-                    <Link href={`/trips/${trip.slug}/book?departure=${batch.id}`}>Select & Book</Link>
+                    <Link
+                      href={`/trips/${trip.slug}/book?departure=${batch.id}${pickupVariantId ? `&pickup=${pickupVariantId}` : ""}`}
+                    >
+                      Select & Book
+                    </Link>
                   </Button>
                 ) : null}
               </span>
