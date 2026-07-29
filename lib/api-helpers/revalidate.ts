@@ -27,6 +27,12 @@ export interface RevalidatableTrip {
  * was just deleted — `revalidatePath` only needs the path, not a live doc. */
 export function revalidateTripSurfaces(trip: RevalidatableTrip): void {
   revalidatePath(`/trips/${trip.slug}`);
+  // The booking page (`/trips/[slug]/book`) is its own statically-generated
+  // route with its own Full Route Cache entry — revalidating the detail
+  // page above does NOT also revalidate this one. Without this line, any
+  // pricing/sharing-markup/batch change made in Admin never reaches the
+  // live booking form until the next full redeploy.
+  revalidatePath(`/trips/${trip.slug}/book`);
   revalidatePath("/trips");
   if (trip.destinationSlug) revalidatePath(`/destinations/${trip.destinationSlug}`);
   revalidatePath("/");
