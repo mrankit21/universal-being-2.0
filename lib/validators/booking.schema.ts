@@ -66,7 +66,14 @@ export const bookingCreateSchema = z
     path: ["travelers"],
   });
 
-export type BookingCreateInput = z.infer<typeof bookingCreateSchema>;
+// NOTE: `z.input` (not `z.infer`/`z.output`) on purpose. Fields with
+// `.default(...)` (e.g. `sharingType`) are optional on the *input* side but
+// required on the *output* side after parsing. react-hook-form + zodResolver
+// type form field values off the input side (defaults haven't been applied
+// yet while the user is filling the form), so this type must match that —
+// using the output type here causes a TS2322 Resolver<...> mismatch at
+// `useForm<BookingCreateInput>({ resolver: zodResolver(bookingCreateSchema) })`.
+export type BookingCreateInput = z.input<typeof bookingCreateSchema>;
 
 export const bookingUpdateSchema = z.object({
   status: z
