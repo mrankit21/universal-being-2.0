@@ -17,22 +17,26 @@ export function TripInclusions({ trip }: TripInclusionsProps) {
       <SectionHeading title="What's included" className="mb-5" />
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <ul className="flex flex-col gap-3">
-          {trip.inclusions.map((item, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
-              <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <ul className="flex flex-col gap-3">
-          {trip.exclusions.map((item, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-              <X className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
-              {item}
-            </li>
-          ))}
-        </ul>
+        {trip.inclusions.length > 0 && (
+          <ul id="trip-inclusions" className="flex flex-col gap-3">
+            {trip.inclusions.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-foreground">
+                <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
+        {trip.exclusions.length > 0 && (
+          <ul id="trip-exclusions" className="flex flex-col gap-3">
+            {trip.exclusions.map((item, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                <X className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );

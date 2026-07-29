@@ -17,7 +17,7 @@ export function TripAccommodation({ trip }: TripAccommodationProps) {
   const theme = themeRegistry[trip.themeKey];
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-accommodation" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading title="Accommodation" className="mb-5" />
       <div className="grid gap-4 sm:grid-cols-2">
         {trip.accommodation.map((stay) => (

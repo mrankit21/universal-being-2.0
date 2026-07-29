@@ -27,7 +27,7 @@ export function TripGallery({ trip }: TripGalleryProps) {
   if (trip.gallery.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-gallery" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading title="Photos" className="mb-5" />
 
       <TripGalleryLightbox images={trip.gallery} theme={theme} tripTitle={trip.title}>

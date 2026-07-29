@@ -49,7 +49,7 @@ export function TripHighlights({ trip }: TripHighlightsProps) {
   if (facts.length === 0 && trip.highlights.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-highlights" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading title="Trip highlights" className="mb-5" />
 
       {facts.length > 0 && (

@@ -143,7 +143,7 @@ export function TripItinerary({ trip }: TripItineraryProps) {
   const theme = themeRegistry[trip.themeKey];
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-itinerary" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading
         eyebrow={`${trip.itinerary.length}-day itinerary`}
         title="Day by day"

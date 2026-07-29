@@ -10,7 +10,7 @@ export interface TripTermsProps {
  * `data/shared/real-content.ts`) unless a trip needs a documented exception. */
 export function TripTerms({ trip }: TripTermsProps) {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-policies" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading title="Terms & cancellation policy" className="mb-5" />
 
       <div className="grid gap-6 sm:grid-cols-2">

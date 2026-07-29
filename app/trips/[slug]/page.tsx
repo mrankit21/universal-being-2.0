@@ -24,6 +24,7 @@ import { TripFAQ } from "@/components/trip/trip-faq";
 import { TripTerms } from "@/components/trip/trip-terms";
 import { RelatedTrips } from "@/components/trip/related-trips";
 import { TripStickyActions } from "@/components/trip/trip-sticky-actions";
+import { TripSectionNav, TRIP_SECTION_NAV_ITEMS } from "@/components/trip/trip-section-nav";
 import { TripPickupVariants } from "@/components/trip/trip-pickup-variants";
 import { getPublishedPickupVariants } from "@/lib/trip/pickup-variants";
 
@@ -76,6 +77,13 @@ export async function generateMetadata({ params }: TripPageProps): Promise<Metad
  * section is optional and self-hides when its data is empty, so a
  * partially-filled Admin Panel entry still renders a coherent page instead
  * of empty section shells.
+ *
+ * `TripSectionNav` (Sticky Section Navigation Strip) sits directly below
+ * the Book Now box in both compositions below. It reads whichever section
+ * ids actually landed in the DOM — via `TRIP_SECTION_NAV_ITEMS` — so it
+ * never needs its own CMS entry and automatically tracks whatever sections
+ * a given Trip actually renders, including future ones (Reviews, Signature
+ * Journeys, more pickup-variant sub-sections) once they're added there.
  */
 export default async function TripDetailPage({ params }: TripPageProps) {
   const { slug } = await params;
@@ -103,6 +111,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
       {hasPickupVariants ? (
         <>
           <TripPickupVariants trip={trip} />
+          <TripSectionNav items={TRIP_SECTION_NAV_ITEMS} />
           <TripDurationSelector trip={trip} siblings={circuitSiblings} />
           <TripGallery trip={trip} />
           <TripHighlights trip={trip} />
@@ -119,6 +128,7 @@ export default async function TripDetailPage({ params }: TripPageProps) {
               <TripBookingCard trip={trip} />
             </div>
           </div>
+          <TripSectionNav items={TRIP_SECTION_NAV_ITEMS} />
           <TripDurationSelector trip={trip} siblings={circuitSiblings} />
           <TripPricingTable trip={trip} />
           <TripGallery trip={trip} />

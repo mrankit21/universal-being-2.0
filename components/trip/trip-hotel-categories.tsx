@@ -29,7 +29,7 @@ export function TripHotelCategories({ trip }: TripHotelCategoriesProps) {
   if (categories.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <section id="trip-hotel-categories" className="mx-auto max-w-6xl px-6 py-8">
       <SectionHeading title="Hotel Category" className="mb-5" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {categories.map((category) => {
