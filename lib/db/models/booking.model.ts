@@ -103,6 +103,14 @@ export interface BookingDocument extends Document {
   amountPaid: number;
   currency: string;
 
+  // Room Sharing markup (2026-07). Snapshotted like every other price
+  // field above — `offerPrice` already includes this markup, these two
+  // are kept alongside it purely for admin reference/auditing so the
+  // booking detail page can show "Double Sharing (+₹1000/person)" without
+  // re-deriving it from the trip (which may have changed since).
+  sharingType?: string;
+  sharingTypeMarkupPerPerson?: number;
+
   status: BookingStatus;
   statusHistory: BookingStatusEvent[];
   paymentStatus: BookingPaymentStatus;
@@ -234,6 +242,8 @@ const BookingSchema = new Schema<BookingDocument>(
     totalAmount: { type: Number, required: true, default: 0 },
     amountPaid: { type: Number, required: true, default: 0 },
     currency: { type: String, default: "INR" },
+    sharingType: { type: String },
+    sharingTypeMarkupPerPerson: { type: Number },
 
     status: {
       type: String,

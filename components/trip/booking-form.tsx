@@ -149,6 +149,7 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
       tripSlug: trip.slug,
       departureDateId: defaultDepartureId,
       pickupVariantId: pickupVariantId,
+      sharingType: "quad",
       customerName: "",
       customerEmail: "",
       customerPhone: "",
@@ -165,12 +166,20 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
   const departureDateId = watch("departureDateId");
   const travelers = watch("travelers");
   const customerEmail = watch("customerEmail");
+  const sharingType = watch("sharingType") || "quad";
   const selectedDeparture = bookableDepartures.find((d) => d.id === departureDateId) ?? null;
 
   const pricing = useMemo(
-    () => computeBookingPricing(trip, selectedDeparture, travelers?.length || 1),
-    [trip, selectedDeparture, travelers?.length]
+    () => computeBookingPricing(trip, selectedDeparture, travelers?.length || 1, sharingType),
+    [trip, selectedDeparture, travelers?.length, sharingType]
   );
+
+  // Room Sharing markup (2026-07). Only worth showing the picker at all
+  // when the trip actually has a markup configured for at least one of
+  // Double/Triple — a trip with no `sharingTypeMarkup` just books at the
+  // Quad (base) price exactly as before, no new UI in the way.
+  const sharingMarkup = trip.price.sharingTypeMarkup;
+  const hasSharingOptions = Boolean(sharingMarkup?.double || sharingMarkup?.triple);
 
   // --- Coupon: manual "Have a coupon code?" field + auto-prefill from a
   // code the visitor copied out of the promo popup earlier
@@ -586,10 +595,52 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
               Travellers: <span className="font-medium text-foreground">{pricing.travellers}</span>
             </p>
 
+            {hasSharingOptions ? (
+              <div className="space-y-2 border-t border-border pt-3">
+                <label htmlFor="booking-sharing-type" className="text-sm font-medium text-foreground">
+                  Room Sharing
+                </label>
+                <Controller
+                  control={control}
+                  name="sharingType"
+                  render={({ field: f }) => (
+                    <Select value={f.value ?? "quad"} onValueChange={f.onChange}>
+                      <SelectTrigger id="booking-sharing-type">
+                        <SelectValue placeholder="Select room sharing" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="quad">Quad Sharing</SelectItem>
+                        {sharingMarkup?.double ? (
+                          <SelectItem value="double">
+                            Double Sharing (+{formatMoney(sharingMarkup.double, pricing.currency)}/person)
+                          </SelectItem>
+                        ) : null}
+                        {sharingMarkup?.triple ? (
+                          <SelectItem value="triple">
+                            Triple Sharing (+{formatMoney(sharingMarkup.triple, pricing.currency)}/person)
+                          </SelectItem>
+                        ) : null}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            ) : null}
+
             <div className="flex items-baseline justify-between gap-2 border-t border-border pt-3">
               <span className="text-muted-foreground">Price / person</span>
               <Price amount={pricing.offerPrice} originalAmount={pricing.originalPrice ?? undefined} size="sm" />
             </div>
+            {pricing.sharingTypeMarkupPerPerson > 0 ? (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  {pricing.sharingType === "double" ? "Double" : "Triple"} sharing charge
+                </span>
+                <span className="font-medium text-foreground">
+                  +{formatMoney(pricing.sharingTypeMarkupPerPerson * pricing.travellers, pricing.currency)}
+                </span>
+              </div>
+            ) : null}
             {pricing.discountAmount > 0 ? (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Discount</span>

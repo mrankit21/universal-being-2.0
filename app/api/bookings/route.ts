@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pricing = computeBookingPricing(trip, departure, seatsBooked);
+    const pricing = computeBookingPricing(trip, departure, seatsBooked, parsed.sharingType);
 
     // Part 5 — Coupon System: optional, additive. If a coupon code was
     // submitted, it's re-validated server-side (never trust the client's
@@ -268,6 +268,11 @@ export async function POST(req: NextRequest) {
         totalAmount: pricing.totalAmount,
         amountPaid: 0,
         currency: pricing.currency,
+        // Room Sharing markup (2026-07) — snapshot alongside the rest of
+        // the price breakdown; `offerPrice` above already has the markup
+        // baked in, these are for admin reference only.
+        sharingType: pricing.sharingType,
+        sharingTypeMarkupPerPerson: pricing.sharingTypeMarkupPerPerson,
         couponCode: appliedCoupon?.code,
         couponDiscountAmount,
 

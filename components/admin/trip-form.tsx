@@ -76,7 +76,7 @@ function blank(): TripFormValue {
     travelNotes: "",
     accommodation: [],
     mealPlan: { breakfast: false, lunch: false, dinner: false, snacks: false, description: "" },
-    price: { base: 0, bookingAmount: 0, currency: "INR" },
+    price: { base: 0, bookingAmount: 0, currency: "INR", sharingTypeMarkup: { double: 1000, triple: 500 } },
     circuitGroup: "",
     isCircuitParent: false,
     destinationRoutes: [],
@@ -133,6 +133,14 @@ function diffTripValue(
 function normalize(v: TripFormValue): TripFormValue {
   return {
     ...v,
+    // Room Sharing markup (2026-07). Backfilled the same way `isPublished`/
+    // `isCircuitParent`/etc. below are — client-side only, on load, never
+    // touching the saved document until the admin next hits Save. Trips
+    // saved before this feature existed simply had no `sharingTypeMarkup`
+    // at all; showing ₹1000/₹500 here (rather than a blank/0 input) means
+    // an admin editing an old trip sees the same sensible starting point a
+    // brand-new trip gets, matching the agreed default.
+    price: { ...v.price, sharingTypeMarkup: v.price.sharingTypeMarkup ?? { double: 1000, triple: 500 } },
     itinerary: v.itinerary.map((day) => ({ ...day, images: day.images ?? [] })),
     accommodation: v.accommodation.map((hotel) => ({ ...hotel, images: hotel.images ?? [], amenities: hotel.amenities ?? [] })),
     mealPlan: { ...v.mealPlan, snacks: v.mealPlan.snacks ?? false },
@@ -467,6 +475,32 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
               </FormField>
               <FormField label="Book Your Slot Amount (₹)" hint="Advance/deposit amount required to reserve a seat on this trip. Booking and payment automatically use this value — set independently per trip.">
                 <Input type="number" min={0} value={value.price.bookingAmount} onChange={(e) => set("price", { ...value.price, bookingAmount: Number(e.target.value) })} />
+              </FormField>
+              <FormField label="Double Sharing markup (₹/person)" hint="Added on top of the Base/Discounted price when a traveller picks Double Sharing on the booking form. Set to 0 to hide Double Sharing entirely.">
+                <Input
+                  type="number"
+                  min={0}
+                  value={value.price.sharingTypeMarkup?.double ?? 0}
+                  onChange={(e) =>
+                    set("price", {
+                      ...value.price,
+                      sharingTypeMarkup: { ...value.price.sharingTypeMarkup, double: Number(e.target.value) },
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label="Triple Sharing markup (₹/person)" hint="Added on top of the Base/Discounted price when a traveller picks Triple Sharing on the booking form. Set to 0 to hide Triple Sharing entirely.">
+                <Input
+                  type="number"
+                  min={0}
+                  value={value.price.sharingTypeMarkup?.triple ?? 0}
+                  onChange={(e) =>
+                    set("price", {
+                      ...value.price,
+                      sharingTypeMarkup: { ...value.price.sharingTypeMarkup, triple: Number(e.target.value) },
+                    })
+                  }
+                />
               </FormField>
               <FormField label="Currency">
                 <Input value={value.price.currency} onChange={(e) => set("price", { ...value.price, currency: e.target.value })} />

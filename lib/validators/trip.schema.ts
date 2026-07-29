@@ -142,6 +142,18 @@ export const tripSchema = z.object({
     discounted: z.number().min(0).optional(),
     bookingAmount: z.number().min(0),
     currency: z.string().default("INR"),
+    // Room Sharing markup (2026-07). Deliberately NO `.default()` here —
+    // `tripUpdateSchema = tripSchema.partial()` + `.default()` is exactly
+    // the pattern that silently overwrote DB fields elsewhere (see PATCH
+    // handler comment in app/api/admin/trips/[id]/route.ts). The Admin
+    // form pre-fills ₹1000/₹500 for a brand-new trip; on edit, whatever the
+    // form sends round-trips as-is.
+    sharingTypeMarkup: z
+      .object({
+        double: z.number().min(0).optional(),
+        triple: z.number().min(0).optional(),
+      })
+      .optional(),
   }),
   circuitGroup: z.string().trim().optional(),
   isCircuitParent: z.boolean().optional().default(false),

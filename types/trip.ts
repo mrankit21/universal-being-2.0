@@ -94,12 +94,32 @@ export interface DepartureDate {
   bookingAmountOverride?: number;
 }
 
+/** Room Sharing markup (2026-07). Base price everywhere else in the app
+ * always means Quad Sharing — this only adds a per-person surcharge on top
+ * when the traveller picks Double or Triple on the booking form. Optional
+ * on purpose: old trips with no `sharingTypeMarkup` at all just behave as
+ * if both markups are 0 (`computeBookingPricing` falls back), so nothing
+ * about an existing trip's price changes until an admin opts in. */
+export type SharingType = "quad" | "triple" | "double";
+
+export interface SharingTypeMarkup {
+  /** Extra ₹ per person added to the Quad base price for Double Sharing. */
+  double?: number;
+  /** Extra ₹ per person added to the Quad base price for Triple Sharing. */
+  triple?: number;
+}
+
 export interface TripPrice {
   base: number;
   /** Present + lower than `base` → renders struck-through via `<Price />`. */
   discounted?: number;
   bookingAmount: number;
   currency: string;
+  /** See `SharingTypeMarkup` doc comment above. Admin-editable per trip,
+   * defaults applied client-side (Admin form pre-fills ₹1000/₹500) rather
+   * than via a Zod `.default()`, to avoid the same silent-overwrite bug
+   * `.partial()` + `.default()` caused elsewhere in this schema. */
+  sharingTypeMarkup?: SharingTypeMarkup;
 }
 
 export interface Faq {

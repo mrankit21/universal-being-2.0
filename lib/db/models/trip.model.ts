@@ -166,7 +166,13 @@ export interface TripDocument extends Document {
   travelNotes?: string;
   accommodation: unknown[];
   mealPlan: unknown;
-  price: { base: number; discounted?: number; bookingAmount: number; currency: string };
+  price: {
+    base: number;
+    discounted?: number;
+    bookingAmount: number;
+    currency: string;
+    sharingTypeMarkup?: { double?: number; triple?: number };
+  };
   /** See `Trip.circuitGroup` doc comment in `types/trip.ts`. */
   circuitGroup?: string;
   /** See `Trip.isCircuitParent` doc comment in `types/trip.ts`. Now wired
@@ -259,6 +265,14 @@ const TripSchema = new Schema<TripDocument>(
       discounted: { type: Number },
       bookingAmount: { type: Number, required: true, default: 0 },
       currency: { type: String, required: true, default: "INR" },
+      // Room Sharing markup (2026-07) — see types/trip.ts SharingTypeMarkup
+      // doc comment. No schema-level default on purpose; absent entirely on
+      // trips saved before this shipped, which computeBookingPricing treats
+      // as 0/0.
+      sharingTypeMarkup: {
+        double: { type: Number },
+        triple: { type: Number },
+      },
     },
 
     circuitGroup: { type: String, index: true, trim: true },

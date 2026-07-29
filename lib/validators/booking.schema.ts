@@ -29,6 +29,15 @@ export const bookingCreateSchema = z
     // charged or reserved.
     pickupVariantId: z.string().optional(),
 
+    // Room Sharing markup (2026-07). Purely a pricing input: the server
+    // still recomputes `offerPrice` itself via `computeBookingPricing`
+    // using the trip's own `sharingTypeMarkup`, so a tampered value here
+    // can only ever select a *different valid* sharing type — never a
+    // fabricated price. Defaults to "quad" (no markup) when omitted, same
+    // as `computeBookingPricing`'s own default, so older client builds
+    // that don't send this at all keep working exactly as before.
+    sharingType: z.enum(["quad", "double", "triple"]).default("quad"),
+
     customerName: z.string().min(2, "Full name is required"),
     customerEmail: z.string().email("Enter a valid email"),
     customerPhone: z

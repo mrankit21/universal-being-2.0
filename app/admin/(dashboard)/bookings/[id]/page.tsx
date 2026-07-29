@@ -178,6 +178,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               </p>
             ) : null}
             <p><span className="text-muted-foreground">Seats:</span> {booking.seatsBooked}</p>
+            {booking.sharingType && booking.sharingType !== "quad" ? (
+              <p>
+                <span className="text-muted-foreground">Room Sharing:</span>{" "}
+                {booking.sharingType === "double" ? "Double Sharing" : "Triple Sharing"}
+                {booking.sharingTypeMarkupPerPerson ? ` (+₹${booking.sharingTypeMarkupPerPerson.toLocaleString("en-IN")}/person)` : ""}
+              </p>
+            ) : null}
             {booking.offerPrice ? <p><span className="text-muted-foreground">Price / person:</span> ₹{booking.offerPrice.toLocaleString("en-IN")}</p> : null}
             {booking.discountAmount > 0 ? <p><span className="text-muted-foreground">Discount:</span> ₹{booking.discountAmount.toLocaleString("en-IN")}</p> : null}
             <p><span className="text-muted-foreground">Total Amount:</span> ₹{booking.totalAmount.toLocaleString("en-IN")}</p>

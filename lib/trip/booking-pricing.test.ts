@@ -110,4 +110,60 @@ describe("computeBookingPricing", () => {
     expect(four.discountAmount).toBe(one.discountAmount * 4);
     expect(four.bookingAmountDue).toBe(one.bookingAmountDue * 4);
   });
+
+  describe("Room Sharing markup", () => {
+    it("defaults to quad sharing with zero markup when no sharingType is passed", () => {
+      const trip = makeTrip({ base: 10000, bookingAmount: 2000, sharingTypeMarkup: { double: 1000, triple: 500 } });
+      const result = computeBookingPricing(trip, null, 1);
+
+      expect(result.sharingType).toBe("quad");
+      expect(result.sharingTypeMarkupPerPerson).toBe(0);
+      expect(result.offerPrice).toBe(10000);
+    });
+
+    it("adds the per-person double markup on top of the offer price", () => {
+      const trip = makeTrip({ base: 10000, bookingAmount: 2000, sharingTypeMarkup: { double: 1000, triple: 500 } });
+      const result = computeBookingPricing(trip, null, 2, "double");
+
+      expect(result.sharingTypeMarkupPerPerson).toBe(1000);
+      expect(result.offerPrice).toBe(11000);
+      // Markup applies per person, not once per booking.
+      expect(result.totalAmount).toBe(22000);
+    });
+
+    it("adds the per-person triple markup on top of the offer price", () => {
+      const trip = makeTrip({ base: 10000, bookingAmount: 2000, sharingTypeMarkup: { double: 1000, triple: 500 } });
+      const result = computeBookingPricing(trip, null, 3, "triple");
+
+      expect(result.sharingTypeMarkupPerPerson).toBe(500);
+      expect(result.offerPrice).toBe(10500);
+      expect(result.totalAmount).toBe(31500);
+    });
+
+    it("falls back to zero markup on trips with no sharingTypeMarkup configured (backward compatible)", () => {
+      const trip = makeTrip({ base: 10000, bookingAmount: 2000 });
+      const result = computeBookingPricing(trip, null, 1, "double");
+
+      expect(result.sharingTypeMarkupPerPerson).toBe(0);
+      expect(result.offerPrice).toBe(10000);
+    });
+
+    it("keeps originalPrice as the pre-markup struck-through price, and discountAmount unaffected by markup", () => {
+      const trip = makeTrip({ base: 10000, discounted: 8000, bookingAmount: 2000, sharingTypeMarkup: { double: 1000 } });
+      const result = computeBookingPricing(trip, null, 1, "double");
+
+      expect(result.originalPrice).toBe(10000);
+      expect(result.offerPrice).toBe(9000);
+      expect(result.discountAmount).toBe(2000);
+    });
+
+    it("caps bookingAmountPerPerson using the markup-inclusive offer price", () => {
+      const trip = makeTrip({ base: 500, bookingAmount: 2000, sharingTypeMarkup: { double: 1000 } });
+      const result = computeBookingPricing(trip, null, 1, "double");
+
+      // offerPrice = 500 + 1000 = 1500, so the 2000 configured deposit clamps to 1500.
+      expect(result.offerPrice).toBe(1500);
+      expect(result.bookingAmountPerPerson).toBe(1500);
+    });
+  });
 });
