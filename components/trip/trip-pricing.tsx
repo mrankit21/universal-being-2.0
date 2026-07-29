@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 
 import type { Trip, DepartureDate } from "@/types/trip";
@@ -130,12 +130,12 @@ export function TripPricingTable({ trip, pickupVariantId }: TripPricingTableProp
   );
 
   const [selectedId, setSelectedId] = useState<string | null>(sortedDepartures[0]?.id ?? null);
-  const batchRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   function handleSelect(id: string) {
     setSelectedId(id);
-    batchRefs.current.get(id)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+
+  const selectedBatch = sortedDepartures.find((batch) => batch.id === selectedId) ?? sortedDepartures[0] ?? null;
 
   return (
     <section id="trip-batches" className="mx-auto max-w-6xl px-6 py-8">
@@ -161,31 +161,24 @@ export function TripPricingTable({ trip, pickupVariantId }: TripPricingTableProp
           <BatchDateStrip departures={sortedDepartures} selectedId={selectedId} onSelect={handleSelect} />
 
           <div className="flex flex-col gap-2">
-            {sortedDepartures.map((batch) => (
+            {selectedBatch ? (
               <div
-                key={batch.id}
-                ref={(node) => {
-                  if (node) batchRefs.current.set(batch.id, node);
-                  else batchRefs.current.delete(batch.id);
-                }}
-                className={cn(
-                  "flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 transition-colors",
-                  batch.id === selectedId ? "border-ub-teal-500 ring-1 ring-ub-teal-500/30" : "border-border"
-                )}
+                key={selectedBatch.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ub-teal-500 bg-card px-4 py-3 ring-1 ring-ub-teal-500/30 transition-colors"
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <CalendarDays className="size-4 text-muted-foreground" aria-hidden="true" />
-                  {formatDate(batch.startDate)} – {formatDate(batch.endDate)}
+                  {formatDate(selectedBatch.startDate)} – {formatDate(selectedBatch.endDate)}
                 </span>
                 <span className="flex items-center gap-3">
                   <span className="text-sm text-muted-foreground">
-                    {batch.seatsAvailable}/{batch.seatsTotal} seats left
+                    {selectedBatch.seatsAvailable}/{selectedBatch.seatsTotal} seats left
                   </span>
-                  <Badge variant={statusVariant[batch.status]}>{statusLabel[batch.status]}</Badge>
-                  {batch.status === "open" || batch.status === "filling-fast" ? (
+                  <Badge variant={statusVariant[selectedBatch.status]}>{statusLabel[selectedBatch.status]}</Badge>
+                  {selectedBatch.status === "open" || selectedBatch.status === "filling-fast" ? (
                     <Button asChild size="sm" variant="outline">
                       <Link
-                        href={`/trips/${trip.slug}/book?departure=${batch.id}${pickupVariantId ? `&pickup=${pickupVariantId}` : ""}`}
+                        href={`/trips/${trip.slug}/book?departure=${selectedBatch.id}${pickupVariantId ? `&pickup=${pickupVariantId}` : ""}`}
                       >
                         Select & Book
                       </Link>
@@ -193,7 +186,7 @@ export function TripPricingTable({ trip, pickupVariantId }: TripPricingTableProp
                   ) : null}
                 </span>
               </div>
-            ))}
+            ) : null}
           </div>
         </div>
       </div>
