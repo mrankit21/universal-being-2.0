@@ -4,6 +4,7 @@ import { UtensilsCrossed, Home, ListChecks } from "lucide-react";
 
 import type { DayPlan, Trip } from "@/types/trip";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { SectionDivider } from "@/components/primitives/section-divider";
 import { SectionHeading } from "@/components/primitives/section-heading";
 import { Tag } from "@/components/primitives/tag";
 import { TripImage } from "@/components/trip/trip-image";
@@ -155,6 +156,8 @@ export function TripItinerary({ trip }: TripItineraryProps) {
           <DayCard key={day.day} day={day} trip={trip} theme={theme} />
         ))}
       </Accordion>
+
+      <SectionDivider headline="End Of Trip" subtitle="Beginning Of Beautiful Memories" />
     </section>
   );
 }

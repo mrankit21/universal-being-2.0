@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Fraunces, Inter } from "next/font/google";
+import { Fraunces, Inter, Alex_Brush } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { RootShell } from "@/components/layout/root-shell";
@@ -28,6 +28,13 @@ const fraunces = Fraunces({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--ub-font-sans",
+  display: "swap",
+});
+
+const alexBrush = Alex_Brush({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--ub-font-script",
   display: "swap",
 });
 
@@ -94,7 +101,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const [announcement, brand] = await Promise.all([getActiveAnnouncement(), getSiteBrand()]);
 
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${fraunces.variable} ${inter.variable} ${alexBrush.variable}`} suppressHydrationWarning>
       <body>
         <ThemeProvider themeKey="brand">
           <BrandProvider brand={brand}>
