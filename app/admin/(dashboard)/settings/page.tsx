@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FormField } from "@/components/admin/form-field";
 import { ImageAssetField } from "@/components/admin/image-asset-field";
 
@@ -87,6 +88,31 @@ export default function SiteSettingsPage() {
           </FormField>
           <FormField label="Brand Story" className="md:col-span-2">
             <Textarea rows={4} value={data.brandStory} onChange={(e) => set(["brandStory"], e.target.value)} />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Homepage Version</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Choose which homepage goes live at <code>/</code>. Switching this never deletes either
+            version&apos;s content — edit each one any time from its own panel (Homepage /
+            Homepage 2.0) and the live site picks up whichever is selected here.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Active Homepage">
+            <Select
+              value={data.activeHomepageVersion ?? "v1"}
+              onValueChange={(v) => set(["activeHomepageVersion"], v)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="v1">Homepage (original)</SelectItem>
+                <SelectItem value="v2">Homepage 2.0 (new)</SelectItem>
+              </SelectContent>
+            </Select>
           </FormField>
         </CardContent>
       </Card>

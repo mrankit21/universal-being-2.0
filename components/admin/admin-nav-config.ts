@@ -19,6 +19,7 @@ export const adminNavItems: AdminNavItem[] = [
 
   { label: "Themes", href: "/admin/themes", icon: "Palette", permission: "themes:read" },
   { label: "Homepage", href: "/admin/homepage", icon: "LayoutTemplate", permission: "homepage:read" },
+  { label: "Homepage 2.0", href: "/admin/homepage2", icon: "Sparkles", permission: "homepage:read" },
   { label: "Testimonials", href: "/admin/testimonials", icon: "MessageSquareQuote", permission: "homepage:read" },
   { label: "Announcements", href: "/admin/announcements", icon: "Megaphone", permission: "announcements:read" },
   { label: "Media Library", href: "/admin/media", icon: "Image", permission: "media:read" },

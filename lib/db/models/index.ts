@@ -4,6 +4,7 @@ export * from "./destination.model";
 export * from "./theme.model";
 export * from "./announcement.model";
 export * from "./homepage.model";
+export * from "./homepage-v2.model";
 export * from "./testimonial.model";
 export * from "./media.model";
 export * from "./booking.model";

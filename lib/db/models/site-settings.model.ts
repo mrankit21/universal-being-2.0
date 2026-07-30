@@ -11,6 +11,13 @@ export interface SiteSettingsDocument extends Document {
   brandName: string;
   tagline: string;
   brandStory: string;
+  /** Homepage Version toggle (Homepage 2.0): which homepage layout is
+   * live at `/`. "v1" = original sections (Hero + Package Includes Strip +
+   * Featured Trips grid). "v2" = Homepage 2.0 (Hero Parallax + Floating
+   * Quick Links + Featured Trips Stack), fully admin-controlled via the
+   * "Homepage 2.0" panel. Switching this never deletes either version's
+   * content — it only changes which one `app/page.tsx` renders. */
+  activeHomepageVersion: "v1" | "v2";
   contact: {
     phone: string;
     whatsapp: string;
@@ -48,6 +55,7 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
     brandName: { type: String, required: true, default: "Universal Being" },
     tagline: { type: String, default: "" },
     brandStory: { type: String, default: "" },
+    activeHomepageVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
     contact: {
       phone: { type: String, default: "" },
       whatsapp: { type: String, default: "" },

@@ -20,6 +20,7 @@ import {
   Settings,
   Ticket,
   RotateCcw,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ const ICONS: Record<string, LucideIcon> = {
   Settings,
   Ticket,
   RotateCcw,
+  Sparkles,
 };
 
 export function AdminSidebar({ permissions }: { permissions: Permission[] }) {
