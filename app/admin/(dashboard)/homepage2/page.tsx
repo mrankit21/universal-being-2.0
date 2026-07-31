@@ -31,12 +31,17 @@ function emptyQuickLink() {
     variant: "icon" as const,
     icon: "MapPinned",
     image: { ...BLANK_IMAGE },
+    gallery: [] as { image: typeof BLANK_IMAGE; title: string }[],
     tag: "",
     description: "",
     wide: false,
     order: 0,
     enabled: true,
   };
+}
+
+function emptyGalleryImage() {
+  return { image: { ...BLANK_IMAGE }, title: "" };
 }
 
 const TAG_TONES = ["brass", "teal", "stone"] as const;
@@ -128,11 +133,21 @@ export default function Homepage2Page() {
             <Input value={data.hero.ctaHref} onChange={(e) => set(["hero", "ctaHref"], e.target.value)} placeholder="/trips" />
           </FormField>
           <ImageAssetField
-            label="Hero Background Image"
-            value={data.hero.image ?? BLANK_IMAGE}
-            onChange={(v) => set(["hero", "image"], v)}
+            label="Hero Background Image — Desktop / Laptop"
+            value={data.hero.imageDesktop ?? BLANK_IMAGE}
+            onChange={(v) => set(["hero", "imageDesktop"], v)}
             category="banners"
           />
+          <ImageAssetField
+            label="Hero Background Image — Mobile / Phone"
+            value={data.hero.imageMobile ?? BLANK_IMAGE}
+            onChange={(v) => set(["hero", "imageMobile"], v)}
+            category="banners"
+          />
+          <p className="text-xs text-muted-foreground md:col-span-2">
+            Mobile falls back to the desktop image if left blank — but a wide laptop photo often crops
+            badly on a phone, so uploading a separate portrait/tighter crop here is recommended.
+          </p>
         </CardContent>
       </Card>
 
@@ -211,6 +226,42 @@ export default function Homepage2Page() {
                     ) : null}
                   </div>
                 )}
+
+                {item.variant === "featured" ? (
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <div>
+                      <p className="text-sm font-medium">Auto-Playing Gallery (optional)</p>
+                      <p className="text-xs text-muted-foreground">
+                        Add 2 or more images to make this card auto-cycle every ~3.5s (crossfade + slow zoom),
+                        each with its own title — e.g. &quot;Must-See&quot; badge staying fixed while the photo and
+                        title rotate through Zayed National Museum → Qasr Al Watan → Sheikh Zayed Grand Mosque.
+                        The tag pill above stays fixed as the shared badge. Leave empty to just use the single
+                        Photo above with no rotation.
+                      </p>
+                    </div>
+                    <ArrayFieldEditor
+                      items={item.gallery ?? []}
+                      onChange={(next) => update({ gallery: next })}
+                      draggable
+                      createItem={emptyGalleryImage}
+                      addLabel="Add Gallery Image"
+                      emptyMessage="No gallery images — card will show the single Photo above with no auto-play."
+                      renderItem={(slide: any, _i, updateSlide) => (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <FormField label="Slide Title (e.g. Zayed National Museum)">
+                            <Input value={slide.title} onChange={(e) => updateSlide({ title: e.target.value })} />
+                          </FormField>
+                          <ImageAssetField
+                            label="Slide Image"
+                            value={slide.image ?? BLANK_IMAGE}
+                            onChange={(v) => updateSlide({ image: v })}
+                            category="banners"
+                          />
+                        </div>
+                      )}
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
           />

@@ -22,6 +22,9 @@ export interface ResolvedHomepageV2Hero {
   ctaHref: string;
   imageUrl: string;
   imageAlt: string;
+  /** Falls back to imageUrl/imageAlt when no dedicated mobile crop is set. */
+  imageMobileUrl?: string;
+  imageMobileAlt?: string;
 }
 
 export interface ResolvedHomepageV2 {
@@ -152,7 +155,9 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
 
     // Hero — DB content only counts once a heading has actually been set;
     // an empty admin-created singleton must not render a blank hero.
-    const heroImg = doc.hero?.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    type ImgLike = { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+    const heroImgDesktop = doc.hero?.imageDesktop as ImgLike;
+    const heroImgMobile = doc.hero?.imageMobile as ImgLike;
     const hero: ResolvedHomepageV2Hero =
       doc.hero?.heading
         ? {
@@ -161,8 +166,10 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
             subheading: doc.hero.subheading || FALLBACK_HERO.subheading,
             ctaLabel: doc.hero.ctaLabel || FALLBACK_HERO.ctaLabel,
             ctaHref: doc.hero.ctaHref || FALLBACK_HERO.ctaHref,
-            imageUrl: heroImg?.url && !heroImg.isPlaceholder ? heroImg.url : FALLBACK_HERO.imageUrl,
-            imageAlt: heroImg?.alt || FALLBACK_HERO.imageAlt,
+            imageUrl: heroImgDesktop?.url && !heroImgDesktop.isPlaceholder ? heroImgDesktop.url : FALLBACK_HERO.imageUrl,
+            imageAlt: heroImgDesktop?.alt || FALLBACK_HERO.imageAlt,
+            imageMobileUrl: heroImgMobile?.url && !heroImgMobile.isPlaceholder ? heroImgMobile.url : undefined,
+            imageMobileAlt: heroImgMobile?.alt || undefined,
           }
         : FALLBACK_HERO;
 
@@ -174,7 +181,18 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
     const quickLinks: QuickLinkItem[] =
       enabledLinks.length > 0
         ? enabledLinks.map((l) => {
-            const img = l.image as { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+            const img = l.image as ImgLike;
+            const gallery = (l.gallery ?? [])
+              .filter((g) => g.title || (g.image as ImgLike)?.url)
+              .map((g) => {
+                const gImg = g.image as ImgLike;
+                return {
+                  imageUrl: gImg?.url && !gImg.isPlaceholder ? gImg.url : "",
+                  imageAlt: gImg?.alt || g.title,
+                  title: g.title,
+                };
+              })
+              .filter((g) => g.imageUrl);
             return {
               title: l.title,
               href: l.href,
@@ -182,6 +200,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
               icon: l.variant === "icon" ? l.icon : undefined,
               imageUrl: img?.url && !img.isPlaceholder ? img.url : undefined,
               imageAlt: img?.alt || l.title,
+              gallery: gallery.length > 0 ? gallery : undefined,
               tag: l.tag || undefined,
               description: l.description || undefined,
               wide: l.wide,

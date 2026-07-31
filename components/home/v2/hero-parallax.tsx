@@ -14,8 +14,14 @@ export interface HeroParallaxProps {
   subheading: string;
   ctaLabel: string;
   ctaHref: string;
+  /** Background shown on tablet/desktop (≥768px). */
   imageUrl: string;
   imageAlt: string;
+  /** Optional separate background for phone viewports (<768px) — falls
+   * back to `imageUrl`/`imageAlt` when unset. Useful because a wide
+   * laptop-shot photo often crops badly on a phone even with `bg-cover`. */
+  imageMobileUrl?: string;
+  imageMobileAlt?: string;
   className?: string;
 }
 
@@ -45,18 +51,28 @@ export function HeroParallax({
   ctaHref,
   imageUrl,
   imageAlt,
+  imageMobileUrl,
+  imageMobileAlt,
   className,
 }: HeroParallaxProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <section className={cn("relative isolate flex h-[100svh] min-h-[620px] w-full flex-col justify-end overflow-hidden", className)}>
-      {/* Fixed background layer */}
+      {/* Fixed background layer — separate images for phone vs. tablet/desktop,
+          swapped at the md breakpoint (768px). Mobile falls back to the
+          desktop image when no dedicated crop is set. */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-fixed"
+        className="absolute inset-0 hidden bg-cover bg-center bg-fixed md:block"
         style={{ backgroundImage: `url(${imageUrl})` }}
         role="img"
         aria-label={imageAlt}
+      />
+      <div
+        className="absolute inset-0 block bg-cover bg-center bg-fixed md:hidden"
+        style={{ backgroundImage: `url(${imageMobileUrl || imageUrl})` }}
+        role="img"
+        aria-label={imageMobileAlt || imageAlt}
       />
       {/* Legibility scrim */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/40" aria-hidden="true" />

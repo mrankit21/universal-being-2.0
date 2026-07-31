@@ -1,12 +1,18 @@
 import { z } from "zod";
 import { imageAssetSchema } from "./shared.schema";
 
+export const homepageV2GalleryImageSchema = z.object({
+  image: imageAssetSchema.optional(),
+  title: z.string().default(""),
+});
+
 export const homepageV2QuickLinkSchema = z.object({
   title: z.string().default(""),
   href: z.string().default("/"),
   variant: z.enum(["featured", "image", "icon"]).default("icon"),
   icon: z.string().default("MapPinned"),
   image: imageAssetSchema.optional(),
+  gallery: z.array(homepageV2GalleryImageSchema).default([]),
   tag: z.string().default(""),
   description: z.string().default(""),
   wide: z.boolean().default(false),
@@ -28,7 +34,8 @@ export const homepageV2Schema = z.object({
     subheading: z.string().default(""),
     ctaLabel: z.string().default("Explore Trips"),
     ctaHref: z.string().default("/trips"),
-    image: imageAssetSchema.optional(),
+    imageDesktop: imageAssetSchema.optional(),
+    imageMobile: imageAssetSchema.optional(),
   }),
   quickLinks: z.array(homepageV2QuickLinkSchema).default([]),
   featuredTrips: z.array(homepageV2FeaturedTripSchema).default([]),

@@ -11,6 +11,11 @@ import { ImageAssetSchema } from "./shared.schemas";
 
 export type QuickLinkVariant = "featured" | "image" | "icon";
 
+export interface HomepageV2GalleryImageDoc {
+  image?: unknown;
+  title: string;
+}
+
 export interface HomepageV2QuickLinkDoc {
   title: string;
   href: string;
@@ -19,8 +24,14 @@ export interface HomepageV2QuickLinkDoc {
    * client-side by `components/home/v2/floating-quick-links.tsx`'s
    * `QUICK_LINK_ICONS` map. Only used for "icon"-variant tiles. */
   icon: string;
-  /** Background photo — only used for "featured" and "image"-variant tiles. */
+  /** Background photo — only used for "featured" and "image"-variant tiles.
+   * For "featured", this is the fallback shown when `gallery` is empty. */
   image?: unknown;
+  /** Auto-playing image/title rotation for the "featured" tile only (the
+   * visitabudhabi.ae-style "Must-See" card). When this has 2+ entries, the
+   * tile cycles through them automatically; `image`/`title` above are
+   * ignored in favor of the gallery. */
+  gallery: HomepageV2GalleryImageDoc[];
   tag: string;
   description: string;
   /** Span both grid columns. Ignored for "featured", which is always
@@ -46,7 +57,13 @@ export interface HomepageV2Document extends Document {
     subheading: string;
     ctaLabel: string;
     ctaHref: string;
-    image?: unknown;
+    /** Background image on tablet/desktop viewports (≥768px). */
+    imageDesktop?: unknown;
+    /** Background image on phone viewports (<768px). Falls back to
+     * `imageDesktop` when unset — most laptop-shot photos crop badly on a
+     * phone screen, so this lets admins supply a separate portrait/tighter
+     * crop instead of relying on `bg-cover` alone. */
+    imageMobile?: unknown;
   };
   quickLinks: HomepageV2QuickLinkDoc[];
   featuredTrips: HomepageV2FeaturedTripDoc[];
@@ -55,6 +72,14 @@ export interface HomepageV2Document extends Document {
   updatedAt: string;
 }
 
+const GalleryImageSchema = new Schema<HomepageV2GalleryImageDoc>(
+  {
+    image: { type: ImageAssetSchema },
+    title: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const QuickLinkSchema = new Schema<HomepageV2QuickLinkDoc>(
   {
     title: { type: String, default: "" },
@@ -62,6 +87,7 @@ const QuickLinkSchema = new Schema<HomepageV2QuickLinkDoc>(
     variant: { type: String, enum: ["featured", "image", "icon"], default: "icon" },
     icon: { type: String, default: "MapPinned" },
     image: { type: ImageAssetSchema },
+    gallery: { type: [GalleryImageSchema], default: [] },
     tag: { type: String, default: "" },
     description: { type: String, default: "" },
     wide: { type: Boolean, default: false },
@@ -89,7 +115,8 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
       subheading: { type: String, default: "" },
       ctaLabel: { type: String, default: "Explore Trips" },
       ctaHref: { type: String, default: "/trips" },
-      image: { type: ImageAssetSchema },
+      imageDesktop: { type: ImageAssetSchema },
+      imageMobile: { type: ImageAssetSchema },
     },
     quickLinks: { type: [QuickLinkSchema], default: [] },
     featuredTrips: { type: [FeaturedTripSchema], default: [] },

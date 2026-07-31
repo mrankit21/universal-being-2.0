@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Bus,
   MapPinned,
@@ -43,6 +43,13 @@ export const QUICK_LINK_ICONS: Record<string, LucideIcon> = {
 export type QuickLinkIconName = keyof typeof QUICK_LINK_ICONS;
 export const QUICK_LINK_ICON_NAMES = Object.keys(QUICK_LINK_ICONS) as QuickLinkIconName[];
 
+/** One slide of the "featured" tile's auto-playing gallery. */
+export interface QuickLinkGalleryImage {
+  imageUrl: string;
+  imageAlt?: string;
+  title: string;
+}
+
 export interface QuickLinkItem {
   title: string;
   href: string;
@@ -50,7 +57,8 @@ export interface QuickLinkItem {
    * Tile shape:
    * - "featured" — the big spotlight card at the top (image thumbnail +
    *   tag + title). There should only be one of these, and it renders
-   *   full-width regardless of `wide`.
+   *   full-width regardless of `wide`. When `gallery` has 2+ entries, the
+   *   image and title auto-cycle (visitabudhabi.ae-style "Must-See" card).
    * - "image" — half-width card with a background photo and the title
    *   overlaid at the bottom (e.g. "Hotels" in the reference).
    * - "icon" — half-width (or full-width when `wide`) card with an icon
@@ -60,10 +68,15 @@ export interface QuickLinkItem {
   /** Icon name for "icon"-variant tiles — looked up in `QUICK_LINK_ICONS`.
    * Admin/DB-driven, so this is a string, not a component reference. */
   icon?: string;
-  /** Background photo for "featured" and "image"-variant tiles. */
+  /** Background photo for "featured" and "image"-variant tiles. For
+   * "featured", this is only used as a fallback when `gallery` is empty. */
   imageUrl?: string;
   imageAlt?: string;
-  /** Small pill label on the "featured" tile (e.g. "Featured"). */
+  /** Auto-playing rotation for the "featured" tile — image + title cycle
+   * together every ~3.5s with a crossfade + slow Ken Burns zoom. The tag
+   * pill stays fixed (it's not per-slide). */
+  gallery?: QuickLinkGalleryImage[];
+  /** Small pill label on the "featured" tile (e.g. "Featured", "Must-See"). */
   tag?: string;
   /** Optional short description, shown only on "icon"-variant tiles. */
   description?: string;
@@ -165,7 +178,31 @@ export function FloatingQuickLinks({ items = DEFAULT_LINKS, className }: { items
   );
 }
 
+/** Auto-play interval for the Featured tile's gallery, in ms. 3.5s sits in
+ * the middle of the requested 3–4s range. */
+const FEATURED_GALLERY_INTERVAL_MS = 3500;
+
 function FeaturedTile({ item }: { item: QuickLinkItem }) {
+  const slides: QuickLinkGalleryImage[] =
+    item.gallery && item.gallery.length > 0
+      ? item.gallery
+      : [{ imageUrl: item.imageUrl ?? "", imageAlt: item.imageAlt, title: item.title }];
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    // Reset to the first slide if the gallery itself changes (e.g. admin
+    // edits are live-previewed) so we never point past the end.
+    setIndex(0);
+  }, [slides.length]);
+
+  React.useEffect(() => {
+    if (slides.length < 2) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), FEATURED_GALLERY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
+  const active = slides[index];
+
   return (
     <Link
       href={item.href}
@@ -174,21 +211,52 @@ function FeaturedTile({ item }: { item: QuickLinkItem }) {
         "shadow-ub-lg transition-colors hover:bg-ub-ink-900/85 sm:gap-6 sm:p-5"
       )}
     >
+      {/* Left side: badge stays fixed, title + counter sync to the active slide. */}
       <span className="min-w-0 flex-1">
         {item.tag ? (
           <span className="mb-2 inline-block rounded-md bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-ub-ink-900 sm:text-xs">
             {item.tag}
           </span>
         ) : null}
-        <span className="block text-lg font-semibold text-white sm:text-xl">{item.title}</span>
+        <span className="relative block overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={index}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="block text-lg font-semibold text-white sm:text-xl"
+            >
+              {active.title}
+            </motion.span>
+          </AnimatePresence>
+        </span>
+        {slides.length > 1 ? (
+          <span className="mt-2 block text-xs font-medium tabular-nums text-white/50">
+            {index + 1} / {slides.length}
+          </span>
+        ) : null}
       </span>
-      {item.imageUrl ? (
+
+      {/* Right side: crossfading image with a slow continuous Ken Burns zoom. */}
+      {active.imageUrl ? (
         <span className="relative aspect-square w-28 shrink-0 overflow-hidden rounded-xl sm:w-36">
-          <img
-            src={item.imageUrl}
-            alt={item.imageAlt ?? ""}
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <AnimatePresence initial={false}>
+            <motion.img
+              key={index}
+              src={active.imageUrl}
+              alt={active.imageAlt ?? ""}
+              initial={{ opacity: 0, scale: 1.02 }}
+              animate={{ opacity: 1, scale: 1.14 }}
+              exit={{ opacity: 0 }}
+              transition={{
+                opacity: { duration: 0.6, ease: "easeInOut" },
+                scale: { duration: FEATURED_GALLERY_INTERVAL_MS / 1000 + 0.6, ease: "linear" },
+              }}
+              className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          </AnimatePresence>
         </span>
       ) : null}
     </Link>
