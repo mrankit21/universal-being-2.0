@@ -43,7 +43,7 @@ of truth is `apps/web/.env.example` — copy it and fill in real values.
 
 | Variable | What breaks without it |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | Canonical URLs, Open Graph tags, and JSON-LD structured data won't resolve to absolute production URLs. Set to your real domain, e.g. `https://universalbeing.travel`. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URLs, Open Graph tags, and JSON-LD structured data won't resolve to absolute production URLs. Set to your real domain, e.g. `https://universalbeing.in`. |
 
 ### Payments (Razorpay) — optional but required for online checkout
 
@@ -240,9 +240,9 @@ twice daily. This keeps the secret out of your repository.
 1. In Vercel, go to your project → **Settings → Domains** and add your
    custom domain.
 2. Vercel will show you the DNS records to add at your registrar:
-   - For an apex domain (`universalbeing.travel`): an `A` record pointing
+   - For an apex domain (`universalbeing.in`): an `A` record pointing
      to Vercel's IP, or `ALIAS`/`ANAME` if your registrar supports it.
-   - For a subdomain (`www.universalbeing.travel`): a `CNAME` record
+   - For a subdomain (`www.universalbeing.in`): a `CNAME` record
      pointing to `cname.vercel-dns.com`.
 3. Wait for DNS propagation and for Vercel to confirm the domain (usually
    minutes, occasionally longer depending on your registrar's TTL).

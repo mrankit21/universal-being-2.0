@@ -8,7 +8,7 @@
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, "");
-  return "https://universalbeing.travel";
+  return "https://universalbeing.in";
 }
 
 export function absoluteUrl(path: string): string {
