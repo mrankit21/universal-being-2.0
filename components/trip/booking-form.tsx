@@ -134,6 +134,8 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
     rzp.open();
   }
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   const {
     register,
     control,
@@ -282,6 +284,66 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
     }
   }
 
+  // Book Now looked "dead" whenever a required field above the summary
+  // card (name/email/phone/traveller name) was empty or invalid:
+  // react-hook-form silently blocks handleSubmit(onSubmit) and only shows
+  // the red inline error text next to that field — with no toast and no
+  // scroll, so a user already scrolled down to the sticky summary/Book Now
+  // button saw nothing happen at all. This surfaces it explicitly.
+  function onInvalidSubmit(formErrors: typeof errors) {
+    // RHF's FieldError objects carry a `ref` to the actual DOM element,
+    // which is why logging `formErrors` directly showed as `{}` in the
+    // Next.js overlay — it can't serialize the circular DOM ref. Walk the
+    // tree ourselves and pull out only plain strings (path + message) so
+    // this is guaranteed printable.
+    const found: { path: string; message: string }[] = [];
+    function isPlainTraversable(value: unknown): value is Record<string, unknown> {
+      if (Array.isArray(value)) return true;
+      if (value === null || typeof value !== "object") return false;
+      // RHF's FieldError carries `ref` — a live DOM element with circular
+      // parent/owner references. Only descend into genuine plain objects
+      // (constructor === Object), never into DOM nodes or other class
+      // instances, or this recurses forever into the DOM tree.
+      return Object.getPrototypeOf(value) === Object.prototype;
+    }
+    function walk(obj: unknown, prefix = "") {
+      if (!isPlainTraversable(obj)) return;
+      for (const [key, value] of Object.entries(obj)) {
+        if (key === "ref") continue;
+        if (!isPlainTraversable(value)) continue;
+        const path = prefix ? `${prefix}.${key}` : key;
+        const message = (value as { message?: unknown }).message;
+        if (typeof message === "string" && "type" in value) {
+          found.push({ path, message });
+        }
+        walk(value, path);
+      }
+    }
+    walk(formErrors);
+
+    // eslint-disable-next-line no-console
+    console.error(
+      "[BookingForm] validation blocked submit:",
+      found.length ? found.map((f) => `${f.path}: ${f.message}`) : "(no field errors — see raw object below)",
+      found.length ? undefined : formErrors
+    );
+
+    const first = found[0];
+    const field = first ? formRef.current?.querySelector<HTMLElement>(`[name="${first.path}"]`) : null;
+    if (field) {
+      field.scrollIntoView({ behavior: "smooth", block: "center" });
+      field.focus({ preventScroll: true });
+    } else {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    toast.error(
+      first
+        ? `"${first.path}": ${first.message}`
+        : "Booking couldn't be validated — check the browser console for details and share it."
+    );
+  }
+
   async function onSubmit(data: BookingCreateInput) {
     if (!selectedDeparture) {
       toast.error("Please select a departure batch.");
@@ -395,7 +457,11 @@ export function BookingForm({ trip, initialDepartureId, pickupVariantId }: Booki
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
+      className="grid gap-6 lg:grid-cols-[1fr_360px]"
+    >
       <div className="space-y-6">
         <Card>
           <CardHeader>

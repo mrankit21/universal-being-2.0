@@ -57,7 +57,14 @@ export const bookingCreateSchema = z
 
     // Part 5 — Coupon System. Optional; server re-validates against
     // authoritative pricing rather than trusting a client-side discount.
-    couponCode: z.string().min(1).max(32).optional(),
+    // `couponCode` is bound to a hidden <input> in BookingForm that has no
+    // default value, so react-hook-form registers it as `""` (not
+    // `undefined`) until a coupon is actually applied. `.optional()` alone
+    // only skips `undefined` — `.min(1)` still rejected that empty string,
+    // which blocked "Book Now" for every booking that didn't use a coupon.
+    // `.or(z.literal(""))` matches the same pattern already used for
+    // `emergencyContactPhone` above.
+    couponCode: z.string().min(1).max(32).optional().or(z.literal("")),
 
     travelers: z.array(bookingTravelerSchema).min(1, "Add at least one traveller"),
   })
