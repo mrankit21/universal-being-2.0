@@ -69,8 +69,19 @@ export function getWhatsAppProvider(): WhatsAppProviderName {
   return process.env.WHATSAPP_CLOUD_API_TOKEN ? "whatsapp-cloud-api" : "console";
 }
 
+/** Resend's `from` field accepts a bare address or a `"Name <email>"` pair
+ * — using the latter is what makes the sender show up as "Universal Being"
+ * (not just a raw address) in the customer's inbox. `NOTIFICATIONS_FROM_EMAIL`
+ * can be set either way in the environment; if it's a bare address we wrap
+ * it with the display name ourselves so ops only ever has to get the
+ * address right. Default fallback address matches the live domain
+ * (`universalbeing.in`, same as `getSiteUrl()`) — this is only ever used if
+ * the env var is unset, and that domain must be verified for sending in the
+ * Resend dashboard or delivery will fail. */
 export function getSenderEmail(): string {
-  return process.env.NOTIFICATIONS_FROM_EMAIL || "bookings@universalbeing.travel";
+  const configured = process.env.NOTIFICATIONS_FROM_EMAIL?.trim();
+  const address = configured || "bookings@universalbeing.in";
+  return address.includes("<") ? address : `Universal Being <${address}>`;
 }
 
 /** Refund window — Part 6. Purely informational default surfaced to admins
