@@ -61,6 +61,16 @@ function resolveImage(img: ImgLike, fallbackUrl: string, fallbackAlt: string) {
   return { url: fallbackUrl, alt: fallbackAlt };
 }
 
+type BackdropLike = { image?: ImgLike; opacity?: number } | undefined;
+
+/** Resolves one `Trip.sectionBackdrops.*` entry: admin-uploaded photo +
+ * opacity when set, otherwise the existing hardcoded default photo at
+ * the original 88 opacity. */
+function resolveBackdrop(backdrop: BackdropLike, fallbackUrl: string, fallbackAlt: string) {
+  const img = resolveImage(backdrop?.image, fallbackUrl, fallbackAlt);
+  return { ...img, opacity: backdrop?.opacity ?? 88 };
+}
+
 function mapQuickLinks(trip: ResolvedTrip2): QuickLinkV2[] | undefined {
   return orUndefined(
     [...(trip.quickLinks ?? [])]
@@ -135,6 +145,16 @@ export default async function Trip2Page({ params }: Params) {
   const heroImage = resolveImage(trip.heroImage as ImgLike, FALLBACK_HERO_IMAGE, trip.title);
   const bookHref = trip.bookHref?.trim() || `/trip2/${trip.slug}#price`;
   const hasPrice = trip.price && (trip.price.basePrice > 0 || trip.price.bookingAmount > 0);
+  const quickLinksBackdrop = resolveBackdrop(
+    trip.sectionBackdrops?.quickLinks as BackdropLike,
+    BACKDROP_A,
+    "Mountain landscape"
+  );
+  const priceBackdrop = resolveBackdrop(
+    trip.sectionBackdrops?.price as BackdropLike,
+    BACKDROP_B,
+    "Himalayan monastery on a hillside"
+  );
 
   return (
     <main className="bg-background">
@@ -146,14 +166,14 @@ export default async function Trip2Page({ params }: Params) {
         duration={trip.durationLabel || undefined}
         groupSize={trip.groupSizeLabel || undefined}
       />
-      <SectionBackdropV2 imageUrl={BACKDROP_A} imageAlt="Mountain landscape">
+      <SectionBackdropV2 imageUrl={quickLinksBackdrop.url} imageAlt={quickLinksBackdrop.alt} opacity={quickLinksBackdrop.opacity}>
         <QuickLinksV2 links={mapQuickLinks(trip)} />
+        <HotelTiersV2 tiers={mapHotelTiers(trip)} />
       </SectionBackdropV2>
       <GalleryGridV2 images={mapGallery(trip)} />
-      <HotelTiersV2 tiers={mapHotelTiers(trip)} />
       <ItineraryTimelineV2 days={mapItinerary(trip)} />
       <InclusionsExclusionsV2 inclusions={orUndefined(trip.inclusions)} exclusions={orUndefined(trip.exclusions)} />
-      <SectionBackdropV2 imageUrl={BACKDROP_B} imageAlt="Himalayan monastery on a hillside">
+      <SectionBackdropV2 imageUrl={priceBackdrop.url} imageAlt={priceBackdrop.alt} opacity={priceBackdrop.opacity}>
         {hasPrice ? (
           <PriceV2
             basePrice={trip.price.basePrice}

@@ -58,14 +58,14 @@ export function ItineraryTimelineV2({ days = DEFAULT_DAYS }: { days?: ItineraryD
   return (
     <section id="itinerary" className="w-full bg-secondary/40 px-4 py-8 sm:px-6 sm:py-12">
       <div className="mx-auto max-w-2xl">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Day by day</span>
-        <h2 className="mb-8 mt-1 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Itinerary</h2>
+        <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Day by day</span>
+        <h2 className="mb-8 mt-1 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Itinerary</h2>
       </div>
       <Accordion type="single" collapsible className="mx-auto flex max-w-2xl flex-col gap-6">
         {days.map((d) => (
           <div key={d.day} className="flex gap-4">
             <div className="flex flex-col items-center">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary font-display text-lg font-semibold text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary font-display text-lg font-bold text-primary-foreground shadow-md shadow-primary/30 ring-4 ring-primary/15">
                 {d.day}
               </span>
               {d.day !== days[days.length - 1].day ? (
@@ -80,7 +80,7 @@ export function ItineraryTimelineV2({ days = DEFAULT_DAYS }: { days?: ItineraryD
                 <div className="flex items-center gap-3 text-left">
                   <img src={d.imageUrl} alt={d.imageAlt} className="size-16 shrink-0 rounded-lg object-cover sm:size-20" />
                   <div>
-                    <p className="font-medium text-foreground">{d.title}</p>
+                    <p className="font-semibold text-foreground">{d.title}</p>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="size-3" aria-hidden="true" />
                       {d.location}

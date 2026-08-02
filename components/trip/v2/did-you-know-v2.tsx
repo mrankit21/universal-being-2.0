@@ -61,15 +61,15 @@ export function DidYouKnowV2({ facts = DEFAULT_FACTS }: { facts?: DidYouKnowCard
 
   return (
     <section className="w-full bg-ub-ink-900 px-4 py-10 sm:px-6 sm:py-14">
-      <h2 className="mb-8 font-display text-2xl font-semibold tracking-tight text-white sm:text-3xl">Did You Know</h2>
+      <h2 className="mb-8 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Did You Know</h2>
 
       <div className="mx-auto max-w-md rounded-2xl bg-white p-7 shadow-ub-xl">
         <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
           <ActiveIcon className="size-5" strokeWidth={1.75} aria-hidden="true" />
         </span>
-        <h3 className="mt-4 font-display text-xl font-medium text-ub-ink-900">{active.title}</h3>
+        <h3 className="mt-4 font-display text-xl font-semibold text-ub-ink-900">{active.title}</h3>
         <p className="mt-2 text-sm text-muted-foreground">{active.description}</p>
-        <Link href={active.href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-ub-teal-500 hover:underline">
+        <Link href={active.href} className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-ub-teal-500 hover:underline">
           Learn More
           <ChevronRight className="size-4" aria-hidden="true" />
         </Link>

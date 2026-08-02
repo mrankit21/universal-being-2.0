@@ -51,7 +51,7 @@ export function QuickLinksV2({ links = DEFAULT_LINKS }: { links?: QuickLinkV2[] 
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-10">
                 <Icon className="size-4 sm:size-5" strokeWidth={1.75} aria-hidden="true" />
               </span>
-              <span className="text-[11px] font-medium leading-tight text-foreground sm:text-xs">{link.label}</span>
+              <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">{link.label}</span>
             </Link>
           );
         })}

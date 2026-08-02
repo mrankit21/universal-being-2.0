@@ -32,7 +32,7 @@ export function PickupVariantsV2({ variants = DEFAULT_VARIANTS }: { variants?: P
 
   return (
     <section id="pickup-variants" className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      <h2 className="mb-5 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         Choose Your Pickup City
       </h2>
       <div className="flex flex-wrap justify-center gap-3">
@@ -45,7 +45,7 @@ export function PickupVariantsV2({ variants = DEFAULT_VARIANTS }: { variants?: P
               onClick={() => setSelectedId(variant.id)}
               aria-pressed={active}
               className={cn(
-                "flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-colors",
                 active
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-card text-foreground hover:border-primary/40"

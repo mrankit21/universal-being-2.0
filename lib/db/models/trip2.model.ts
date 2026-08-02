@@ -80,6 +80,23 @@ export interface Trip2FaqDoc {
   answer: string;
 }
 
+/** Admin-configurable background photo for a `SectionBackdropV2` wrapper,
+ * with an overlay-opacity slider (0-100). Higher opacity = more of the
+ * cream/tint colour and less of the photo showing through; this mirrors
+ * the `bg-background/88` overlay `SectionBackdropV2` already hardcodes,
+ * just made per-trip and admin-editable instead of a fixed constant. */
+export interface Trip2SectionBackdropDoc {
+  image?: unknown;
+  opacity: number;
+}
+
+export interface Trip2SectionBackdropsDoc {
+  /** Behind Quick Links + Hotel Tiers. */
+  quickLinks?: Trip2SectionBackdropDoc;
+  /** Behind Price + Pickup Variants + Batch Dates. */
+  price?: Trip2SectionBackdropDoc;
+}
+
 export interface Trip2Document extends Document {
   slug: string;
   status: "draft" | "published";
@@ -102,6 +119,7 @@ export interface Trip2Document extends Document {
   thingsToExperience: Trip2ExperienceDoc[];
   didYouKnow: Trip2FactDoc[];
   faqs: Trip2FaqDoc[];
+  sectionBackdrops?: Trip2SectionBackdropsDoc;
   /** Prefills the "Let's Plan Your Trip" lead form's destination field.
    * Falls back to `title` when blank. */
   leadFormDestination: string;
@@ -198,6 +216,22 @@ const FaqSchema = new Schema<Trip2FaqDoc>(
   { _id: false }
 );
 
+const SectionBackdropSchema = new Schema<Trip2SectionBackdropDoc>(
+  {
+    image: { type: ImageAssetSchema },
+    opacity: { type: Number, default: 88 },
+  },
+  { _id: false }
+);
+
+const SectionBackdropsSchema = new Schema<Trip2SectionBackdropsDoc>(
+  {
+    quickLinks: { type: SectionBackdropSchema },
+    price: { type: SectionBackdropSchema },
+  },
+  { _id: false }
+);
+
 const Trip2Schema = new Schema<Trip2Document>(
   {
     slug: { type: String, required: true, unique: true, trim: true, lowercase: true, index: true },
@@ -225,6 +259,7 @@ const Trip2Schema = new Schema<Trip2Document>(
     thingsToExperience: { type: [ExperienceSchema], default: [] },
     didYouKnow: { type: [FactSchema], default: [] },
     faqs: { type: [FaqSchema], default: [] },
+    sectionBackdrops: { type: SectionBackdropsSchema },
     leadFormDestination: { type: String, default: "" },
     createdBy: { type: String },
     updatedBy: { type: String },

@@ -66,7 +66,7 @@ export function ThingsToExperienceV2({ items = DEFAULT_EXPERIENCES }: { items?: 
 
   return (
     <section id="things-to-experience" className="w-full py-8 sm:py-12">
-      <h2 className="mb-6 px-4 font-display text-2xl font-medium text-foreground sm:px-6 sm:text-3xl">
+      <h2 className="mb-6 px-4 font-display text-2xl font-semibold text-foreground sm:px-6 sm:text-3xl">
         Things To Experience
       </h2>
 
@@ -80,12 +80,12 @@ export function ThingsToExperienceV2({ items = DEFAULT_EXPERIENCES }: { items?: 
             <img src={item.imageUrl} alt={item.imageAlt} className="absolute inset-0 size-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" aria-hidden="true" />
             <div className="relative z-10 flex h-full flex-col justify-end gap-2 p-6">
-              <span className="w-fit rounded-full border border-white/40 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+              <span className="w-fit rounded-full border border-white/40 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
                 {item.tag}
               </span>
-              <h3 className="font-display text-xl font-medium text-white sm:text-2xl">{item.title}</h3>
+              <h3 className="font-display text-xl font-semibold text-white sm:text-2xl">{item.title}</h3>
               <p className="max-w-sm text-sm text-white/80">{item.description}</p>
-              <Link href={item.href} className="mt-1 inline-flex w-fit items-center gap-1 text-sm font-medium text-white hover:underline">
+              <Link href={item.href} className="mt-1 inline-flex w-fit items-center gap-1 text-sm font-semibold text-white hover:underline">
                 Explore
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </Link>

@@ -36,7 +36,7 @@ export function HotelTiersV2({ tiers = DEFAULT_TIERS }: { tiers?: HotelTierV2[] 
                 />
               ))}
             </div>
-            <span className="font-display text-xl font-medium text-foreground">{tier.label}</span>
+            <span className="font-display text-xl font-semibold text-foreground">{tier.label}</span>
             <span className="text-sm text-muted-foreground">{tier.description}</span>
           </div>
         ))}

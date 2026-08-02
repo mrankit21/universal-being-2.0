@@ -29,7 +29,7 @@ const DEFAULT_FAQS: FaqV2[] = [
 export function FaqAccordionV2({ faqs = DEFAULT_FAQS }: { faqs?: FaqV2[] }) {
   return (
     <section id="faqs" className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12">
-      <h2 className="mb-6 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Frequently Asked Questions</h2>
+      <h2 className="mb-6 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Frequently Asked Questions</h2>
       <Accordion type="single" collapsible className="w-full">
         {faqs.map((faq) => (
           <AccordionItem key={faq.id} value={faq.id}>

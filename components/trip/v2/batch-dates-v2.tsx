@@ -76,7 +76,7 @@ export function BatchDatesV2({ batches = DEFAULT_BATCHES, bookHref = "/trips/spi
 
   return (
     <section id="batch-dates" className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      <h2 className="mb-5 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Batch Dates</h2>
+      <h2 className="mb-5 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Batch Dates</h2>
 
       {/* Month tabs */}
       <div className="mb-4 flex flex-wrap justify-center gap-2">
@@ -87,7 +87,7 @@ export function BatchDatesV2({ batches = DEFAULT_BATCHES, bookHref = "/trips/spi
             onClick={() => setActiveMonth(m.key)}
             aria-pressed={m.key === activeMonth}
             className={cn(
-              "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
               m.key === activeMonth ? "bg-primary text-primary-foreground" : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
             )}
           >
@@ -103,7 +103,7 @@ export function BatchDatesV2({ batches = DEFAULT_BATCHES, bookHref = "/trips/spi
             key={batch.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3.5 sm:px-5"
           >
-            <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <CalendarDays className="size-4 text-primary" aria-hidden="true" />
               {dateLabel(batch.startDate)} – {dateLabel(batch.endDate)}
             </span>
@@ -111,13 +111,13 @@ export function BatchDatesV2({ batches = DEFAULT_BATCHES, bookHref = "/trips/spi
               <span className="text-xs text-muted-foreground sm:text-sm">
                 {batch.seatsAvailable}/{batch.seatsTotal} seats left
               </span>
-              <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", STATUS_CLASS[batch.status])}>
+              <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", STATUS_CLASS[batch.status])}>
                 {STATUS_LABEL[batch.status]}
               </span>
               {batch.status !== "sold-out" ? (
                 <Link
                   href={`${bookHref}?departure=${batch.id}`}
-                  className="rounded-full border border-primary px-3.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  className="rounded-full border border-primary px-3.5 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                 >
                   Book
                 </Link>

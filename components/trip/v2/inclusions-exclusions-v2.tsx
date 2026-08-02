@@ -40,7 +40,7 @@ export function InclusionsExclusionsV2({
 
   return (
     <section id="inclusions-exclusions" className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-      <h2 className="mb-6 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+      <h2 className="mb-6 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         Inclusions &amp; Exclusions
       </h2>
       <div className="grid gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2 sm:p-6">

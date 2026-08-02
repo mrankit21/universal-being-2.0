@@ -77,15 +77,15 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
     <section id="lets-plan-your-trip" className="w-full px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.06] via-card to-card">
         <div className="px-6 pb-2 pt-6 sm:px-8 sm:pt-8">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Still deciding?</span>
-          <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Let&apos;s Plan Your Trip</h2>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Still deciding?</span>
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Let&apos;s Plan Your Trip</h2>
           <p className="mt-1.5 text-sm text-muted-foreground">
             Share a few details and our travel expert will call you back to help you plan.
           </p>
         </div>
 
         {submitted ? (
-          <div className="mx-6 mb-6 mt-4 rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success sm:mx-8">
+          <div className="mx-6 mb-6 mt-4 rounded-xl bg-success/10 px-4 py-3 text-sm font-semibold text-success sm:mx-8">
             Thanks! Our travel expert will call you shortly.
           </div>
         ) : (
@@ -142,7 +142,7 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
             >
               {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               {submitting ? "Sending…" : "Request a Callback"}

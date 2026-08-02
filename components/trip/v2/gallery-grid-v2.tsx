@@ -24,7 +24,7 @@ const DEFAULT_IMAGES: GalleryImageV2[] = [
 export function GalleryGridV2({ images = DEFAULT_IMAGES }: { images?: GalleryImageV2[] }) {
   return (
     <section id="gallery" className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-      <h2 className="mb-6 font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Gallery</h2>
+      <h2 className="mb-6 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Gallery</h2>
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {images.map((img, i) => (
           <figure key={img.id} className={i % 3 === 0 ? "row-span-2" : ""}>

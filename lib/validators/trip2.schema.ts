@@ -72,6 +72,16 @@ export const trip2FaqSchema = z.object({
   answer: z.string().default(""),
 });
 
+export const trip2SectionBackdropSchema = z.object({
+  image: imageAssetSchema.optional(),
+  opacity: z.number().min(0).max(100).default(88),
+});
+
+export const trip2SectionBackdropsSchema = z.object({
+  quickLinks: trip2SectionBackdropSchema.optional(),
+  price: trip2SectionBackdropSchema.optional(),
+});
+
 export const trip2Schema = z.object({
   slug: z
     .string()
@@ -105,6 +115,7 @@ export const trip2Schema = z.object({
   thingsToExperience: z.array(trip2ExperienceSchema).default([]),
   didYouKnow: z.array(trip2FactSchema).default([]),
   faqs: z.array(trip2FaqSchema).default([]),
+  sectionBackdrops: trip2SectionBackdropsSchema.optional(),
   leadFormDestination: z.string().default(""),
 });
 

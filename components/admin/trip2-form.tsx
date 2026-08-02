@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FormField } from "@/components/admin/form-field";
 import { ImageAssetField } from "@/components/admin/image-asset-field";
+import { TripGalleryUploadField } from "@/components/admin/trip-gallery-upload-field";
 import { ArrayFieldEditor } from "@/components/admin/array-field-editor";
 import { StringListEditor } from "@/components/admin/string-list-editor";
 import { TRIP2_ICON_NAMES } from "@/components/trip/v2/icon-registry";
@@ -51,6 +52,10 @@ function blankTrip2(): any {
     thingsToExperience: [],
     didYouKnow: [],
     faqs: [],
+    sectionBackdrops: {
+      quickLinks: { image: { ...BLANK_IMAGE }, opacity: 88 },
+      price: { image: { ...BLANK_IMAGE }, opacity: 88 },
+    },
     leadFormDestination: "",
   };
 }
@@ -172,6 +177,81 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Section Backgrounds</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Optional background photo behind the Quick Links/Hotel Tiers section, and behind the Price/Batch Dates
+            section. Opacity is the cream tint laid over the photo — 100 hides the photo completely, 0 shows it at
+            full strength. Leave the photo blank to use the site&rsquo;s default backdrop.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Quick Links / Hotel Tiers backdrop</p>
+            <ImageAssetField
+              label="Background Photo"
+              value={value.sectionBackdrops?.quickLinks?.image ?? BLANK_IMAGE}
+              onChange={(v) =>
+                set("sectionBackdrops", {
+                  ...(value.sectionBackdrops ?? {}),
+                  quickLinks: { ...(value.sectionBackdrops?.quickLinks ?? { opacity: 88 }), image: v },
+                })
+              }
+              category="trip-section-backdrop"
+            />
+            <FormField label="Overlay Opacity (0–100)">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={value.sectionBackdrops?.quickLinks?.opacity ?? 88}
+                onChange={(e) =>
+                  set("sectionBackdrops", {
+                    ...(value.sectionBackdrops ?? {}),
+                    quickLinks: {
+                      ...(value.sectionBackdrops?.quickLinks ?? { image: BLANK_IMAGE }),
+                      opacity: Number(e.target.value),
+                    },
+                  })
+                }
+              />
+            </FormField>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-foreground">Price / Batch Dates backdrop</p>
+            <ImageAssetField
+              label="Background Photo"
+              value={value.sectionBackdrops?.price?.image ?? BLANK_IMAGE}
+              onChange={(v) =>
+                set("sectionBackdrops", {
+                  ...(value.sectionBackdrops ?? {}),
+                  price: { ...(value.sectionBackdrops?.price ?? { opacity: 88 }), image: v },
+                })
+              }
+              category="trip-section-backdrop"
+            />
+            <FormField label="Overlay Opacity (0–100)">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={value.sectionBackdrops?.price?.opacity ?? 88}
+                onChange={(e) =>
+                  set("sectionBackdrops", {
+                    ...(value.sectionBackdrops ?? {}),
+                    price: {
+                      ...(value.sectionBackdrops?.price ?? { image: BLANK_IMAGE }),
+                      opacity: Number(e.target.value),
+                    },
+                  })
+                }
+              />
+            </FormField>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Quick Links</CardTitle>
           <p className="text-sm text-muted-foreground">The row of tiles under the title (Hotels, Highlights, Itinerary, Gallery…). Order here = display order.</p>
         </CardHeader>
@@ -206,8 +286,20 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Gallery</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">Gallery</CardTitle>
+          <p className="text-sm text-muted-foreground">Upload several photos at once below, or add/reorder them one by one with the list underneath.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <TripGalleryUploadField
+            tripSlug={value.slug}
+            tripTitle={value.title}
+            onUploaded={(assets) => {
+              const startOrder = (value.gallery ?? []).length;
+              const next = assets.map((image, i) => ({ image, caption: "", order: startOrder + i }));
+              set("gallery", [...(value.gallery ?? []), ...next]);
+            }}
+          />
           <ArrayFieldEditor
             items={value.gallery ?? []}
             onChange={(next) => set("gallery", next)}

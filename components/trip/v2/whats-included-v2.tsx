@@ -25,7 +25,7 @@ const DEFAULT_ITEMS: IncludedItem[] = [
 export function WhatsIncludedV2({ items = DEFAULT_ITEMS }: { items?: IncludedItem[] }) {
   return (
     <section className="w-full px-4 py-8 sm:px-6 sm:py-12">
-      <h2 className="mb-6 font-display text-2xl font-medium text-foreground sm:text-3xl">
+      <h2 className="mb-6 font-display text-2xl font-semibold text-foreground sm:text-3xl">
         What&apos;s Included
       </h2>
       <div className="mx-auto flex max-w-3xl snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
@@ -37,7 +37,7 @@ export function WhatsIncludedV2({ items = DEFAULT_ITEMS }: { items?: IncludedIte
             <span className="flex size-14 items-center justify-center rounded-full bg-primary/15 text-primary">
               <item.icon className="size-6" strokeWidth={1.75} aria-hidden="true" />
             </span>
-            <span className="font-semibold text-foreground">{item.title}</span>
+            <span className="font-bold text-foreground">{item.title}</span>
             <span className="text-xs text-muted-foreground sm:text-sm">{item.description}</span>
           </div>
         ))}

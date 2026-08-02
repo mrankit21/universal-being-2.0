@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Search, Menu, CalendarCheck } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -20,14 +20,17 @@ export interface TripHeroV2Props {
  * Simplified per serial-order revision (2026-07): image only, no title/
  * description overlay — that content now lives in its own block
  * (`TripTitleV2`) directly below, so it never gets swallowed by the hero
- * gradient on smaller screens. Keeps the floating control row: a
- * search+menu pill (mirrors `FloatingPillNav`) and a separate gold "Book
- * Now" pill, matching the reference screenshot.
+ * gradient on smaller screens. Keeps the floating "Book Now" pill from
+ * the reference screenshot.
  *
  * Static content only for now — no data-fetching. Once approved, this
  * accepts real `Trip` fields (`heroImage`, a generated `/trips/[slug]/book`
  * href) the same way Homepage 2.0's components were wired up after their
  * UI was approved.
+ *
+ * Revision (2026-08): dropped the search+menu pill from the floating
+ * control row — those actions already live in the site header, so the
+ * hero now surfaces only the "Book Now" pill.
  */
 export function TripHeroV2({ bookHref, imageUrl, imageAlt }: TripHeroV2Props) {
   return (
@@ -40,21 +43,12 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt }: TripHeroV2Props) {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" aria-hidden="true" />
 
-      {/* Floating control row: search+menu pill, then a separate Book Now pill */}
-      <div className="absolute inset-x-0 bottom-6 z-20 flex items-center justify-center gap-3 px-4 sm:bottom-8">
-        <div className="flex items-center gap-1 rounded-full bg-ub-ink-900/80 p-1.5 shadow-ub-xl backdrop-blur-md">
-          <button type="button" aria-label="Search" className="flex size-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 sm:size-12">
-            <Search className="size-5" strokeWidth={1.75} aria-hidden="true" />
-          </button>
-          <div className="h-6 w-px bg-white/25" aria-hidden="true" />
-          <button type="button" aria-label="Menu" className="flex size-11 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 sm:size-12">
-            <Menu className="size-5" strokeWidth={1.75} aria-hidden="true" />
-          </button>
-        </div>
+      {/* Floating control row: just the Book Now pill (search+menu pill removed per revision) */}
+      <div className="absolute inset-x-0 bottom-6 z-20 flex items-center justify-center px-4 sm:bottom-8">
         <Link
           href={bookHref}
           className={cn(
-            "flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-ub-xl",
+            "flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-ub-xl",
             "transition-colors hover:bg-primary/90 sm:px-6"
           )}
         >
