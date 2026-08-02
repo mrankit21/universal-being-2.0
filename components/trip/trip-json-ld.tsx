@@ -57,21 +57,43 @@ export function TripJsonLd({ trip }: TripJsonLdProps) {
       availability: trip.availableSeats > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
       url: tripUrl,
     },
-    ...(trip.reviewCount > 0
-      ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: trip.rating,
-            reviewCount: trip.reviewCount,
-          },
-        }
-      : {}),
     provider: {
       "@type": "TravelAgency",
       name: siteConfig.brandName,
       url: absoluteUrl("/"),
     },
   };
+
+  // Google Search Console — "Review snippets structured data" flags
+  // `aggregateRating` on `TouristTrip` as "Invalid object type for field
+  // '<parent_node>'": TouristTrip isn't one of the parent types Google
+  // supports for review-snippet rich results (Product, LocalBusiness,
+  // Recipe, Course, etc. are). So the rating now goes on its own separate
+  // `Product` node instead — a type Google *does* support for review
+  // snippets — while `TouristTrip` above stays exactly as it was, minus
+  // the field that was causing the error.
+  const reviewProduct =
+    trip.reviewCount > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: trip.title,
+          description: trip.seo.description || trip.shortDescription,
+          ...(image ? { image } : {}),
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: trip.rating,
+            reviewCount: trip.reviewCount,
+          },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: trip.price.currency,
+            price: offerPrice,
+            availability: trip.availableSeats > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+            url: tripUrl,
+          },
+        }
+      : null;
 
   return (
     <>
@@ -83,6 +105,12 @@ export function TripJsonLd({ trip }: TripJsonLdProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(touristTrip) }}
       />
+      {reviewProduct ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewProduct) }}
+        />
+      ) : null}
     </>
   );
 }
