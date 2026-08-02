@@ -13,7 +13,8 @@
  * is the trip-price discount from the trip's own price, kept separate from
  * `couponDiscountAmount` (below) so reporting can distinguish the two.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import {
   REMAINING_PAYMENT_METHODS,
   REMAINING_PAYMENT_STATUSES,

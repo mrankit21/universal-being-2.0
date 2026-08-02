@@ -16,7 +16,8 @@
  * asset whenever it's read, so callers get an always-fresh "Used In" list
  * without this phase touching any other collection's schema.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 /** Media Library categories (Step 7.6A spec). Kept distinct from the older,
  * coarser `folder` enum — `folder` is retained only so pre-7.6A documents

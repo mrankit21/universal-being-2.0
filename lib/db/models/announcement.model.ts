@@ -1,7 +1,8 @@
 /** Announcement Mongoose model — DB mirror of `types/layout.ts`'s
  * `AnnouncementConfig`, extended with the admin-only `enabled`/`expiresAt`
  * fields requirement #6 asks for. */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import { ImageAssetSchema } from "./shared.schemas";
 
 export interface AnnouncementDocument extends Document {

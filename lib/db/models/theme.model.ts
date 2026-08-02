@@ -4,7 +4,8 @@
  * flexible `Mixed` config blob keyed by the same field names as `ThemeConfig`
  * so the Theme Engine can consume it with zero mapping — only the admin
  * Theme Management UI and this model need to know about persistence. */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export interface ThemeDocument extends Document {
   key: string;

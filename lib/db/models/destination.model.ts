@@ -1,5 +1,6 @@
 /** Destination Mongoose model — mirrors `types/destination.ts` (Architecture §3, §14). */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import { ImageAssetSchema, SeoSchema } from "./shared.schemas";
 
 export interface DestinationTripAssignmentDoc {

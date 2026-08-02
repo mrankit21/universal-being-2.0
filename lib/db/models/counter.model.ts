@@ -7,7 +7,8 @@
  * MongoDB level, no read-then-write race regardless of how many payments
  * are being verified at once.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export interface CounterDocument extends Omit<Document, "_id"> {
   _id: string;

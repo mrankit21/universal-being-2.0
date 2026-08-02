@@ -7,7 +7,8 @@
  * endpoint for the initial `requested` state) so `timeline` always reflects
  * exactly what happened and who did it.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export type RefundStatus = "requested" | "approved" | "rejected" | "processed";
 

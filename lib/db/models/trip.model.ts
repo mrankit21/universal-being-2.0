@@ -5,7 +5,8 @@
  * with no mapping layer, exactly as the "ONE Trip type" comment in
  * `types/trip.ts` anticipates.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import { ImageAssetSchema, SeoSchema } from "./shared.schemas";
 
 const DayPlanSchema = new Schema(

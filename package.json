@@ -15,6 +15,7 @@
     "seed:announcements": "tsx scripts/seed-announcements.ts",
     "seed:homepage": "tsx scripts/seed-homepage.ts",
     "seed:site-settings": "tsx scripts/seed-site-settings.ts",
+    "seed:trip2-batch": "tsx scripts/seed-trip2-batch.ts",
     "seed:all": "npm run seed:trips && npm run seed:destinations && npm run seed:testimonials && npm run seed:announcements && npm run seed:homepage && npm run seed:site-settings",
     "test": "vitest run",
     "test:watch": "vitest",

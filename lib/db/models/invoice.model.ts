@@ -8,7 +8,8 @@
  * document's data plus the booking, so re-issuing after an admin edits
  * something never requires a separate regeneration step.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export type InvoiceStatus = "issued" | "cancelled";
 

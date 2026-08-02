@@ -6,7 +6,8 @@
  * never touches the other's content — see `SiteSettingsDocument.activeHomepageVersion`
  * for the toggle that decides which one `app/page.tsx` renders.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import { ImageAssetSchema } from "./shared.schemas";
 
 export type QuickLinkVariant = "featured" | "image" | "icon";

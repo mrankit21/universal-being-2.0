@@ -15,7 +15,8 @@
  * change only had `hero` — `lib/api/home.ts` migrates that legacy shape
  * into a single hero slide the first time it's read, so no content is lost.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 import { ImageAssetSchema } from "./shared.schemas";
 
 export type HomepageSectionKey =

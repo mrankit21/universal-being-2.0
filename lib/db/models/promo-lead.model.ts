@@ -6,7 +6,8 @@
  * because a lead hasn't created an account and may never book — this is a
  * marketing capture, not an auth identity.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export interface PromoLeadDocument extends Document {
   fullName: string;

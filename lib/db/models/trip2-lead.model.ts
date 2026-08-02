@@ -9,7 +9,8 @@
  * `Trip2Model` separate from `TripModel`: different shape, different
  * surface, easier to reason about and query independently.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export interface Trip2LeadDocument extends Document {
   name: string;

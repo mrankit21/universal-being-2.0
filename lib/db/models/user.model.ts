@@ -4,7 +4,8 @@
  * receives or persists a plaintext password. `role` drives the permission
  * matrix in `lib/auth/rbac.ts`.
  */
-import { Schema, model, models, type Model, type Document } from "mongoose";
+import mongoose, { Schema, model, type Model, type Document } from "mongoose";
+const models = mongoose.models;
 
 export type AdminRole = "admin" | "manager" | "editor";
 
