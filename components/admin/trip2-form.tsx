@@ -205,9 +205,17 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
         <CardHeader>
           <CardTitle className="text-base">Section Backgrounds</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Optional background photo behind the Quick Links/Hotel Tiers section, and behind the Price/Batch Dates
-            section. Opacity is the cream tint laid over the photo — 100 hides the photo completely, 0 shows it at
+            Optional background photo behind the Quick Links/Hotel Tiers section, and behind the Price section — set
+            per trip. Opacity is the cream tint laid over the photo — 100 hides the photo completely, 0 shows it at
             full strength. Leave the photo blank to use the site&rsquo;s default backdrop.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            The Day by Day Itinerary, Inclusions &amp; Exclusions, Batch Dates, Things To Experience, and Did You Know
+            backdrops are the same across every trip — manage them once in{" "}
+            <a href="/admin/trip2-backdrops" className="font-medium text-primary underline underline-offset-2">
+              Trip 2.0 Backdrops
+            </a>
+            .
           </p>
         </CardHeader>
         <CardContent className="grid gap-6 sm:grid-cols-2">
@@ -243,7 +251,7 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
             </FormField>
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">Price / Batch Dates backdrop</p>
+            <p className="text-sm font-medium text-foreground">Price backdrop</p>
             <ImageAssetField
               label="Background Photo"
               value={value.sectionBackdrops?.price?.image ?? BLANK_IMAGE}

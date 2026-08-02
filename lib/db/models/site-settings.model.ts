@@ -7,6 +7,30 @@
 import mongoose, { Schema, model, type Model, type Document } from "mongoose";
 const models = mongoose.models;
 import { ImageAssetSchema } from "./shared.schemas";
+import { DEFAULT_SECTION_BACKDROP_STEP } from "@/lib/theme/section-backdrop-opacity";
+
+/** One site-wide `SectionBackdropV2` slot — an admin-uploaded photo plus a
+ * 1-7 overlay-opacity step (see `lib/theme/section-backdrop-opacity.ts`).
+ * Unlike `Trip2Document.sectionBackdrops` (per-trip, only Quick Links and
+ * Price), these five apply identically to every published Trip 2.0 page —
+ * there is exactly one of each across the whole site. */
+export interface GlobalSectionBackdropDoc {
+  image?: unknown;
+  opacityStep: number;
+}
+
+export interface Trip2GlobalSectionBackdropsDoc {
+  /** Behind the Day by Day Itinerary section. */
+  itinerary?: GlobalSectionBackdropDoc;
+  /** Behind Inclusions & Exclusions. */
+  inclusionsExclusions?: GlobalSectionBackdropDoc;
+  /** Behind Batch Dates (split out from the per-trip Price backdrop). */
+  batchDates?: GlobalSectionBackdropDoc;
+  /** Behind Things To Experience. */
+  thingsToExperience?: GlobalSectionBackdropDoc;
+  /** Behind Did You Know. */
+  didYouKnow?: GlobalSectionBackdropDoc;
+}
 
 export interface SiteSettingsDocument extends Document {
   brandName: string;
@@ -54,10 +78,32 @@ export interface SiteSettingsDocument extends Document {
     backgroundImageMobile?: unknown;
     overlayOpacity: number;
   };
+  /** Global Trip 2.0 section backdrops — see `Trip2GlobalSectionBackdropsDoc`.
+   * Applies to every published Trip 2.0 page (Admin → Trip 2.0 Backdrops). */
+  trip2SectionBackdrops?: Trip2GlobalSectionBackdropsDoc;
   updatedBy?: string;
   createdAt: string;
   updatedAt: string;
 }
+
+const GlobalSectionBackdropSchema = new Schema<GlobalSectionBackdropDoc>(
+  {
+    image: { type: ImageAssetSchema },
+    opacityStep: { type: Number, default: DEFAULT_SECTION_BACKDROP_STEP, min: 1, max: 7 },
+  },
+  { _id: false }
+);
+
+const Trip2GlobalSectionBackdropsSchema = new Schema<Trip2GlobalSectionBackdropsDoc>(
+  {
+    itinerary: { type: GlobalSectionBackdropSchema },
+    inclusionsExclusions: { type: GlobalSectionBackdropSchema },
+    batchDates: { type: GlobalSectionBackdropSchema },
+    thingsToExperience: { type: GlobalSectionBackdropSchema },
+    didYouKnow: { type: GlobalSectionBackdropSchema },
+  },
+  { _id: false }
+);
 
 const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
   {
@@ -109,6 +155,7 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
       backgroundImageMobile: { type: ImageAssetSchema },
       overlayOpacity: { type: Number, default: 0.7, min: 0, max: 1 },
     },
+    trip2SectionBackdrops: { type: Trip2GlobalSectionBackdropsSchema },
     updatedBy: { type: String },
   },
   { timestamps: true }

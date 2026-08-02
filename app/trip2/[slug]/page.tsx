@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 
 import { getResolvedTrip2, getAllPublishedTrip2Slugs, type ResolvedTrip2 } from "@/lib/api/trip2";
+import { getSiteSettings, type ResolvedSiteSettings } from "@/lib/api/site-settings";
+import { opacityStepToPercent } from "@/lib/theme/section-backdrop-opacity";
 
 import { TripHeroV2 } from "@/components/trip/v2/trip-hero-v2";
 import { TripTitleV2 } from "@/components/trip/v2/trip-title-v2";
@@ -68,6 +71,45 @@ type BackdropLike = { image?: ImgLike; opacity?: number } | undefined;
 function resolveBackdrop(backdrop: BackdropLike, fallbackUrl: string, fallbackAlt: string) {
   const img = resolveImage(backdrop?.image, fallbackUrl, fallbackAlt);
   return { ...img, opacity: backdrop?.opacity ?? 88 };
+}
+
+type GlobalBackdropEntry = { image?: { url: string; alt: string }; opacityStep: number } | undefined;
+
+/** Resolves one `SiteSettings.trip2SectionBackdrops.*` entry into
+ * `SectionBackdropV2` props, or `undefined` when the admin hasn't set a
+ * photo for it yet — unlike the per-trip `resolveBackdrop` above, there's
+ * no hardcoded fallback photo here, so those 5 sections stay unwrapped
+ * (rendering exactly as before this feature) until one is set. Applies
+ * identically across every Trip 2.0 page since it comes from the global
+ * dashboard, not the trip document. */
+function resolveGlobalBackdrop(entry: GlobalBackdropEntry): { imageUrl: string; imageAlt: string; opacity: number } | undefined {
+  if (!entry?.image?.url) return undefined;
+  return { imageUrl: entry.image.url, imageAlt: entry.image.alt || "", opacity: opacityStepToPercent(entry.opacityStep) };
+}
+
+/** Wraps `child` in `SectionBackdropV2` when a global backdrop is set for
+ * that section, otherwise renders `child` unchanged. */
+function maybeWrapWithBackdrop(
+  backdrop: { imageUrl: string; imageAlt: string; opacity: number } | undefined,
+  child: ReactNode
+) {
+  if (!backdrop) return child;
+  return (
+    <SectionBackdropV2 imageUrl={backdrop.imageUrl} imageAlt={backdrop.imageAlt} opacity={backdrop.opacity}>
+      {child}
+    </SectionBackdropV2>
+  );
+}
+
+function resolveGlobalTrip2SectionBackdrops(siteSettings: ResolvedSiteSettings) {
+  const b = siteSettings.trip2SectionBackdrops;
+  return {
+    itinerary: resolveGlobalBackdrop(b?.itinerary),
+    inclusionsExclusions: resolveGlobalBackdrop(b?.inclusionsExclusions),
+    batchDates: resolveGlobalBackdrop(b?.batchDates),
+    thingsToExperience: resolveGlobalBackdrop(b?.thingsToExperience),
+    didYouKnow: resolveGlobalBackdrop(b?.didYouKnow),
+  };
 }
 
 function mapQuickLinks(trip: ResolvedTrip2): QuickLinkV2[] | undefined {
@@ -156,7 +198,7 @@ function mapFaqs(trip: ResolvedTrip2): FaqV2[] | undefined {
 
 export default async function Trip2Page({ params }: Params) {
   const { slug } = await params;
-  const trip = await getResolvedTrip2(slug);
+  const [trip, siteSettings] = await Promise.all([getResolvedTrip2(slug), getSiteSettings()]);
   if (!trip) notFound();
 
   const heroImage = resolveImage(trip.heroImage as ImgLike, FALLBACK_HERO_IMAGE, trip.title);
@@ -173,6 +215,11 @@ export default async function Trip2Page({ params }: Params) {
     "Himalayan monastery on a hillside"
   );
 
+  // Global (site-wide, Admin → Trip 2.0 Backdrops) backdrops — same photo
+  // behind this section on every trip. `undefined` when unset, so the
+  // section renders unwrapped exactly as before this feature existed.
+  const globalBackdrops = resolveGlobalTrip2SectionBackdrops(siteSettings);
+
   return (
     <main className="bg-background">
       <TripHeroV2 bookHref={bookHref} imageUrl={heroImage.url} imageAlt={heroImage.alt} images={mapHeroImages(trip)} />
@@ -187,8 +234,15 @@ export default async function Trip2Page({ params }: Params) {
         <QuickLinksV2 links={mapQuickLinks(trip)} />
       </SectionBackdropV2>
       <GalleryGridV2 images={mapGallery(trip)} />
-      <PickupVariantsV2 variants={mapPickupVariants(trip)} defaultItinerary={mapItinerary(trip)} />
-      <InclusionsExclusionsV2 inclusions={orUndefined(trip.inclusions)} exclusions={orUndefined(trip.exclusions)} />
+      <PickupVariantsV2
+        variants={mapPickupVariants(trip)}
+        defaultItinerary={mapItinerary(trip)}
+        backdrop={globalBackdrops.itinerary}
+      />
+      {maybeWrapWithBackdrop(
+        globalBackdrops.inclusionsExclusions,
+        <InclusionsExclusionsV2 inclusions={orUndefined(trip.inclusions)} exclusions={orUndefined(trip.exclusions)} />
+      )}
       <SectionBackdropV2 imageUrl={priceBackdrop.url} imageAlt={priceBackdrop.alt} opacity={priceBackdrop.opacity}>
         {hasPrice ? (
           <PriceV2
@@ -198,10 +252,10 @@ export default async function Trip2Page({ params }: Params) {
             bookHref={bookHref}
           />
         ) : null}
-        <BatchDatesV2 batches={mapBatchDates(trip)} bookHref={bookHref} />
       </SectionBackdropV2>
-      <ThingsToExperienceV2 items={mapExperiences(trip)} />
-      <DidYouKnowV2 facts={mapFacts(trip)} />
+      {maybeWrapWithBackdrop(globalBackdrops.batchDates, <BatchDatesV2 batches={mapBatchDates(trip)} bookHref={bookHref} />)}
+      {maybeWrapWithBackdrop(globalBackdrops.thingsToExperience, <ThingsToExperienceV2 items={mapExperiences(trip)} />)}
+      {maybeWrapWithBackdrop(globalBackdrops.didYouKnow, <DidYouKnowV2 facts={mapFacts(trip)} />)}
       <LetsPlanYourTripV2 destination={trip.leadFormDestination || trip.title} tripSlug={trip.slug} />
       <FaqAccordionV2 faqs={mapFaqs(trip)} />
     </main>

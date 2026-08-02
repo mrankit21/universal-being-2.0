@@ -5,6 +5,7 @@ import { MapPin, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ItineraryTimelineV2, type ItineraryDayV2 } from "@/components/trip/v2/itinerary-timeline-v2";
+import { SectionBackdropV2 } from "@/components/trip/v2/section-backdrop-v2";
 
 export interface PickupVariantV2 {
   id: string;
@@ -47,20 +48,38 @@ const DEFAULT_VARIANTS: PickupVariantV2[] = [
  * (`defaultItinerary`) is used whenever there are no variants, or the
  * selected variant hasn't defined its own — so removing this component's
  * old page-level neighbour never leaves the page without an itinerary.
+ *
+ * Revision (2026-08): optional `backdrop` wraps just the
+ * `ItineraryTimelineV2` (both render paths below) in `SectionBackdropV2`
+ * — the site-wide "Day by Day Itinerary" backdrop from
+ * `SiteSettings.trip2SectionBackdrops.itinerary`, same photo/opacity on
+ * every trip. Omitted when the admin hasn't set that global photo yet,
+ * so the section renders exactly as before.
  */
 export function PickupVariantsV2({
   variants = DEFAULT_VARIANTS,
   defaultItinerary,
+  backdrop,
 }: {
   variants?: PickupVariantV2[];
   defaultItinerary?: ItineraryDayV2[];
+  backdrop?: { imageUrl: string; imageAlt: string; opacity: number };
 }) {
   const [selectedId, setSelectedId] = React.useState(variants[0]?.id ?? "");
   const selected = variants.find((v) => v.id === selectedId) ?? variants[0];
   const effectiveItinerary = selected?.itinerary?.length ? selected.itinerary : defaultItinerary;
 
+  const itineraryTimeline = <ItineraryTimelineV2 key={selected?.id} days={effectiveItinerary} />;
+  const wrappedItinerary = backdrop ? (
+    <SectionBackdropV2 imageUrl={backdrop.imageUrl} imageAlt={backdrop.imageAlt} opacity={backdrop.opacity}>
+      {itineraryTimeline}
+    </SectionBackdropV2>
+  ) : (
+    itineraryTimeline
+  );
+
   if (variants.length === 0) {
-    return <ItineraryTimelineV2 days={effectiveItinerary} />;
+    return wrappedItinerary;
   }
 
   return (
@@ -105,7 +124,7 @@ export function PickupVariantsV2({
         ) : null}
       </section>
 
-      <ItineraryTimelineV2 key={selected?.id} days={effectiveItinerary} />
+      {wrappedItinerary}
     </>
   );
 }

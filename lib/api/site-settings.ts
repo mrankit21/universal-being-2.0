@@ -38,9 +38,35 @@ export interface ResolvedSiteSettings {
     overlayOpacity: number;
   };
   seoDefaults: { title: string; description: string; ogImageUrl?: string };
+  /** Global Trip 2.0 section backdrops (Admin → Trip 2.0 Backdrops) —
+   * same photo + opacity applied behind that section on every published
+   * Trip 2.0 page. `undefined` per-section (or the whole object) means
+   * no photo has been set yet, so the page renders that section plain,
+   * exactly as it did before this feature existed. */
+  trip2SectionBackdrops: {
+    itinerary?: { image?: { url: string; alt: string }; opacityStep: number };
+    inclusionsExclusions?: { image?: { url: string; alt: string }; opacityStep: number };
+    batchDates?: { image?: { url: string; alt: string }; opacityStep: number };
+    thingsToExperience?: { image?: { url: string; alt: string }; opacityStep: number };
+    didYouKnow?: { image?: { url: string; alt: string }; opacityStep: number };
+  };
   /** True when this response came from MongoDB rather than the static
    * fallback — surfaced for admin/debug use only. */
   source: "database" | "static";
+}
+
+type RawImageAsset = { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+
+/** A `GlobalSectionBackdropDoc` only counts as "set" once it has a real
+ * (non-placeholder) uploaded photo — an opacityStep alone with no image
+ * still resolves to `undefined` so the trip page keeps rendering that
+ * section without a backdrop wrapper. */
+function resolveGlobalBackdrop(
+  raw: { image?: unknown; opacityStep?: number } | undefined
+): { image?: { url: string; alt: string }; opacityStep: number } | undefined {
+  const img = raw?.image as RawImageAsset;
+  if (!img?.url || img.isPlaceholder) return undefined;
+  return { image: { url: img.url, alt: img.alt ?? "" }, opacityStep: raw?.opacityStep ?? 6 };
 }
 
 function staticSiteSettings(): ResolvedSiteSettings {
@@ -54,6 +80,7 @@ function staticSiteSettings(): ResolvedSiteSettings {
     copyrightHolder: staticSiteConfig.copyrightHolder,
     footerBackground: { overlayOpacity: 0.25 },
     seoDefaults: { title: staticSiteConfig.brandName, description: staticSiteConfig.tagline },
+    trip2SectionBackdrops: {},
     source: "static",
   };
 }
@@ -121,6 +148,13 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
         title: doc.seoDefaults?.title || staticSiteConfig.brandName,
         description: doc.seoDefaults?.description || staticSiteConfig.tagline,
         ogImageUrl: doc.seoDefaults?.ogImageUrl,
+      },
+      trip2SectionBackdrops: {
+        itinerary: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.itinerary),
+        inclusionsExclusions: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.inclusionsExclusions),
+        batchDates: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.batchDates),
+        thingsToExperience: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.thingsToExperience),
+        didYouKnow: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.didYouKnow),
       },
       source: "database",
     };

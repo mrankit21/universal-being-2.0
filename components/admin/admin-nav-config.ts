@@ -16,6 +16,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "Destinations", href: "/admin/destinations", icon: "MapPin", permission: "destinations:read" },
   { label: "Trips", href: "/admin/trips", icon: "Compass", permission: "trips:read" },
   { label: "Trip 2.0", href: "/admin/trip2", icon: "Sparkles", permission: "trip2:read" },
+  { label: "Trip 2.0 Backdrops", href: "/admin/trip2-backdrops", icon: "Layers", permission: "settings:read" },
   { label: "Itinerary", href: "/admin/itinerary", icon: "MapPinned", permission: "trips:read" },
 
   { label: "Themes", href: "/admin/themes", icon: "Palette", permission: "themes:read" },

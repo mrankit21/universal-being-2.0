@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { imageAssetSchema } from "./shared.schema";
 
+const globalSectionBackdropSchema = z.object({
+  image: imageAssetSchema.optional(),
+  opacityStep: z.number().min(1).max(7).default(6),
+});
+
 export const siteSettingsSchema = z.object({
   brandName: z.string().min(1),
   tagline: z.string().default(""),
@@ -36,6 +41,15 @@ export const siteSettingsSchema = z.object({
     backgroundImageMobile: imageAssetSchema.optional(),
     overlayOpacity: z.number().min(0).max(1).default(0.7),
   }),
+  trip2SectionBackdrops: z
+    .object({
+      itinerary: globalSectionBackdropSchema.optional(),
+      inclusionsExclusions: globalSectionBackdropSchema.optional(),
+      batchDates: globalSectionBackdropSchema.optional(),
+      thingsToExperience: globalSectionBackdropSchema.optional(),
+      didYouKnow: globalSectionBackdropSchema.optional(),
+    })
+    .optional(),
 });
 
 export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;
