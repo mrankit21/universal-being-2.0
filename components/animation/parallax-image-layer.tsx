@@ -11,31 +11,35 @@ export interface ParallaxImageLayerProps {
    * `imageUrl`/`imageAlt` when unset. */
   imageMobileUrl?: string;
   imageMobileAlt?: string;
-  /** How far the image drifts relative to the section's own scroll
-   * distance, as a fraction of the image layer's height. 0.16 means the
-   * photo moves at ~16% of the page's scroll speed — "almost fixed" with
-   * just enough drift to read as depth, not a sudden jump. */
-  strength?: number;
+  /** Opacity the image fades DOWN to by the time the section has fully
+   * scrolled past (progress = 1). 1 = no fade. Defaults to 0.35, matching
+   * the reference: the image stays visibly present, just dimmed, never
+   * fully disappearing before the next section takes over. */
+  fadeToOpacity?: number;
 }
 
 /**
- * Cinematic hero background layer — the visitabudhabi.ae-style effect
- * where the destination photo stays nearly still while everything else
- * (headline, cards, sections) scrolls normally over it.
+ * Cinematic hero background layer — destination photo stays pinned in
+ * place for the entire time its section is in view, then scrolls away
+ * normally once the section itself scrolls past, fading out as it goes.
  *
- * Deliberately NOT `background-attachment: fixed`. That CSS trick pins the
- * image to the *viewport*, which is cheap but historically flaky on iOS
- * Safari inside scroll containers and gives an all-or-nothing "glued to
- * screen" look rather than the reference's *slight* drift. Instead this
- * measures the section's own scroll progress (`useScroll` with
- * `target: sectionRef`) and translates a slightly oversized image layer by
- * a small fraction of that (`useTransform`) — a transform-based parallax
- * that's GPU-composited (translateY only, no layout thrash) and works
- * identically across browsers.
+ * Revision (2026-08): switched from a transform-based "slight drift"
+ * parallax to `position: sticky`. Sticky pins the image to the top of the
+ * viewport for as long as its section occupies the viewport — a true
+ * "fixed" look — without the iOS Safari flakiness of
+ * `background-attachment: fixed` (sticky is well-supported everywhere,
+ * since it's resolved by normal layout/scroll, not a separate compositing
+ * path). No oversize/overscan hack needed either, since the image never
+ * translates on its own; it just sticks, then leaves with its section.
+ * Opacity is the only animated property, driven by the section's own
+ * scroll progress (`useScroll` + `useTransform`), so it's a single
+ * GPU-cheap property change.
  *
  * Usage: give the *section* a `ref` and pass it as `containerRef`; this
- * component fills that section absolutely (`inset-0`) as its first child,
- * behind the section's own gradient scrim and foreground content.
+ * component fills that section (`inset-0`) as its first child, behind the
+ * section's own gradient scrim and foreground content. The section must
+ * NOT have `overflow-hidden` removed elsewhere in a way that clips this
+ * before it can stick — the existing hero sections are fine as-is.
  */
 export function ParallaxImageLayer({
   containerRef,
@@ -43,29 +47,25 @@ export function ParallaxImageLayer({
   imageAlt,
   imageMobileUrl,
   imageMobileAlt,
-  strength = 0.16,
+  fadeToOpacity = 0.35,
 }: ParallaxImageLayerProps & { containerRef: React.RefObject<HTMLElement | null> }) {
   const prefersReducedMotion = useReducedMotion();
 
   // Progress across exactly this section's own scroll distance (0 as its
   // top hits the viewport top, 1 as its bottom hits the viewport top) —
-  // not the whole page — so the drift is scoped to while the section is
-  // actually the one on screen.
+  // not the whole page — so the fade is scoped to while the section is
+  // actually the one leaving the screen.
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  // The layer is oversized (see className below) so translating it never
-  // reveals an edge. Percentages here are relative to the layer's own
-  // (oversized) height, so keep `strength` well under the overscan built
-  // into that oversize — see the h-[128%] / -16% pairing below.
-  const rawY = useTransform(scrollYProgress, [0, 1], ["0%", `-${strength * 100}%`]);
-  const y = prefersReducedMotion ? "0%" : rawY;
+  const rawOpacity = useTransform(scrollYProgress, [0, 1], [1, fadeToOpacity]);
+  const opacity = prefersReducedMotion ? 1 : rawOpacity;
 
   return (
     <div className="absolute inset-0 overflow-hidden" aria-hidden={false}>
-      <motion.div style={{ y }} className="absolute inset-x-0 top-0 h-[128%] w-full will-change-transform">
+      <motion.div style={{ opacity }} className="sticky top-0 h-full w-full will-change-[opacity]">
         <div
           className="absolute inset-0 hidden bg-cover bg-center md:block"
           style={{ backgroundImage: `url(${imageUrl})` }}
