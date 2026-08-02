@@ -18,6 +18,14 @@ export interface SiteSettingsDocument extends Document {
    * "Homepage 2.0" panel. Switching this never deletes either version's
    * content — it only changes which one `app/page.tsx` renders. */
   activeHomepageVersion: "v1" | "v2";
+  /** Trips Version toggle (Trip 2.0), same idea as `activeHomepageVersion`
+   * but for `/trips/[slug]`. "v1" (default) leaves each Trip's own
+   * "Page Version" field (Trip Editor) in control — unchanged from
+   * before this toggle existed. "v2" forces every trip over to its
+   * Trip 2.0 design wherever a matching published Trip 2.0 page exists,
+   * regardless of that trip's individual "Page Version" field — a single
+   * site-wide switch, same spirit as Homepage Version. */
+  activeTripsVersion: "v1" | "v2";
   contact: {
     phone: string;
     whatsapp: string;
@@ -56,6 +64,7 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
     tagline: { type: String, default: "" },
     brandStory: { type: String, default: "" },
     activeHomepageVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
+    activeTripsVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
     contact: {
       phone: { type: String, default: "" },
       whatsapp: { type: String, default: "" },

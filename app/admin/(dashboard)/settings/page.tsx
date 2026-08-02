@@ -118,6 +118,33 @@ export default function SiteSettingsPage() {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Trips Version</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Choose which trip page design goes live at <code>/trips/[slug]</code> across the whole site.
+            Leaving this on &quot;Trips (original)&quot; keeps each trip on whatever its own &quot;Page
+            Version&quot; field (in that Trip&apos;s editor) says. Switching this to &quot;Trip 2.0&quot;
+            forces every trip that has a matching published Trip 2.0 page to use the new design — a trip
+            with no published Trip 2.0 page yet keeps showing its original page either way.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Active Trips Design">
+            <Select
+              value={data.activeTripsVersion ?? "v1"}
+              onValueChange={(v) => set(["activeTripsVersion"], v)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="v1">Trips (original)</SelectItem>
+                <SelectItem value="v2">Trip 2.0 (new)</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-base">Brand Assets</CardTitle></CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
           <ImageAssetField

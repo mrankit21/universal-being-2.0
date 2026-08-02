@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials, getCircuitSiblings } from "@/lib/api/trips";
 import { getResolvedTrip2 } from "@/lib/api/trip2";
+import { getSiteSettings } from "@/lib/api/site-settings";
 import { TripModel } from "@/lib/db/models";
-import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { siteConfig } from "@/data/layout/site-config";
 import { TripHero } from "@/components/trip/trip-hero";
@@ -93,40 +93,31 @@ export default async function TripDetailPage({ params }: TripPageProps) {
   const trip = await getTripBySlug(slug);
   if (!trip) notFound();
 
-  // "Active Homepage"-style switch (Site Settings), but per-trip: an
-  // editor can flip a single Trip over to its Trip 2.0 design from the
-  // Trip Editor's "Page Version" field, same idea as the Homepage
-  // Original/2.0 switch. Everything below this block — the entire
-  // original composition — is completely untouched and still runs
-  // byte-for-byte the same for every "v1" (default) trip; a lightweight
-  // standalone lookup here (not the shared `getTripBySlug` mapper) keeps
-  // this check additive rather than threading a new field through the
-  // existing Trip type and every place that consumes it.
-  //
-  // Guarded exactly like `getResolvedTrip2`/`getTripBySlug`: skip
-  // entirely when the DB isn't configured, and never let a connection
-  // hiccup take the whole page down — worst case a "v2" trip quietly
-  // keeps rendering its original design for one request instead of
-  // failing the static build (a bare `TripModel.findOne()` here with no
-  // `connectToDatabase()` call and no try/catch previously buffered
-  // forever and 10s-timed-out on every `/trips/[slug]` prerender in CI,
-  // where `MONGODB_URI` isn't set — that's what broke the production
-  // build smoke test).
-  if (isDatabaseConfigured()) {
-    try {
-      await connectToDatabase();
-      const versionDoc = await TripModel.findOne({ slug }).select("activeVersion").lean();
-      if (versionDoc?.activeVersion === "v2") {
-        const trip2 = await getResolvedTrip2(slug);
-        if (trip2) redirect(`/trip2/${slug}`);
-        // No matching published Trip 2.0 page yet — fall through and
-        // keep serving the original design rather than 404ing a live
-        // trip page.
-      }
-    } catch (err) {
-      console.error(`[TripDetailPage] activeVersion lookup failed for slug "${slug}":`, err);
-      // Fall through to the original page rather than failing the request.
-    }
+  // "Active Homepage"-style switch (Site Settings) — two layers, same
+  // idea as the Homepage Original/2.0 switch:
+  //   1. Per-trip: an editor can flip a single Trip over to its Trip 2.0
+  //      design from the Trip Editor's "Page Version" field.
+  //   2. Site-wide: Site Settings → "Trips Version" → "Active Trips
+  //      Design" can force EVERY trip to Trip 2.0 at once, exactly like
+  //      the Homepage Version toggle does for `/`. When that site-wide
+  //      switch is "v1" (default), each trip's own "Page Version" field
+  //      still decides — nothing here changes for existing installs.
+  // Everything below this block — the entire original composition — is
+  // completely untouched and still runs byte-for-byte the same for every
+  // "v1" trip; a lightweight standalone lookup here (not the shared
+  // `getTripBySlug` mapper) keeps this check additive rather than
+  // threading a new field through the existing Trip type and every place
+  // that consumes it.
+  const [versionDoc, siteSettings] = await Promise.all([
+    TripModel.findOne({ slug }).select("activeVersion").lean(),
+    getSiteSettings(),
+  ]);
+  const effectiveVersion = siteSettings.activeTripsVersion === "v2" ? "v2" : (versionDoc?.activeVersion ?? "v1");
+  if (effectiveVersion === "v2") {
+    const trip2 = await getResolvedTrip2(slug);
+    if (trip2) redirect(`/trip2/${slug}`);
+    // No matching published Trip 2.0 page yet — fall through and keep
+    // serving the original design rather than 404ing a live trip page.
   }
 
   const relatedTrips = await getRelatedTrips(trip);

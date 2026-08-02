@@ -21,6 +21,9 @@ export interface ResolvedSiteSettings {
    * "v1" when unset (fresh installs, or the DB isn't configured) so the
    * live site never breaks because of this field. */
   activeHomepageVersion: "v1" | "v2";
+  /** Trips Version toggle (Trip 2.0) — "v1" or "v2". Defaults to "v1"
+   * when unset, same fallback rule as `activeHomepageVersion`. */
+  activeTripsVersion: "v1" | "v2";
   brandStory: string;
   contact: { whatsappHref: string; phoneHref: string; email: string; address: string };
   socialLinks: { platform: string; href: string; label: string; icon?: { url: string; alt: string } }[];
@@ -43,6 +46,7 @@ export interface ResolvedSiteSettings {
 function staticSiteSettings(): ResolvedSiteSettings {
   return {
     activeHomepageVersion: "v1",
+    activeTripsVersion: "v1",
     brandStory: staticSiteConfig.brandStory,
     contact: { ...staticSiteConfig.contact, address: contactContent.officeAddress },
     socialLinks: staticSiteConfig.socialLinks,
@@ -84,6 +88,7 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
 
     return {
       activeHomepageVersion: doc.activeHomepageVersion === "v2" ? "v2" : "v1",
+      activeTripsVersion: doc.activeTripsVersion === "v2" ? "v2" : "v1",
       brandStory: doc.brandStory || staticSiteConfig.brandStory,
       contact: {
         whatsappHref: doc.contact?.whatsapp ? toWhatsappHref(doc.contact.whatsapp) : staticSiteConfig.contact.whatsappHref,
