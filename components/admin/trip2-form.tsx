@@ -65,7 +65,7 @@ const emptyQuickLink = () => ({ icon: "Sparkles", label: "", href: "#", order: 0
 const emptyGalleryImage = () => ({ image: { ...BLANK_IMAGE }, caption: "", order: 0 });
 const emptyHotelTier = () => ({ stars: 3, label: "", description: "" });
 const emptyItineraryDay = () => ({ day: 1, title: "", location: "", image: { ...BLANK_IMAGE }, description: "" });
-const emptyPickupVariant = () => ({ city: "", note: "", route: [], itinerary: [] });
+const emptyPickupVariant = () => ({ city: "", note: "", route: [] as string[], itinerary: [] as ReturnType<typeof emptyItineraryDay>[] });
 const emptyBatchDate = () => ({ startDate: "", endDate: "", seatsTotal: 16, seatsAvailable: 16, status: "open" });
 const emptyExperience = () => ({ tag: "", title: "", description: "", href: "#", image: { ...BLANK_IMAGE } });
 const emptyFact = () => ({ icon: "Globe2", title: "", description: "", href: "#" });

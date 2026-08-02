@@ -48,6 +48,14 @@ export interface Trip2ItineraryDayDoc {
 export interface Trip2PickupVariantDoc {
   city: string;
   note: string;
+  /** Ordered list of stop names for this pickup's route, e.g.
+   * ["Delhi", "Udaipur", "Jaipur", "Delhi"] — mirrors `TripPickupVariantDoc`
+   * in `lib/db/models/trip.model.ts` (v1). */
+  route: string[];
+  /** This pickup's own day-by-day itinerary, switched in on the public
+   * page when the visitor picks this city (see
+   * `components/trip/v2/pickup-variants-v2.tsx`). */
+  itinerary: Trip2ItineraryDayDoc[];
 }
 
 export type Trip2BatchStatus = "open" | "filling-fast" | "sold-out";
@@ -106,6 +114,11 @@ export interface Trip2Document extends Document {
   durationLabel: string;
   groupSizeLabel: string;
   heroImage?: unknown;
+  /** Additional hero photos (Admin → Trip 2.0 → Hero Image → "Additional
+   * Hero Images"). When non-empty, `TripHeroV2` renders a swipeable
+   * gallery (dots + arrows + touch-swipe) instead of a single static
+   * image, with `heroImage` always shown first. */
+  heroImages: unknown[];
   bookHref: string;
   quickLinks: Trip2QuickLinkDoc[];
   gallery: Trip2GalleryImageDoc[];
@@ -172,6 +185,8 @@ const PickupVariantSchema = new Schema<Trip2PickupVariantDoc>(
   {
     city: { type: String, default: "" },
     note: { type: String, default: "" },
+    route: { type: [String], default: [] },
+    itinerary: { type: [ItineraryDaySchema], default: [] },
   },
   { _id: false }
 );
@@ -242,6 +257,7 @@ const Trip2Schema = new Schema<Trip2Document>(
     durationLabel: { type: String, default: "" },
     groupSizeLabel: { type: String, default: "" },
     heroImage: { type: ImageAssetSchema },
+    heroImages: { type: [ImageAssetSchema], default: [] },
     bookHref: { type: String, default: "" },
     quickLinks: { type: [QuickLinkSchema], default: [] },
     gallery: { type: [GalleryImageSchema], default: [] },

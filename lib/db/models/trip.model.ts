@@ -1,290 +1,423 @@
 /**
- * Trip2 Mongoose model — one document per Trip 2.0 page (unlike
- * `HomepageV2Model`, this is NOT a singleton: there are many Trip 2.0
- * pages, same as the original `TripModel`). Kept as its own collection,
- * separate from `TripModel`, exactly like `HomepageV2Model` is kept
- * separate from `HomepageModel` — the old Trip Editor and its live
- * `/trips/[slug]` pages are completely untouched by this; Trip 2.0 pages
- * live at `/trip2/[slug]` and are managed from their own "Trip 2.0"
- * section in the Admin Panel.
- *
- * Field groups map 1:1 to the serial-order sections agreed with Ankit
- * (2026-07) and the `components/trip/v2/*` components that render them:
- * hero image, title block, quick links, gallery, hotel tiers, itinerary +
- * inclusions/exclusions, price, pickup variants, batch dates, things to
- * experience, did you know, and FAQ.
+ * Trip Mongoose model — mirrors `types/trip.ts` (Architecture §3/§6/§13/§14).
+ * One document per Trip page at `/trips/[slug]` (the original Trip Editor,
+ * distinct from `Trip2Model`'s `/trip2/[slug]` pages — see `trip2.model.ts`
+ * doc comment). Field groups map 1:1 to `Trip` in `types/trip.ts` and the
+ * Zod schema in `lib/validators/trip.schema.ts`, which remains the single
+ * source of truth for validation; this file only needs to persist the same
+ * shape.
  */
 import mongoose, { Schema, model, type Model, type Document } from "mongoose";
 const models = mongoose.models;
-import { ImageAssetSchema } from "./shared.schemas";
+import { ImageAssetSchema, SeoSchema } from "./shared.schemas";
 
-export interface Trip2QuickLinkDoc {
-  icon: string;
-  label: string;
-  href: string;
-  order: number;
-}
-
-export interface Trip2GalleryImageDoc {
-  image?: unknown;
-  caption: string;
-  order: number;
-}
-
-export interface Trip2HotelTierDoc {
-  stars: number;
-  label: string;
-  description: string;
-}
-
-export interface Trip2ItineraryDayDoc {
+export interface TripDayPlanDoc {
   day: number;
   title: string;
-  location: string;
-  image?: unknown;
   description: string;
+  activities: string[];
+  meals: ("breakfast" | "lunch" | "dinner")[];
+  stay?: string;
+  location?: string;
+  images: unknown[];
 }
 
-export interface Trip2PickupVariantDoc {
-  city: string;
-  note: string;
-  /** This variant's own route, e.g. ["Delhi", "Udaipur", "Jaipur"] —
-   * rendered as a stop-by-stop chain under the pickup selector. Optional/
-   * empty for variants that haven't set one yet. */
-  route: string[];
-  /** This variant's own day-by-day itinerary. When set (non-empty), the
-   * Trip page swaps the itinerary shown under Pickup Variants to this
-   * list as soon as the visitor picks this variant — same day/title/
-   * location/image/description shape as the Trip's top-level `itinerary`,
-   * so it renders through the same `ItineraryTimelineV2`. Empty means this
-   * variant hasn't defined its own itinerary yet, and the Trip's
-   * top-level `itinerary` is shown instead. */
-  itinerary: Trip2ItineraryDayDoc[];
-}
-
-export type Trip2BatchStatus = "open" | "filling-fast" | "sold-out";
-
-export interface Trip2BatchDateDoc {
+export interface TripDepartureDateDoc {
+  id: string;
   startDate: string;
   endDate: string;
   seatsTotal: number;
   seatsAvailable: number;
-  status: Trip2BatchStatus;
+  priceOverride?: number;
+  status: "open" | "filling-fast" | "sold-out" | "closed";
+  isPublished?: boolean;
+  pickupVariantId?: string;
+  bookingAmountOverride?: number;
 }
 
-export interface Trip2ExperienceDoc {
-  tag: string;
-  title: string;
+export interface TripAccommodationEntryDoc {
+  id: string;
+  hotelName: string;
+  roomType: string;
+  roomSharing?: string;
+  amenities?: string[];
+  location?: string;
+  notes?: string;
+  images: unknown[];
+}
+
+export interface TripMealPlanDoc {
+  breakfast: boolean;
+  lunch: boolean;
+  dinner: boolean;
+  snacks: boolean;
   description: string;
-  href: string;
-  image?: unknown;
 }
 
-export interface Trip2FactDoc {
-  icon: string;
+export interface TripHotelCategoryDoc {
+  id: string;
+  stars: 0 | 3 | 4 | 5;
   title: string;
-  description: string;
-  href: string;
+  shortDescription?: string;
+  isEnabled: boolean;
 }
 
-export interface Trip2FaqDoc {
+export interface TripFaqDoc {
+  id: string;
   question: string;
   answer: string;
 }
 
-/** Admin-configurable background photo for a `SectionBackdropV2` wrapper,
- * with an overlay-opacity slider (0-100). Higher opacity = more of the
- * cream/tint colour and less of the photo showing through; this mirrors
- * the `bg-background/88` overlay `SectionBackdropV2` already hardcodes,
- * just made per-trip and admin-editable instead of a fixed constant. */
-export interface Trip2SectionBackdropDoc {
-  image?: unknown;
-  opacity: number;
+export interface TripReviewDoc {
+  id: string;
+  customerName: string;
+  customerPhoto: unknown;
+  rating: number;
+  reviewText: string;
+  reviewDate?: string;
 }
 
-export interface Trip2SectionBackdropsDoc {
-  /** Behind Quick Links + Hotel Tiers. */
-  quickLinks?: Trip2SectionBackdropDoc;
-  /** Behind Price + Pickup Variants + Batch Dates. */
-  price?: Trip2SectionBackdropDoc;
+export interface TripDestinationRouteDoc {
+  id: string;
+  stops: string[];
+  href?: string;
 }
 
-export interface Trip2Document extends Document {
+export interface TripPickupVariantDoc {
+  id: string;
+  name: string;
+  pickupCity: string;
+  dropCity: string;
+  route: string[];
+  duration: { days: number; nights: number; label: string };
+  startingPrice: number;
+  discountedPrice?: number;
+  bookingAmount: number;
+  gstNote?: string;
+  paymentNote?: string;
+  itinerary: TripDayPlanDoc[];
+  status?: "active" | "draft" | "archived";
+  isPublished?: boolean;
+  isDefault?: boolean;
+}
+
+export interface TripDocument extends Document {
   slug: string;
-  status: "draft" | "published";
   title: string;
+
+  destinationSlug: string;
+  destinationName: string;
+
+  themeKey: string;
+
   shortDescription: string;
-  location: string;
-  durationLabel: string;
-  groupSizeLabel: string;
-  heroImage?: unknown;
-  /** Extra hero photos beyond `heroImage`. When non-empty, the Trip page
-   * hero becomes a swipeable gallery (`heroImage` first, then these, in
-   * order) instead of a single static photo. Empty = unchanged
-   * single-image hero. */
-  heroImages: unknown[];
-  bookHref: string;
-  quickLinks: Trip2QuickLinkDoc[];
-  gallery: Trip2GalleryImageDoc[];
-  hotelTiers: Trip2HotelTierDoc[];
-  itinerary: Trip2ItineraryDayDoc[];
+  fullDescription: string;
+
+  heroImage: unknown;
+  heroImageMobile?: unknown;
+  coverImage: unknown;
+  thumbnail: unknown;
+  homepageHeroImage: unknown;
+  gallery: unknown[];
+
+  duration: { days: number; nights: number; label: string };
+  difficulty: "easy" | "moderate" | "challenging";
+  bestSeason: string[];
+  bestTimeToVisit?: string;
+  altitude?: string;
+  groupSize: { min: number; max: number };
+  pickup: string;
+  drop: string;
+  startingCity?: string;
+  endingCity?: string;
+  vehicle: string;
+  travelNotes?: string;
+
+  accommodation: TripAccommodationEntryDoc[];
+  mealPlan: TripMealPlanDoc;
+
+  price: {
+    base: number;
+    discounted?: number;
+    bookingAmount: number;
+    currency: string;
+    sharingTypeMarkup?: { double?: number; triple?: number };
+  };
+
+  circuitGroup?: string;
+  isCircuitParent?: boolean;
+  destinationRoutes?: TripDestinationRouteDoc[];
+
+  pickupVariants?: TripPickupVariantDoc[];
+  hotelCategories?: TripHotelCategoryDoc[];
+
+  totalSeats: number;
+  availableSeats: number;
+  departureDates: TripDepartureDateDoc[];
+
   inclusions: string[];
   exclusions: string[];
-  price: { basePrice: number; discountedPrice?: number; bookingAmount: number };
-  pickupVariants: Trip2PickupVariantDoc[];
-  batchDates: Trip2BatchDateDoc[];
-  thingsToExperience: Trip2ExperienceDoc[];
-  didYouKnow: Trip2FactDoc[];
-  faqs: Trip2FaqDoc[];
-  sectionBackdrops?: Trip2SectionBackdropsDoc;
-  /** Prefills the "Let's Plan Your Trip" lead form's destination field.
-   * Falls back to `title` when blank. */
-  leadFormDestination: string;
+  highlights: string[];
+  itinerary: TripDayPlanDoc[];
+  faqs: TripFaqDoc[];
+  reviews: TripReviewDoc[];
+  reviewIds: string[];
+  termsAndConditions: string[];
+  cancellationPolicy: string;
+
+  mapEmbedUrl?: string;
+  mapQuery: string;
+
+  rating: number;
+  reviewCount: number;
+
+  featured: boolean;
+  status: "draft" | "published" | "archived";
+  activeVersion?: "v1" | "v2";
+
+  seo: unknown;
+
+  isPlaceholderContent: boolean;
+
+  /** Admin audit fields — who created/last-edited this Trip document.
+   * Set from the requesting session's email on every write (see
+   * app/api/admin/trips/route.ts and [id]/route.ts). */
   createdBy?: string;
   updatedBy?: string;
+
   createdAt: string;
   updatedAt: string;
 }
 
-const QuickLinkSchema = new Schema<Trip2QuickLinkDoc>(
+const DayPlanSchema = new Schema<TripDayPlanDoc>(
   {
-    icon: { type: String, default: "Sparkles" },
-    label: { type: String, default: "" },
-    href: { type: String, default: "#" },
-    order: { type: Number, default: 0 },
-  },
-  { _id: false }
-);
-
-const GalleryImageSchema = new Schema<Trip2GalleryImageDoc>(
-  {
-    image: { type: ImageAssetSchema },
-    caption: { type: String, default: "" },
-    order: { type: Number, default: 0 },
-  },
-  { _id: false }
-);
-
-const HotelTierSchema = new Schema<Trip2HotelTierDoc>(
-  {
-    stars: { type: Number, default: 3 },
-    label: { type: String, default: "" },
-    description: { type: String, default: "" },
-  },
-  { _id: false }
-);
-
-const ItineraryDaySchema = new Schema<Trip2ItineraryDayDoc>(
-  {
-    day: { type: Number, default: 1 },
+    day: { type: Number, required: true },
     title: { type: String, default: "" },
-    location: { type: String, default: "" },
-    image: { type: ImageAssetSchema },
     description: { type: String, default: "" },
+    activities: { type: [String], default: [] },
+    meals: { type: [String], enum: ["breakfast", "lunch", "dinner"], default: [] },
+    stay: { type: String },
+    location: { type: String },
+    images: { type: [ImageAssetSchema], default: [] },
   },
   { _id: false }
 );
 
-const PickupVariantSchema = new Schema<Trip2PickupVariantDoc>(
+const DepartureDateSchema = new Schema<TripDepartureDateDoc>(
   {
-    city: { type: String, default: "" },
-    note: { type: String, default: "" },
-    route: { type: [String], default: [] },
-    itinerary: { type: [ItineraryDaySchema], default: [] },
-  },
-  { _id: false }
-);
-
-const BatchDateSchema = new Schema<Trip2BatchDateDoc>(
-  {
+    id: { type: String, required: true },
     startDate: { type: String, required: true },
     endDate: { type: String, required: true },
-    seatsTotal: { type: Number, default: 16 },
-    seatsAvailable: { type: Number, default: 16 },
-    status: { type: String, enum: ["open", "filling-fast", "sold-out"], default: "open" },
+    seatsTotal: { type: Number, default: 0 },
+    seatsAvailable: { type: Number, default: 0 },
+    priceOverride: { type: Number },
+    status: { type: String, enum: ["open", "filling-fast", "sold-out", "closed"], default: "open" },
+    isPublished: { type: Boolean, default: true },
+    // Pickup Variant Architecture (2026-07) — see types/trip.ts DepartureDate doc.
+    pickupVariantId: { type: String },
+    bookingAmountOverride: { type: Number },
   },
   { _id: false }
 );
 
-const ExperienceSchema = new Schema<Trip2ExperienceDoc>(
+const AccommodationEntrySchema = new Schema<TripAccommodationEntryDoc>(
   {
-    tag: { type: String, default: "" },
-    title: { type: String, default: "" },
+    id: { type: String, required: true },
+    hotelName: { type: String, default: "" },
+    roomType: { type: String, default: "" },
+    roomSharing: { type: String },
+    amenities: { type: [String], default: [] },
+    location: { type: String },
+    notes: { type: String },
+    images: { type: [ImageAssetSchema], default: [] },
+  },
+  { _id: false }
+);
+
+const MealPlanSchema = new Schema<TripMealPlanDoc>(
+  {
+    breakfast: { type: Boolean, default: false },
+    lunch: { type: Boolean, default: false },
+    dinner: { type: Boolean, default: false },
+    snacks: { type: Boolean, default: false },
     description: { type: String, default: "" },
-    href: { type: String, default: "#" },
-    image: { type: ImageAssetSchema },
   },
   { _id: false }
 );
 
-const FactSchema = new Schema<Trip2FactDoc>(
+const HotelCategorySchema = new Schema<TripHotelCategoryDoc>(
   {
-    icon: { type: String, default: "Globe2" },
+    id: { type: String, required: true },
+    stars: { type: Number, enum: [0, 3, 4, 5], required: true },
     title: { type: String, default: "" },
-    description: { type: String, default: "" },
-    href: { type: String, default: "#" },
+    shortDescription: { type: String },
+    isEnabled: { type: Boolean, default: true },
   },
   { _id: false }
 );
 
-const FaqSchema = new Schema<Trip2FaqDoc>(
+const FaqSchema = new Schema<TripFaqDoc>(
   {
+    id: { type: String, required: true },
     question: { type: String, default: "" },
     answer: { type: String, default: "" },
   },
   { _id: false }
 );
 
-const SectionBackdropSchema = new Schema<Trip2SectionBackdropDoc>(
+const TripReviewSchema = new Schema<TripReviewDoc>(
   {
-    image: { type: ImageAssetSchema },
-    opacity: { type: Number, default: 88 },
+    id: { type: String, required: true },
+    customerName: { type: String, default: "" },
+    customerPhoto: { type: ImageAssetSchema },
+    rating: { type: Number, min: 1, max: 5, default: 5 },
+    reviewText: { type: String, default: "" },
+    reviewDate: { type: String },
   },
   { _id: false }
 );
 
-const SectionBackdropsSchema = new Schema<Trip2SectionBackdropsDoc>(
+const DestinationRouteSchema = new Schema<TripDestinationRouteDoc>(
   {
-    quickLinks: { type: SectionBackdropSchema },
-    price: { type: SectionBackdropSchema },
+    id: { type: String, required: true },
+    stops: { type: [String], default: [] },
+    href: { type: String },
   },
   { _id: false }
 );
 
-const Trip2Schema = new Schema<Trip2Document>(
+// Pickup Variant Architecture (2026-07) — see types/trip.ts PickupVariant doc.
+const PickupVariantSchema = new Schema<TripPickupVariantDoc>(
   {
-    slug: { type: String, required: true, unique: true, trim: true, lowercase: true, index: true },
-    status: { type: String, enum: ["draft", "published"], default: "draft", index: true },
-    title: { type: String, default: "" },
+    id: { type: String, required: true },
+    name: { type: String, default: "" },
+    pickupCity: { type: String, default: "" },
+    dropCity: { type: String, default: "" },
+    route: { type: [String], default: [] },
+    duration: {
+      days: { type: Number, default: 1 },
+      nights: { type: Number, default: 0 },
+      label: { type: String, default: "" },
+    },
+    startingPrice: { type: Number, default: 0 },
+    discountedPrice: { type: Number },
+    bookingAmount: { type: Number, default: 0 },
+    gstNote: { type: String },
+    paymentNote: { type: String },
+    itinerary: { type: [DayPlanSchema], default: [] },
+    status: { type: String, enum: ["active", "draft", "archived"], default: "active" },
+    // Deprecated — kept for variants saved before `status` existed.
+    isPublished: { type: Boolean, default: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
+const TripSchema = new Schema<TripDocument>(
+  {
+    slug: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+    title: { type: String, required: true, trim: true },
+
+    destinationSlug: { type: String, required: true, index: true },
+    destinationName: { type: String, required: true, default: "" },
+
+    themeKey: {
+      type: String,
+      required: true,
+      enum: ["brand", "rajasthan", "winter", "monsoon", "beach", "mountain", "forest", "udaipur", "spiti", "manali", "goa", "jibhi"],
+    },
+
     shortDescription: { type: String, default: "" },
-    location: { type: String, default: "" },
-    durationLabel: { type: String, default: "" },
-    groupSizeLabel: { type: String, default: "" },
-    heroImage: { type: ImageAssetSchema },
-    heroImages: { type: [ImageAssetSchema], default: [] },
-    bookHref: { type: String, default: "" },
-    quickLinks: { type: [QuickLinkSchema], default: [] },
-    gallery: { type: [GalleryImageSchema], default: [] },
-    hotelTiers: { type: [HotelTierSchema], default: [] },
-    itinerary: { type: [ItineraryDaySchema], default: [] },
+    fullDescription: { type: String, default: "" },
+
+    heroImage: { type: ImageAssetSchema, required: true },
+    heroImageMobile: { type: ImageAssetSchema },
+    coverImage: { type: ImageAssetSchema, required: true },
+    thumbnail: { type: ImageAssetSchema, required: true },
+    homepageHeroImage: { type: ImageAssetSchema, required: true },
+    gallery: { type: [ImageAssetSchema], default: [] },
+
+    duration: {
+      days: { type: Number, required: true },
+      nights: { type: Number, required: true },
+      label: { type: String, default: "" },
+    },
+    difficulty: { type: String, enum: ["easy", "moderate", "challenging"], required: true },
+    bestSeason: { type: [String], default: [] },
+    bestTimeToVisit: { type: String },
+    altitude: { type: String },
+    groupSize: {
+      min: { type: Number, default: 1 },
+      max: { type: Number, default: 1 },
+    },
+    pickup: { type: String, default: "" },
+    drop: { type: String, default: "" },
+    startingCity: { type: String },
+    endingCity: { type: String },
+    vehicle: { type: String, default: "" },
+    travelNotes: { type: String },
+
+    accommodation: { type: [AccommodationEntrySchema], default: [] },
+    mealPlan: {
+      type: MealPlanSchema,
+      default: { breakfast: false, lunch: false, dinner: false, snacks: false, description: "" },
+    },
+
+    price: {
+      base: { type: Number, required: true, default: 0 },
+      discounted: { type: Number },
+      bookingAmount: { type: Number, required: true, default: 0 },
+      currency: { type: String, default: "INR" },
+      // Room Sharing markup (2026-07) — deliberately no schema-level default,
+      // see lib/validators/trip.schema.ts comment on the same field.
+      sharingTypeMarkup: {
+        double: { type: Number },
+        triple: { type: Number },
+      },
+    },
+
+    circuitGroup: { type: String, trim: true, index: true },
+    isCircuitParent: { type: Boolean, default: false },
+    destinationRoutes: { type: [DestinationRouteSchema], default: [] },
+
+    // Pickup Variant Architecture (2026-07).
+    pickupVariants: { type: [PickupVariantSchema], default: [] },
+    // Hotel Category Architecture (2026-07).
+    hotelCategories: { type: [HotelCategorySchema], default: [] },
+
+    totalSeats: { type: Number, default: 0 },
+    availableSeats: { type: Number, default: 0 },
+    departureDates: { type: [DepartureDateSchema], default: [] },
+
     inclusions: { type: [String], default: [] },
     exclusions: { type: [String], default: [] },
-    price: {
-      basePrice: { type: Number, default: 0 },
-      discountedPrice: { type: Number },
-      bookingAmount: { type: Number, default: 0 },
-    },
-    pickupVariants: { type: [PickupVariantSchema], default: [] },
-    batchDates: { type: [BatchDateSchema], default: [] },
-    thingsToExperience: { type: [ExperienceSchema], default: [] },
-    didYouKnow: { type: [FactSchema], default: [] },
+    highlights: { type: [String], default: [] },
+    itinerary: { type: [DayPlanSchema], default: [] },
     faqs: { type: [FaqSchema], default: [] },
-    sectionBackdrops: { type: SectionBackdropsSchema },
-    leadFormDestination: { type: String, default: "" },
+    reviews: { type: [TripReviewSchema], default: [] },
+    reviewIds: { type: [String], default: [] },
+    termsAndConditions: { type: [String], default: [] },
+    cancellationPolicy: { type: String, default: "" },
+
+    mapEmbedUrl: { type: String },
+    mapQuery: { type: String, default: "" },
+
+    rating: { type: Number, min: 0, max: 5, default: 0 },
+    reviewCount: { type: Number, default: 0 },
+
+    featured: { type: Boolean, default: false, index: true },
+    status: { type: String, enum: ["draft", "published", "archived"], default: "draft", index: true },
+    // "Active Homepage"-style switch, but per-trip — see types/trip.ts doc.
+    activeVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
+
+    seo: { type: SeoSchema, required: true },
+
+    isPlaceholderContent: { type: Boolean, default: false },
+
     createdBy: { type: String },
     updatedBy: { type: String },
   },
   { timestamps: true }
 );
 
-export const Trip2Model: Model<Trip2Document> = models.Trip2 || model<Trip2Document>("Trip2", Trip2Schema);
+export const TripModel: Model<TripDocument> = models.Trip || model<TripDocument>("Trip", TripSchema);
