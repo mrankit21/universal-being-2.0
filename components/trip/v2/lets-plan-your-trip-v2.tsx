@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Phone, User, MapPin, CalendarDays, Loader2 } from "lucide-react";
+import { Phone, User, MapPin, Calendar, Loader2 } from "lucide-react";
 
 const WHATSAPP_REGEX = /^[6-9]\d{9}$/;
 
@@ -125,7 +125,7 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
                 <span className="w-full truncate text-sm text-foreground">{destination}</span>
               </label>
               <label className="flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5">
-                <CalendarDays className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <Calendar className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <input
                   type="text"
                   name="travelTiming"

@@ -65,7 +65,7 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images }: TripHeroV2P
   return (
     <section
       ref={sectionRef}
-      className="relative isolate flex h-[70svh] min-h-[420px] w-full flex-col justify-end overflow-hidden sm:h-[80svh]"
+      className="relative isolate flex h-[100svh] min-h-[620px] w-full flex-col justify-end overflow-hidden"
       onTouchStart={(e) => {
         touchStartX.current = e.touches[0]?.clientX ?? null;
       }}
