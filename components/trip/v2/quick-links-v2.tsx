@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { resolveTrip2Icon } from "./icon-registry";
 
@@ -40,19 +41,27 @@ export function QuickLinksV2({ links = DEFAULT_LINKS }: { links?: QuickLinkV2[] 
   return (
     <section className="w-full py-6 sm:py-8">
       <div className="mx-auto flex max-w-3xl gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide snap-x snap-mandatory sm:gap-4 sm:px-6">
-        {links.map((link) => {
+        {links.map((link, i) => {
           const Icon = resolveTrip2Icon(link.icon);
           return (
-            <Link
+            <motion.div
               key={link.id}
-              href={link.href}
-              className="flex w-20 shrink-0 snap-start flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-primary/50 hover:bg-primary/5 sm:w-24 sm:p-3.5"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.4, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+              className="shrink-0 snap-start"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-10">
-                <Icon className="size-4 sm:size-5" strokeWidth={1.75} aria-hidden="true" />
-              </span>
-              <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">{link.label}</span>
-            </Link>
+              <Link
+                href={link.href}
+                className="flex w-20 flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-primary/50 hover:bg-primary/5 sm:w-24 sm:p-3.5"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-10">
+                  <Icon className="size-4 sm:size-5" strokeWidth={1.75} aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">{link.label}</span>
+              </Link>
+            </motion.div>
           );
         })}
       </div>

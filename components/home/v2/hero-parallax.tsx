@@ -6,6 +6,7 @@ import { ArrowRight, ArrowDown } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
+import { ParallaxImageLayer } from "@/components/animation/parallax-image-layer";
 import { cn } from "@/lib/utils";
 
 export interface HeroParallaxProps {
@@ -27,17 +28,18 @@ export interface HeroParallaxProps {
 
 /**
  * Homepage UI v2 — hero section modeled on visitabudhabi.ae's "Find your
- * pace" opener: full-bleed photo held fixed with `bg-fixed` (the image
- * itself never moves — only the page's content scrolls over it), a large
+ * pace" opener: a destination photo that stays almost still while the
+ * headline and every section below scroll normally over it, a large
  * serif headline, and a scroll cue.
  *
- * Note on `bg-fixed`: this is a CSS `background-attachment: fixed` effect.
- * It's solid on desktop and Android Chrome (matches the reference
- * screenshots, which were themselves captured on Android). iOS Safari has
- * historically been inconsistent with fixed backgrounds inside scroll
- * containers — worth a real-device check once this is wired into the app;
- * a `motion`-driven transform-based parallax is a drop-in fallback if that
- * ever becomes an issue.
+ * Revision (2026-08): the background is now a genuine scroll-linked
+ * parallax (`ParallaxImageLayer`, built on Framer Motion's `useScroll` +
+ * `useTransform`) instead of `background-attachment: fixed`. `bg-fixed`
+ * pins the image to the viewport — cheap, but historically inconsistent
+ * on iOS Safari inside scroll containers, and reads as "glued to screen"
+ * rather than the reference's slight drift. The transform-based version
+ * drifts the photo at ~16% of scroll speed, is GPU-composited (translateY
+ * only), and degrades gracefully under `prefers-reduced-motion`.
  *
  * Static content only for now — no data-fetching, so this can sit at a
  * preview route and be swapped for CMS-driven props later without
@@ -56,23 +58,19 @@ export function HeroParallax({
   className,
 }: HeroParallaxProps) {
   const prefersReducedMotion = useReducedMotion();
+  const sectionRef = React.useRef<HTMLElement | null>(null);
 
   return (
-    <section className={cn("relative isolate flex h-[100svh] min-h-[620px] w-full flex-col justify-end overflow-hidden", className)}>
-      {/* Fixed background layer — separate images for phone vs. tablet/desktop,
-          swapped at the md breakpoint (768px). Mobile falls back to the
-          desktop image when no dedicated crop is set. */}
-      <div
-        className="absolute inset-0 hidden bg-cover bg-center bg-fixed md:block"
-        style={{ backgroundImage: `url(${imageUrl})` }}
-        role="img"
-        aria-label={imageAlt}
-      />
-      <div
-        className="absolute inset-0 block bg-cover bg-center bg-fixed md:hidden"
-        style={{ backgroundImage: `url(${imageMobileUrl || imageUrl})` }}
-        role="img"
-        aria-label={imageMobileAlt || imageAlt}
+    <section
+      ref={sectionRef}
+      className={cn("relative isolate flex h-[100svh] min-h-[620px] w-full flex-col justify-end overflow-hidden", className)}
+    >
+      <ParallaxImageLayer
+        containerRef={sectionRef}
+        imageUrl={imageUrl}
+        imageAlt={imageAlt}
+        imageMobileUrl={imageMobileUrl}
+        imageMobileAlt={imageMobileAlt}
       />
       {/* Legibility scrim */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/40" aria-hidden="true" />
