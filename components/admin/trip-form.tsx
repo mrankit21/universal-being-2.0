@@ -99,6 +99,7 @@ function blank(): TripFormValue {
     reviewCount: 0,
     featured: false,
     status: "draft",
+    activeVersion: "v1",
     seo: { title: "", description: "", keywords: [] },
     isPlaceholderContent: true,
   };
@@ -286,12 +287,27 @@ export function TripForm({ tripId, initialValue }: { tripId?: string; initialVal
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-3">
           <FormField label="" className="flex flex-row items-center gap-2 space-y-0">
             <Switch checked={value.featured} onCheckedChange={(v) => set("featured", v)} id="featured" />
           </FormField>
           <label htmlFor="featured" className="text-sm font-medium">Featured trip</label>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground" title="Which page design is live at /trips/[slug] for this trip. Switching this never deletes either version's content — the Trip 2.0 page keeps its own content in its own panel.">
+            Page Version
+          </span>
+          <Select
+            value={value.activeVersion ?? "v1"}
+            onValueChange={(v) => set("activeVersion", v as TripFormValue["activeVersion"])}
+          >
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="v1">Original</SelectItem>
+              <SelectItem value="v2">Trip 2.0 (new)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <Select value={value.status} onValueChange={(v) => set("status", v as TripFormValue["status"])}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

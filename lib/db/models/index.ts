@@ -17,3 +17,5 @@ export * from "./payment-event.model";
 export * from "./counter.model";
 export * from "./saved-item.model";
 export * from "./promo-lead.model";
+export * from "./trip2.model";
+export * from "./trip2-lead.model";

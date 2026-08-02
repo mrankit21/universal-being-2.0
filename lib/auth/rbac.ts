@@ -14,6 +14,8 @@ export type Permission =
   | "dashboard:view"
   | "trips:read"
   | "trips:write"
+  | "trip2:read"
+  | "trip2:write"
   | "destinations:read"
   | "destinations:write"
   | "themes:read"
@@ -40,6 +42,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "dashboard:view",
     "trips:read",
     "trips:write",
+    "trip2:read",
+    "trip2:write",
     "destinations:read",
     "destinations:write",
     "themes:read",
@@ -65,6 +69,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "dashboard:view",
     "trips:read",
     "trips:write",
+    "trip2:read",
+    "trip2:write",
     "destinations:read",
     "destinations:write",
     "themes:read",
@@ -87,6 +93,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "dashboard:view",
     "trips:read",
     "trips:write",
+    "trip2:read",
+    "trip2:write",
     "destinations:read",
     "destinations:write",
     "homepage:read",

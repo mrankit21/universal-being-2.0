@@ -452,6 +452,11 @@ export interface Trip {
   /** Admin Panel "Publish/Unpublish" + "Mark Featured Trips" (requirement #10). */
   featured: boolean;
   status: TripStatus;
+  /** "Active Homepage"-style switch (Site Settings), but per-trip: which
+   * page design is live at `/trips/[slug]` for this trip — the original
+   * composition ("v1", default) or its Trip 2.0 counterpart ("v2"),
+   * once one exists with the same slug. See `app/trips/[slug]/page.tsx`. */
+  activeVersion?: "v1" | "v2";
 
   seo: TripSeo;
 

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials, getCircuitSiblings } from "@/lib/api/trips";
+import { getResolvedTrip2 } from "@/lib/api/trip2";
+import { TripModel } from "@/lib/db/models";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { siteConfig } from "@/data/layout/site-config";
 import { TripHero } from "@/components/trip/trip-hero";
@@ -89,6 +91,23 @@ export default async function TripDetailPage({ params }: TripPageProps) {
   const { slug } = await params;
   const trip = await getTripBySlug(slug);
   if (!trip) notFound();
+
+  // "Active Homepage"-style switch (Site Settings), but per-trip: an
+  // editor can flip a single Trip over to its Trip 2.0 design from the
+  // Trip Editor's "Page Version" field, same idea as the Homepage
+  // Original/2.0 switch. Everything below this block — the entire
+  // original composition — is completely untouched and still runs
+  // byte-for-byte the same for every "v1" (default) trip; a lightweight
+  // standalone lookup here (not the shared `getTripBySlug` mapper) keeps
+  // this check additive rather than threading a new field through the
+  // existing Trip type and every place that consumes it.
+  const versionDoc = await TripModel.findOne({ slug }).select("activeVersion").lean();
+  if (versionDoc?.activeVersion === "v2") {
+    const trip2 = await getResolvedTrip2(slug);
+    if (trip2) redirect(`/trip2/${slug}`);
+    // No matching published Trip 2.0 page yet — fall through and keep
+    // serving the original design rather than 404ing a live trip page.
+  }
 
   const relatedTrips = await getRelatedTrips(trip);
   const assignedReviews = await getTripReviewTestimonials(trip);

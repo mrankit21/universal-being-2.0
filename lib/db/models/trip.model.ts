@@ -201,6 +201,7 @@ export interface TripDocument extends Document {
   reviewCount: number;
   featured: boolean;
   status: "draft" | "published" | "archived";
+  activeVersion?: "v1" | "v2";
   seo: unknown;
   isPlaceholderContent: boolean;
   createdBy?: string;
@@ -303,6 +304,11 @@ const TripSchema = new Schema<TripDocument>(
 
     featured: { type: Boolean, default: false, index: true },
     status: { type: String, enum: ["draft", "published", "archived"], default: "draft", index: true },
+    // "Active Homepage"-style switch (Site Settings), but per-trip: which
+    // page design is live at `/trips/[slug]` for this trip. "v2" only
+    // takes effect once a published `Trip2` document with the same slug
+    // exists — see `app/trips/[slug]/page.tsx`. Added 2026-08.
+    activeVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
 
     seo: { type: SeoSchema, required: true },
 

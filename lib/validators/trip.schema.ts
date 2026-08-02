@@ -178,6 +178,7 @@ export const tripSchema = z.object({
   reviewCount: z.number().int().min(0).default(0),
   featured: z.boolean().default(false),
   status: z.enum(["draft", "published", "archived"]).default("draft"),
+  activeVersion: z.enum(["v1", "v2"]).default("v1"),
   seo: seoSchema,
   isPlaceholderContent: z.boolean().default(false),
 });
