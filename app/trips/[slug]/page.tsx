@@ -5,6 +5,7 @@ import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials
 import { getResolvedTrip2 } from "@/lib/api/trip2";
 import { getSiteSettings } from "@/lib/api/site-settings";
 import { TripModel } from "@/lib/db/models";
+import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import { siteConfig } from "@/data/layout/site-config";
 import { TripHero } from "@/components/trip/trip-hero";
@@ -108,10 +109,19 @@ export default async function TripDetailPage({ params }: TripPageProps) {
   // `getTripBySlug` mapper) keeps this check additive rather than
   // threading a new field through the existing Trip type and every place
   // that consumes it.
-  const [versionDoc, siteSettings] = await Promise.all([
-    TripModel.findOne({ slug }).select("activeVersion").lean(),
-    getSiteSettings(),
-  ]);
+  //
+  // Guarded with `isDatabaseConfigured()`/`connectToDatabase()` — same
+  // pattern every other DB call in `lib/api/*` already uses. Without this
+  // guard, a build/environment with no `MONGODB_URI` (e.g. CI) would hang
+  // on this bare `TripModel.findOne(...)` waiting for a connection that
+  // never comes, instead of cleanly falling back to "v1" like the rest of
+  // the site does when the database isn't configured.
+  let versionDoc: { activeVersion?: "v1" | "v2" } | null = null;
+  if (isDatabaseConfigured()) {
+    await connectToDatabase();
+    versionDoc = await TripModel.findOne({ slug }).select("activeVersion").lean();
+  }
+  const siteSettings = await getSiteSettings();
   const effectiveVersion = siteSettings.activeTripsVersion === "v2" ? "v2" : (versionDoc?.activeVersion ?? "v1");
   if (effectiveVersion === "v2") {
     const trip2 = await getResolvedTrip2(slug);
