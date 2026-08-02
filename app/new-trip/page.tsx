@@ -5,7 +5,6 @@ import { TripTitleV2 } from "@/components/trip/v2/trip-title-v2";
 import { QuickLinksV2 } from "@/components/trip/v2/quick-links-v2";
 import { SectionBackdropV2 } from "@/components/trip/v2/section-backdrop-v2";
 import { GalleryGridV2 } from "@/components/trip/v2/gallery-grid-v2";
-import { ItineraryTimelineV2 } from "@/components/trip/v2/itinerary-timeline-v2";
 import { InclusionsExclusionsV2 } from "@/components/trip/v2/inclusions-exclusions-v2";
 import { PriceV2 } from "@/components/trip/v2/price-v2";
 import { PickupVariantsV2 } from "@/components/trip/v2/pickup-variants-v2";
@@ -33,9 +32,9 @@ export const metadata: Metadata = {
  *   2. Trip title                     -> TripTitleV2
  *   3. Squared quick-link boxes       -> QuickLinksV2
  *   4. Gallery                        -> GalleryGridV2
- *   5. Itinerary + Inclusion/Exclusion-> ItineraryTimelineV2 + InclusionsExclusionsV2
- *   6. Price                          -> PriceV2
- *   7. Pickup variants                -> PickupVariantsV2
+ *   5. Pickup variants (+ itinerary)  -> PickupVariantsV2 (also renders ItineraryTimelineV2 internally, swapped per selected variant)
+ *   6. Inclusion/Exclusion            -> InclusionsExclusionsV2
+ *   7. Price                          -> PriceV2
  *   8. Batch dates (old-style, new UI)-> BatchDatesV2
  *   9. Things to experience           -> ThingsToExperienceV2
  *  10. Did you know                   -> DidYouKnowV2
@@ -91,14 +90,13 @@ export default function NewTripPreview() {
         <QuickLinksV2 />
       </SectionBackdropV2>
       <GalleryGridV2 />
-      <ItineraryTimelineV2 />
+      <PickupVariantsV2 />
       <InclusionsExclusionsV2 />
       <SectionBackdropV2
         imageUrl="https://images.unsplash.com/photo-1520769669658-f07657f5a307?q=80&w=1600&auto=format&fit=crop"
         imageAlt="Key Monastery perched on a Himalayan hillside"
       >
         <PriceV2 basePrice={24999} discountedPrice={21499} bookingAmount={5000} bookHref="/trips/spiti-valley/book" />
-        <PickupVariantsV2 />
         <BatchDatesV2 bookHref="/trips/spiti-valley/book" />
       </SectionBackdropV2>
       <ThingsToExperienceV2 />

@@ -8,8 +8,7 @@ import { TripTitleV2 } from "@/components/trip/v2/trip-title-v2";
 import { QuickLinksV2, type QuickLinkV2 } from "@/components/trip/v2/quick-links-v2";
 import { SectionBackdropV2 } from "@/components/trip/v2/section-backdrop-v2";
 import { GalleryGridV2, type GalleryImageV2 } from "@/components/trip/v2/gallery-grid-v2";
-import { HotelTiersV2, type HotelTierV2 } from "@/components/trip/v2/hotel-tiers-v2";
-import { ItineraryTimelineV2, type ItineraryDayV2 } from "@/components/trip/v2/itinerary-timeline-v2";
+import type { ItineraryDayV2 } from "@/components/trip/v2/itinerary-timeline-v2";
 import { InclusionsExclusionsV2 } from "@/components/trip/v2/inclusions-exclusions-v2";
 import { PriceV2 } from "@/components/trip/v2/price-v2";
 import { PickupVariantsV2, type PickupVariantV2 } from "@/components/trip/v2/pickup-variants-v2";
@@ -90,10 +89,6 @@ function mapGallery(trip: ResolvedTrip2): GalleryImageV2[] | undefined {
   );
 }
 
-function mapHotelTiers(trip: ResolvedTrip2): HotelTierV2[] | undefined {
-  return orUndefined(trip.hotelTiers?.map((t) => ({ stars: t.stars, label: t.label, description: t.description })));
-}
-
 function mapItinerary(trip: ResolvedTrip2): ItineraryDayV2[] | undefined {
   return orUndefined(
     trip.itinerary?.map((d) => {
@@ -104,7 +99,29 @@ function mapItinerary(trip: ResolvedTrip2): ItineraryDayV2[] | undefined {
 }
 
 function mapPickupVariants(trip: ResolvedTrip2): PickupVariantV2[] | undefined {
-  return orUndefined(trip.pickupVariants?.map((v, i) => ({ id: `${i}-${v.city}`, city: v.city, note: v.note || undefined })));
+  return orUndefined(
+    trip.pickupVariants?.map((v, i) => ({
+      id: `${i}-${v.city}`,
+      city: v.city,
+      note: v.note || undefined,
+      route: orUndefined(v.route),
+      itinerary: orUndefined(
+        v.itinerary?.map((d) => {
+          const img = resolveImage(d.image as ImgLike, FALLBACK_HERO_IMAGE, d.title);
+          return { day: d.day, title: d.title, location: d.location, imageUrl: img.url, imageAlt: img.alt, description: d.description };
+        })
+      ),
+    }))
+  );
+}
+
+function mapHeroImages(trip: ResolvedTrip2): { imageUrl: string; imageAlt: string }[] | undefined {
+  return orUndefined(
+    (trip.heroImages ?? [])
+      .map((img) => resolveImage(img as ImgLike, "", trip.title))
+      .filter((img) => img.url)
+      .map((img) => ({ imageUrl: img.url, imageAlt: img.alt }))
+  );
 }
 
 function mapBatchDates(trip: ResolvedTrip2): BatchDateV2[] | undefined {
@@ -158,7 +175,7 @@ export default async function Trip2Page({ params }: Params) {
 
   return (
     <main className="bg-background">
-      <TripHeroV2 bookHref={bookHref} imageUrl={heroImage.url} imageAlt={heroImage.alt} />
+      <TripHeroV2 bookHref={bookHref} imageUrl={heroImage.url} imageAlt={heroImage.alt} images={mapHeroImages(trip)} />
       <TripTitleV2
         title={trip.title || "Untitled Trip"}
         description={trip.shortDescription || ""}
@@ -168,10 +185,9 @@ export default async function Trip2Page({ params }: Params) {
       />
       <SectionBackdropV2 imageUrl={quickLinksBackdrop.url} imageAlt={quickLinksBackdrop.alt} opacity={quickLinksBackdrop.opacity}>
         <QuickLinksV2 links={mapQuickLinks(trip)} />
-        <HotelTiersV2 tiers={mapHotelTiers(trip)} />
       </SectionBackdropV2>
       <GalleryGridV2 images={mapGallery(trip)} />
-      <ItineraryTimelineV2 days={mapItinerary(trip)} />
+      <PickupVariantsV2 variants={mapPickupVariants(trip)} defaultItinerary={mapItinerary(trip)} />
       <InclusionsExclusionsV2 inclusions={orUndefined(trip.inclusions)} exclusions={orUndefined(trip.exclusions)} />
       <SectionBackdropV2 imageUrl={priceBackdrop.url} imageAlt={priceBackdrop.alt} opacity={priceBackdrop.opacity}>
         {hasPrice ? (
@@ -182,7 +198,6 @@ export default async function Trip2Page({ params }: Params) {
             bookHref={bookHref}
           />
         ) : null}
-        <PickupVariantsV2 variants={mapPickupVariants(trip)} />
         <BatchDatesV2 batches={mapBatchDates(trip)} bookHref={bookHref} />
       </SectionBackdropV2>
       <ThingsToExperienceV2 items={mapExperiences(trip)} />

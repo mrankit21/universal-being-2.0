@@ -39,6 +39,7 @@ function blankTrip2(): any {
     durationLabel: "",
     groupSizeLabel: "",
     heroImage: { ...BLANK_IMAGE },
+    heroImages: [],
     bookHref: "",
     quickLinks: [],
     gallery: [],
@@ -64,7 +65,7 @@ const emptyQuickLink = () => ({ icon: "Sparkles", label: "", href: "#", order: 0
 const emptyGalleryImage = () => ({ image: { ...BLANK_IMAGE }, caption: "", order: 0 });
 const emptyHotelTier = () => ({ stars: 3, label: "", description: "" });
 const emptyItineraryDay = () => ({ day: 1, title: "", location: "", image: { ...BLANK_IMAGE }, description: "" });
-const emptyPickupVariant = () => ({ city: "", note: "" });
+const emptyPickupVariant = () => ({ city: "", note: "", route: [], itinerary: [] });
 const emptyBatchDate = () => ({ startDate: "", endDate: "", seatsTotal: 16, seatsAvailable: 16, status: "open" });
 const emptyExperience = () => ({ tag: "", title: "", description: "", href: "#", image: { ...BLANK_IMAGE } });
 const emptyFact = () => ({ icon: "Globe2", title: "", description: "", href: "#" });
@@ -169,9 +170,34 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Hero Image</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader>
+          <CardTitle className="text-base">Hero Image</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Add more photos below to turn the hero into a swipeable gallery (this photo shown first, then the rest in
+            order). Leave the list empty to keep a single still photo.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <ImageAssetField label="Hero Background Image" value={value.heroImage ?? BLANK_IMAGE} onChange={(v) => set("heroImage", v)} category="trip-hero" />
+          <div>
+            <p className="mb-2 text-sm font-medium">Additional Hero Images</p>
+            <TripGalleryUploadField
+              tripSlug={value.slug}
+              tripTitle={value.title}
+              onUploaded={(assets) => set("heroImages", [...(value.heroImages ?? []), ...assets])}
+            />
+            <ArrayFieldEditor
+              items={value.heroImages ?? []}
+              onChange={(next) => set("heroImages", next)}
+              draggable
+              createItem={() => ({ ...BLANK_IMAGE })}
+              addLabel="Add Hero Image"
+              emptyMessage="No additional hero images yet — hero will show as a single still photo."
+              renderItem={(item: any, _i, update) => (
+                <ImageAssetField label="Photo" value={item ?? BLANK_IMAGE} onChange={(v) => update(v)} category="trip-hero" />
+              )}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -416,7 +442,15 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Pickup Variants</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Pickup Variants</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Each city here can carry its own route (e.g. Delhi → Udaipur → Jaipur vs Delhi → Udaipur → Delhi) and its
+            own day-by-day itinerary. Visitors switch between them on the same Trip page — the Itinerary section
+            below updates to match whichever one is selected. Leave a variant&rsquo;s itinerary empty to fall back to
+            the Trip&rsquo;s main Itinerary above.
+          </p>
+        </CardHeader>
         <CardContent>
           <ArrayFieldEditor
             items={value.pickupVariants ?? []}
@@ -425,13 +459,56 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
             addLabel="Add Pickup City"
             emptyMessage="No pickup cities yet."
             renderItem={(item: any, _i, update) => (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FormField label="City">
-                  <Input value={item.city} onChange={(e) => update({ city: e.target.value })} placeholder="Delhi" />
-                </FormField>
-                <FormField label="Note (optional)">
-                  <Input value={item.note} onChange={(e) => update({ note: e.target.value })} placeholder="Default / Self-arrival" />
-                </FormField>
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField label="City">
+                    <Input value={item.city} onChange={(e) => update({ city: e.target.value })} placeholder="Delhi" />
+                  </FormField>
+                  <FormField label="Note (optional)">
+                    <Input value={item.note} onChange={(e) => update({ note: e.target.value })} placeholder="Default / Self-arrival" />
+                  </FormField>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">Route</p>
+                  <StringListEditor
+                    items={item.route ?? []}
+                    onChange={(next) => update({ route: next })}
+                    placeholder="Udaipur"
+                    addLabel="Add Stop"
+                  />
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">This Variant&rsquo;s Itinerary (optional)</p>
+                  <ArrayFieldEditor
+                    items={item.itinerary ?? []}
+                    onChange={(next) => update({ itinerary: next })}
+                    draggable
+                    createItem={emptyItineraryDay}
+                    addLabel="Add Day"
+                    emptyMessage="Using the Trip's main itinerary for this variant."
+                    renderItem={(dayItem: any, _di, dayUpdate) => (
+                      <div className="space-y-3 rounded-md border border-border p-3">
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <FormField label="Day #">
+                            <Input type="number" min={1} value={dayItem.day} onChange={(e) => dayUpdate({ day: Number(e.target.value) })} />
+                          </FormField>
+                          <FormField label="Title" className="sm:col-span-2">
+                            <Input value={dayItem.title} onChange={(e) => dayUpdate({ title: e.target.value })} placeholder="Arrival in Udaipur" />
+                          </FormField>
+                          <FormField label="Location">
+                            <Input value={dayItem.location} onChange={(e) => dayUpdate({ location: e.target.value })} placeholder="Udaipur" />
+                          </FormField>
+                        </div>
+                        <FormField label="Description">
+                          <Textarea rows={2} value={dayItem.description} onChange={(e) => dayUpdate({ description: e.target.value })} />
+                        </FormField>
+                        <ImageAssetField label="Photo" value={dayItem.image ?? BLANK_IMAGE} onChange={(v) => dayUpdate({ image: v })} category="trip-gallery" />
+                      </div>
+                    )}
+                  />
+                </div>
               </div>
             )}
           />

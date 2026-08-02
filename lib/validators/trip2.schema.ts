@@ -42,6 +42,8 @@ export const trip2ItineraryDaySchema = z.object({
 export const trip2PickupVariantSchema = z.object({
   city: z.string().default(""),
   note: z.string().default(""),
+  route: z.array(z.string()).default([]),
+  itinerary: z.array(trip2ItineraryDaySchema).default([]),
 });
 
 export const trip2BatchDateSchema = z.object({
@@ -96,6 +98,7 @@ export const trip2Schema = z.object({
   durationLabel: z.string().default(""),
   groupSizeLabel: z.string().default(""),
   heroImage: imageAssetSchema.optional(),
+  heroImages: z.array(imageAssetSchema).default([]),
   bookHref: z.string().default(""),
   quickLinks: z.array(trip2QuickLinkSchema).default([]),
   gallery: z.array(trip2GalleryImageSchema).default([]),
