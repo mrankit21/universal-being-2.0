@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { getResolvedHomepage } from "@/lib/api/home";
 import { getResolvedHomepage2 } from "@/lib/api/home2";
 import { getSiteSettings } from "@/lib/api/site-settings";
+import { opacityStepToPercent } from "@/lib/theme/section-backdrop-opacity";
 import { getHomepageVisibleDestinations } from "@/lib/api/destinations";
 import { HeroSection } from "@/components/home/hero-section";
 import { PackageIncludesStrip } from "@/components/home/package-includes-strip";
@@ -76,6 +77,10 @@ export default async function HomePage() {
   const isV2 = siteSettings.activeHomepageVersion === "v2";
   const homepage2 = isV2 ? await getResolvedHomepage2() : null;
 
+  // Same global backdrop as Admin → Trip 2.0 Backdrops → "Still Deciding?" —
+  // one image controls this section on every Trip 2.0 page AND here.
+  const stillDecidingBackdrop = siteSettings.trip2SectionBackdrops?.stillDeciding;
+
   const sectionRenderers: Partial<Record<HomepageSectionKey, React.ReactNode>> = {
     hero: homepage.sectionVisibility.hero ? (
       homepage2 ? (
@@ -115,7 +120,15 @@ export default async function HomePage() {
     testimonials: homepage.sectionVisibility.testimonials ? (
       <Fragment key="testimonials">
         <TestimonialsSection testimonials={homepage.testimonials} background={homepage.testimonialsSection} />
-        {homepage2 ? <LetsPlanYourTripV2 /> : null}
+        {homepage2 ? (
+          <LetsPlanYourTripV2
+            backgroundImageUrl={stillDecidingBackdrop?.image?.url}
+            backgroundImageAlt={stillDecidingBackdrop?.image?.alt}
+            overlayOpacity={
+              stillDecidingBackdrop?.image?.url ? opacityStepToPercent(stillDecidingBackdrop.opacityStep) : undefined
+            }
+          />
+        ) : null}
       </Fragment>
     ) : null,
     promoBanner: <PromoBannerSection key="promoBanner" config={homepage.promoBanner} />,

@@ -48,6 +48,7 @@ export const siteSettingsSchema = z.object({
       batchDates: globalSectionBackdropSchema.optional(),
       thingsToExperience: globalSectionBackdropSchema.optional(),
       didYouKnow: globalSectionBackdropSchema.optional(),
+      stillDeciding: globalSectionBackdropSchema.optional(),
     })
     .optional(),
 });

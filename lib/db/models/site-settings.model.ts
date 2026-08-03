@@ -30,6 +30,9 @@ export interface Trip2GlobalSectionBackdropsDoc {
   thingsToExperience?: GlobalSectionBackdropDoc;
   /** Behind Did You Know. */
   didYouKnow?: GlobalSectionBackdropDoc;
+  /** Behind "Still deciding?" / Let's Plan Your Trip, the lead-capture
+   * section near the end of the page. */
+  stillDeciding?: GlobalSectionBackdropDoc;
 }
 
 export interface SiteSettingsDocument extends Document {
@@ -101,6 +104,7 @@ const Trip2GlobalSectionBackdropsSchema = new Schema<Trip2GlobalSectionBackdrops
     batchDates: { type: GlobalSectionBackdropSchema },
     thingsToExperience: { type: GlobalSectionBackdropSchema },
     didYouKnow: { type: GlobalSectionBackdropSchema },
+    stillDeciding: { type: GlobalSectionBackdropSchema },
   },
   { _id: false }
 );

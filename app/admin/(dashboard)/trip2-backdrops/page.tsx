@@ -2,10 +2,10 @@
 "use client";
 
 /**
- * Trip 2.0 Backdrops — one dashboard for the 5 section backgrounds that
+ * Trip 2.0 Backdrops — one dashboard for the 6 section backgrounds that
  * are the SAME across every Trip 2.0 page (Day by Day Itinerary,
  * Inclusions & Exclusions, Batch Dates, Things To Experience, Did You
- * Know), as opposed to Trip Editor → Trip 2.0's "Section Backgrounds"
+ * Know, Still Deciding?), as opposed to Trip Editor → Trip 2.0's "Section Backgrounds"
  * card (Quick Links, Price), which is set per trip.
  *
  * Backed by the same singleton `SiteSettingsModel` / `/api/admin/site-
@@ -49,6 +49,11 @@ const SECTIONS: { key: string; label: string; hint: string }[] = [
     key: "didYouKnow",
     label: "Did You Know",
     hint: "Behind the Did You Know facts.",
+  },
+  {
+    key: "stillDeciding",
+    label: "Still Deciding? (Let's Plan Your Trip)",
+    hint: "Behind the lead-capture card near the end of the page, for visitors still on the fence.",
   },
 ];
 

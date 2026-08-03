@@ -31,6 +31,7 @@ export function LetsPlanYourTripV2({
   tripSlug,
   backgroundImageUrl,
   backgroundImageAlt,
+  overlayOpacity = 45,
 }: {
   destination?: string;
   tripSlug?: string;
@@ -38,8 +39,14 @@ export function LetsPlanYourTripV2({
    * shot. Unset keeps the plain gold-gradient card look. */
   backgroundImageUrl?: string;
   backgroundImageAlt?: string;
+  /** 0-100 darkening strength over the photo (black overlay, keeps the
+   * white lead-capture card readable). Defaults to 45, the original
+   * hardcoded value — matches the 1-7 step admins pick in Admin →
+   * Trip 2.0 Backdrops for the "Still Deciding?" section. */
+  overlayOpacity?: number;
 }) {
   const hasImage = Boolean(backgroundImageUrl);
+  const clampedOverlay = Math.min(100, Math.max(0, overlayOpacity));
   const [name, setName] = React.useState("");
   const [whatsapp, setWhatsapp] = React.useState("");
   // Editable, not a fixed label — this form is shown site-wide (homepage,
@@ -132,7 +139,7 @@ export function LetsPlanYourTripV2({
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
+          <div className="absolute inset-0 bg-black" style={{ opacity: clampedOverlay / 100 }} aria-hidden="true" />
         </>
       ) : null}
 

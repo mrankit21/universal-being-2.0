@@ -49,6 +49,8 @@ export interface ResolvedSiteSettings {
     batchDates?: { image?: { url: string; alt: string }; opacityStep: number };
     thingsToExperience?: { image?: { url: string; alt: string }; opacityStep: number };
     didYouKnow?: { image?: { url: string; alt: string }; opacityStep: number };
+    /** Behind "Still deciding?" / Let's Plan Your Trip. */
+    stillDeciding?: { image?: { url: string; alt: string }; opacityStep: number };
   };
   /** True when this response came from MongoDB rather than the static
    * fallback — surfaced for admin/debug use only. */
@@ -155,6 +157,7 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
         batchDates: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.batchDates),
         thingsToExperience: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.thingsToExperience),
         didYouKnow: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.didYouKnow),
+        stillDeciding: resolveGlobalBackdrop(doc.trip2SectionBackdrops?.stillDeciding),
       },
       source: "database",
     };

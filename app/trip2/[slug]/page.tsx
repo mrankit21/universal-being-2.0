@@ -109,6 +109,7 @@ function resolveGlobalTrip2SectionBackdrops(siteSettings: ResolvedSiteSettings) 
     batchDates: resolveGlobalBackdrop(b?.batchDates),
     thingsToExperience: resolveGlobalBackdrop(b?.thingsToExperience),
     didYouKnow: resolveGlobalBackdrop(b?.didYouKnow),
+    stillDeciding: resolveGlobalBackdrop(b?.stillDeciding),
   };
 }
 
@@ -263,7 +264,13 @@ export default async function Trip2Page({ params }: Params) {
       {maybeWrapWithBackdrop(globalBackdrops.batchDates, <BatchDatesV2 batches={mapBatchDates(trip)} bookHref={bookHref} />)}
       {maybeWrapWithBackdrop(globalBackdrops.thingsToExperience, <ThingsToExperienceV2 items={mapExperiences(trip)} />)}
       {maybeWrapWithBackdrop(globalBackdrops.didYouKnow, <DidYouKnowV2 facts={mapFacts(trip)} />)}
-      <LetsPlanYourTripV2 destination={trip.leadFormDestination || trip.title} tripSlug={trip.slug} />
+      <LetsPlanYourTripV2
+        destination={trip.leadFormDestination || trip.title}
+        tripSlug={trip.slug}
+        backgroundImageUrl={globalBackdrops.stillDeciding?.imageUrl}
+        backgroundImageAlt={globalBackdrops.stillDeciding?.imageAlt}
+        overlayOpacity={globalBackdrops.stillDeciding?.opacity}
+      />
       <FaqAccordionV2 faqs={mapFaqs(trip)} />
     </main>
   );
