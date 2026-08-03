@@ -140,9 +140,6 @@ export function FeaturedTripsStack({
                 >
                   {trip.tag}
                 </span>
-                <h3 className="max-w-xs font-sans text-2xl font-extrabold leading-tight text-white drop-shadow-md sm:max-w-sm sm:text-4xl">
-                  {trip.title}
-                </h3>
               </div>
             </Link>
           </motion.div>
