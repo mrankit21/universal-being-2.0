@@ -39,6 +39,9 @@ export interface ResolvedHomepageV2 {
    * section — distinct from each card's own cover image. */
   featuredTripsSection: ResolvedSectionBackground;
   funFacts: FunFactCardData[];
+  /** Optional full-bleed background behind the whole Fun Facts section —
+   * same pattern as `featuredTripsSection`. */
+  funFactsSection: ResolvedSectionBackground;
   /** Where Featured Trips' "See all trips" link points — `/trip2` when
    * Site Settings' "Trips Version" is forced to "v2", `/trips` otherwise.
    * Computed here (not hardcoded in the component) so it always tracks
@@ -49,6 +52,7 @@ export interface ResolvedHomepageV2 {
 }
 
 const DEFAULT_FEATURED_TRIPS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
+const DEFAULT_FUN_FACTS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
 
 const FALLBACK_HERO: ResolvedHomepageV2Hero = {
   eyebrow: "Journeys that stay with you",
@@ -235,6 +239,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       featuredTrips: FALLBACK_FEATURED_TRIPS,
       featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
       funFacts: FALLBACK_FUN_FACTS,
+      funFactsSection: DEFAULT_FUN_FACTS_SECTION,
       seeAllHref: "/trips",
       source: "static",
     };
@@ -257,6 +262,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
         featuredTrips: FALLBACK_FEATURED_TRIPS,
         featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
         funFacts: FALLBACK_FUN_FACTS,
+        funFactsSection: DEFAULT_FUN_FACTS_SECTION,
         seeAllHref,
         source: "static",
       };
@@ -394,7 +400,20 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
           }))
         : FALLBACK_FUN_FACTS;
 
-    return { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, seeAllHref, source: "database" };
+    // Fun Facts section background — same optional full-bleed backdrop
+    // pattern as Featured Trips' section background above.
+    const ffsImg = doc.funFactsSection?.backgroundImage as ImgLike;
+    const ffsImgMobile = doc.funFactsSection?.backgroundImageMobile as ImgLike;
+    const funFactsSection: ResolvedSectionBackground = {
+      backgroundImage: ffsImg?.url && !ffsImg.isPlaceholder ? { url: ffsImg.url, alt: ffsImg.alt ?? "", isPlaceholder: false } : undefined,
+      backgroundImageMobile:
+        ffsImgMobile?.url && !ffsImgMobile.isPlaceholder
+          ? { url: ffsImgMobile.url, alt: ffsImgMobile.alt ?? "", isPlaceholder: false }
+          : undefined,
+      overlayOpacity: doc.funFactsSection?.overlayOpacity ?? DEFAULT_FUN_FACTS_SECTION.overlayOpacity,
+    };
+
+    return { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, funFactsSection, seeAllHref, source: "database" };
   } catch (err) {
     console.error("[getResolvedHomepage2] MongoDB unreachable, falling back to static Homepage 2.0 content:", err);
     return {
@@ -403,6 +422,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       featuredTrips: FALLBACK_FEATURED_TRIPS,
       featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
       funFacts: FALLBACK_FUN_FACTS,
+      funFactsSection: DEFAULT_FUN_FACTS_SECTION,
       seeAllHref: "/trips",
       source: "static",
     };

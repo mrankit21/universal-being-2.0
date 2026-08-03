@@ -64,6 +64,10 @@ export const homepageV2Schema = z.object({
    * backgrounds. Leave unset for the plain section background. */
   featuredTripsSection: homepageV2SectionBackgroundSchema.optional(),
   funFacts: z.array(homepageV2FunFactSchema).default([]),
+  /** Optional full-bleed background behind the whole Fun Facts section —
+   * same pattern as `featuredTripsSection`. Leave unset for the plain
+   * teal section background. */
+  funFactsSection: homepageV2SectionBackgroundSchema.optional(),
 });
 
 export type HomepageV2Input = z.infer<typeof homepageV2Schema>;

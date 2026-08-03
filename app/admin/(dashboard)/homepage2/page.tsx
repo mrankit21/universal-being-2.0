@@ -334,6 +334,48 @@ export default function Homepage2Page() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Fun Facts — Section Background</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Optional full-bleed background image behind the whole Fun Facts carousel (replaces the plain
+            teal background). Leave empty for the plain section background.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.funFactsSection?.overlayOpacity ?? 0.6}
+              onChange={(e) =>
+                set(["funFactsSection", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))
+              }
+            />
+          </FormField>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Background Image"
+              value={data.funFactsSection?.backgroundImage ?? BLANK_IMAGE}
+              onChange={(v) => set(["funFactsSection", "backgroundImage"], v)}
+              category="banners"
+              hint="Leave empty for the plain teal background. Use Overlay Opacity to keep card text readable over the image."
+            />
+          </div>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Mobile Background Image (optional)"
+              value={data.funFactsSection?.backgroundImageMobile ?? { ...BLANK_IMAGE, width: 1080, height: 1920 }}
+              onChange={(v) => set(["funFactsSection", "backgroundImageMobile"], v)}
+              category="banners"
+              hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Background Image above."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Featured Trips</CardTitle>
           <p className="text-sm text-muted-foreground">
             Choose real trips to feature on the homepage stack, in the order they should appear — the picker

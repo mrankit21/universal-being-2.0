@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Globe, Sparkles, MapPin, Info, Mountain, Sun, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import type { ResolvedSectionBackground } from "@/lib/api/home";
 
 /** Selectable icon set for admin-authored fun facts — deliberately a small,
  * curated list (rather than exposing every Lucide icon) so the admin
@@ -51,9 +53,14 @@ const ZIGZAG_CLIP_PATH =
 export function FunFactsZigzag({
   facts,
   className,
+  background,
 }: {
   facts: FunFactCardData[];
   className?: string;
+  /** Optional full-bleed backdrop behind the whole section — same
+   * "themed backdrop + overlay opacity" pattern as Featured Trips'
+   * `featuredTripsSection`. Unset keeps the plain `bg-ub-teal-600` backdrop. */
+  background?: ResolvedSectionBackground;
 }) {
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -100,9 +107,37 @@ export function FunFactsZigzag({
 
   if (facts.length === 0) return null;
 
+  const hasImage = Boolean(background?.backgroundImage);
+
   return (
     <section className={cn("relative w-full overflow-hidden bg-ub-teal-600 py-14 sm:py-20", className)}>
-      <div className="mx-auto w-full max-w-xl px-4 sm:px-6">
+      {hasImage && background?.backgroundImage ? (
+        <>
+          <Image
+            src={(background.backgroundImageMobile ?? background.backgroundImage).url}
+            alt={(background.backgroundImageMobile ?? background.backgroundImage).alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 object-cover md:hidden"
+            unoptimized
+          />
+          <Image
+            src={background.backgroundImage.url}
+            alt={background.backgroundImage.alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 hidden object-cover md:block"
+            unoptimized
+          />
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: background.overlayOpacity }}
+            aria-hidden="true"
+          />
+        </>
+      ) : null}
+
+      <div className="relative mx-auto w-full max-w-xl px-4 sm:px-6">
         <div
           ref={trackRef}
           className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

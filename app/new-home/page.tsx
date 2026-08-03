@@ -50,7 +50,7 @@ export const metadata: Metadata = {
  */
 export default async function NewHomePreview() {
   const [homepage2, homepage] = await Promise.all([getResolvedHomepage2(), getResolvedHomepage()]);
-  const { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts } = homepage2;
+  const { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, funFactsSection } = homepage2;
 
   return (
     <main className="bg-background">
@@ -70,7 +70,7 @@ export default async function NewHomePreview() {
 
       <FeaturedTripsStack trips={featuredTrips} background={featuredTripsSection} />
 
-      <FunFactsZigzag facts={funFacts} />
+      <FunFactsZigzag facts={funFacts} background={funFactsSection} />
 
       <ValuePropsSection background={homepage.valuePropsSection} />
 

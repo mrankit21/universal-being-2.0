@@ -99,6 +99,10 @@ export interface HomepageV2Document extends Document {
    * section. Unset renders the plain section background as before. */
   featuredTripsSection?: HomepageV2SectionBackgroundDoc;
   funFacts: HomepageV2FunFactDoc[];
+  /** Optional full-bleed background behind the whole Fun Facts section —
+   * same "themed backdrop + overlay opacity" pattern as
+   * `featuredTripsSection`. Unset keeps the plain `bg-ub-teal-600` backdrop. */
+  funFactsSection?: HomepageV2SectionBackgroundDoc;
   updatedBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -176,6 +180,7 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
     featuredTrips: { type: [FeaturedTripSchema], default: [] },
     featuredTripsSection: { type: SectionBackgroundSchema, default: () => ({ overlayOpacity: 0.6 }) },
     funFacts: { type: [FunFactSchema], default: [] },
+    funFactsSection: { type: SectionBackgroundSchema, default: () => ({ overlayOpacity: 0.6 }) },
     updatedBy: { type: String },
   },
   { timestamps: true }

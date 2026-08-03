@@ -92,7 +92,7 @@ export default async function HomePage() {
       homepage2 ? (
         <Fragment key="featuredTrips">
           <FeaturedTripsStack trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} background={homepage2.featuredTripsSection} />
-          <FunFactsZigzag facts={homepage2.funFacts} />
+          <FunFactsZigzag facts={homepage2.funFacts} background={homepage2.funFactsSection} />
         </Fragment>
       ) : (
         <FeaturedTripsSection key="featuredTrips" trips={homepage.featuredTrips} />
