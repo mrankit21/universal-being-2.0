@@ -5,7 +5,6 @@ import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
 import { FindYourDestination } from "@/components/home/v2/find-your-destination";
 import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
-import { FunFactsZigzag } from "@/components/home/v2/fun-facts-zigzag";
 import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
 import { ValuePropsSection } from "@/components/home/value-props-section";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
@@ -29,10 +28,11 @@ export const metadata: Metadata = {
  * Content backend (2026-08): every Homepage 2.0-specific section below
  * resolves through `getResolvedHomepage2()` — the same `HomepageV2Model`
  * singleton / `/api/admin/homepage2` panel that already drove Hero, Quick
- * Links and Featured Trips — extended with a `funFacts` array for the new
- * zigzag carousel. No hardcoded mock data left in this file; editing Fun
- * Facts in Admin → Homepage 2.0 reflects here immediately
- * (`revalidatePath("/")` on save).
+ * Links and Featured Trips. No hardcoded mock data left in this file;
+ * editing "Find your destination" in Admin → Homepage 2.0 reflects here
+ * immediately (`revalidatePath("/")` on save). The "Fun Facts" zigzag
+ * carousel that used to render after it has been removed — "Find your
+ * destination" is now an enlarged, hero-scale banner instead.
  *
  * Shared sections (2026-08): "Why Travel With Us" (`ValuePropsSection`),
  * "From Past Travelers" (`TestimonialsSection`) and the closing "Ready for
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
  */
 export default async function NewHomePreview() {
   const [homepage2, homepage] = await Promise.all([getResolvedHomepage2(), getResolvedHomepage()]);
-  const { hero, quickLinks, featuredTrips, featuredTripsSection, findDestination, funFacts, funFactsSection } = homepage2;
+  const { hero, quickLinks, featuredTrips, featuredTripsSection, findDestination } = homepage2;
 
   return (
     <main className="bg-background">
@@ -78,8 +78,6 @@ export default async function NewHomePreview() {
           background={findDestination.background}
         />
       ) : null}
-
-      <FunFactsZigzag facts={funFacts} background={funFactsSection} />
 
       <ValuePropsSection background={homepage.valuePropsSection} />
 

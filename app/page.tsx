@@ -14,7 +14,6 @@ import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
 import { FindYourDestination } from "@/components/home/v2/find-your-destination";
-import { FunFactsZigzag } from "@/components/home/v2/fun-facts-zigzag";
 import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { PromoBannerSection } from "@/components/home/promo-banner-section";
@@ -53,13 +52,15 @@ export const metadata: Metadata = {
  * (`MobileHeader` → `MobileHeaderRight`, same one used on Trip 2.0 pages)
  * — no separate mount needed here.
  *
- * v2-only sections (2026-08): when `homepage2` is active, "Fun Facts"
- * (`FunFactsZigzag`, driven by `homepage2.funFacts` — Admin → Homepage 2.0)
- * renders right after Featured Trips, and "Let's Plan Your Trip"
- * (`LetsPlanYourTripV2`, already backend-connected via `/api/trip2-leads`)
- * renders right after Testimonials — same placement as the `/new-home`
- * preview route. Neither exists on v1; v1's `sectionOrder`/
- * `sectionVisibility` from Admin → Homepage are untouched.
+ * v2-only sections (2026-08): when `homepage2` is active, "Find your
+ * destination" (`FindYourDestination`, driven by `homepage2.findDestination`
+ * — Admin → Homepage 2.0) renders right after Featured Trips as a large,
+ * hero-scale banner (the "Fun Facts" carousel that used to render after it
+ * has been removed), and "Let's Plan Your Trip" (`LetsPlanYourTripV2`,
+ * already backend-connected via `/api/trip2-leads`) renders right after
+ * Testimonials — same placement as the `/new-home` preview route. Neither
+ * exists on v1; v1's `sectionOrder`/`sectionVisibility` from Admin →
+ * Homepage are untouched.
  *
  * RootShell (header/footer/nav/search/sticky CTA) and ThemeProvider are
  * already wired in app/layout.tsx, so this file only supplies the
@@ -100,7 +101,6 @@ export default async function HomePage() {
               background={homepage2.findDestination.background}
             />
           ) : null}
-          <FunFactsZigzag facts={homepage2.funFacts} background={homepage2.funFactsSection} />
         </Fragment>
       ) : (
         <FeaturedTripsSection key="featuredTrips" trips={homepage.featuredTrips} />
