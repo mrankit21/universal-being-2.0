@@ -158,10 +158,16 @@ const FALLBACK_FUN_FACTS: FunFactCardData[] = [
   },
 ];
 
+type CoverImageOverride = { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
+
 function tripToFeaturedCardV2(
   trip: Trip,
-  override: { tag?: string; tagTone?: "brass" | "teal" | "stone" }
+  override: { tag?: string; tagTone?: "brass" | "teal" | "stone"; coverImage?: CoverImageOverride }
 ): FeaturedTripCardData {
+  // Homepage-only cover image override wins when set; otherwise fall back
+  // to the trip's own cover photo, then the static placeholder.
+  const overrideCover = override.coverImage;
+  const hasOverrideCover = overrideCover?.url && !overrideCover.isPlaceholder;
   const hasCover = trip.coverImage?.url && !trip.coverImage.isPlaceholder;
   return {
     id: trip.slug,
@@ -169,8 +175,16 @@ function tripToFeaturedCardV2(
     tagTone: override.tagTone ?? "brass",
     title: trip.title,
     description: trip.shortDescription,
-    imageUrl: hasCover ? trip.coverImage.url : FALLBACK_FEATURED_TRIPS[0].imageUrl,
-    imageAlt: hasCover ? trip.coverImage.alt || trip.title : trip.title,
+    imageUrl: hasOverrideCover
+      ? overrideCover!.url!
+      : hasCover
+        ? trip.coverImage.url
+        : FALLBACK_FEATURED_TRIPS[0].imageUrl,
+    imageAlt: hasOverrideCover
+      ? overrideCover!.alt || trip.title
+      : hasCover
+        ? trip.coverImage.alt || trip.title
+        : trip.title,
     href: `/trips/${trip.slug}`,
   };
 }
@@ -182,8 +196,10 @@ function tripToFeaturedCardV2(
  * always point at the live Trip 2.0 page rather than the old one. */
 function trip2ToFeaturedCardV2(
   trip: Trip2CardSummary,
-  override: { tag?: string; tagTone?: "brass" | "teal" | "stone" }
+  override: { tag?: string; tagTone?: "brass" | "teal" | "stone"; coverImage?: CoverImageOverride }
 ): FeaturedTripCardData {
+  const overrideCover = override.coverImage;
+  const hasOverrideCover = overrideCover?.url && !overrideCover.isPlaceholder;
   const hasCover = trip.heroImage?.url && !trip.heroImage.isPlaceholder;
   return {
     id: trip.slug,
@@ -191,8 +207,16 @@ function trip2ToFeaturedCardV2(
     tagTone: override.tagTone ?? "brass",
     title: trip.title,
     description: trip.shortDescription,
-    imageUrl: hasCover ? trip.heroImage!.url! : FALLBACK_FEATURED_TRIPS[0].imageUrl,
-    imageAlt: hasCover ? trip.heroImage!.alt || trip.title : trip.title,
+    imageUrl: hasOverrideCover
+      ? overrideCover!.url!
+      : hasCover
+        ? trip.heroImage!.url!
+        : FALLBACK_FEATURED_TRIPS[0].imageUrl,
+    imageAlt: hasOverrideCover
+      ? overrideCover!.alt || trip.title
+      : hasCover
+        ? trip.heroImage!.alt || trip.title
+        : trip.title,
     href: `/trip2/${trip.slug}`,
   };
 }
@@ -297,7 +321,9 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
     // falling back to its old-Trip version. If that leaves nothing (none
     // of the chosen slugs have a Trip 2.0 page yet), fall back to every
     // published Trip 2.0 trip — still never the old collection.
-    const chosen = (doc.featuredTrips ?? []).filter((f) => f.enabled);
+    const chosen = (doc.featuredTrips ?? []).filter((f) => f.enabled) as Array<
+      HomepageV2Document["featuredTrips"][number] & { coverImage?: CoverImageOverride }
+    >;
     let featuredTrips: FeaturedTripCardData[] = [];
 
     if (trip2Active) {

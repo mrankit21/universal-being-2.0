@@ -338,6 +338,8 @@ export default function Homepage2Page() {
           <p className="text-sm text-muted-foreground">
             Choose real trips from your Trips collection to feature on the homepage stack, in the order they
             should appear. Tag and tag color are optional — leave blank to use the trip&apos;s destination.
+            Cover image is also optional — leave blank to use the trip&apos;s own cover photo, or upload one
+            here to use a different photo just for this homepage card (the trip&apos;s own page is unaffected).
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -352,6 +354,7 @@ export default function Homepage2Page() {
                 enabled: e.enabled,
                 tag: (bySlug.get(e.tripSlug) as any)?.tag ?? "",
                 tagTone: (bySlug.get(e.tripSlug) as any)?.tagTone ?? "brass",
+                coverImage: (bySlug.get(e.tripSlug) as any)?.coverImage ?? undefined,
               }));
               set(["featuredTrips"], merged);
             }}
@@ -360,7 +363,7 @@ export default function Homepage2Page() {
             <div className="space-y-3 border-t border-border pt-4">
               <p className="text-sm font-medium">Tag overrides (optional)</p>
               {data.featuredTrips.map((f: any, i: number) => (
-                <div key={f.tripSlug} className="grid grid-cols-1 items-end gap-2 sm:grid-cols-3">
+                <div key={f.tripSlug} className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 sm:grid-cols-3">
                   <FormField label={f.tripSlug}>
                     <Input
                       value={f.tag}
@@ -389,6 +392,16 @@ export default function Homepage2Page() {
                       </SelectContent>
                     </Select>
                   </FormField>
+                  <ImageAssetField
+                    label="Cover Image Override (optional)"
+                    value={f.coverImage ?? BLANK_IMAGE}
+                    onChange={(v) => {
+                      const next = [...data.featuredTrips];
+                      next[i] = { ...f, coverImage: v };
+                      set(["featuredTrips"], next);
+                    }}
+                    category="banners"
+                  />
                 </div>
               ))}
             </div>

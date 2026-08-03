@@ -26,9 +26,15 @@ const WHATSAPP_REGEX = /^[6-9]\d{9}$/;
  * design — a failed request shows a toast and leaves the form open to
  * retry rather than silently pretending it worked.
  */
-export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: { destination?: string; tripSlug?: string }) {
+export function LetsPlanYourTripV2({ destination, tripSlug }: { destination?: string; tripSlug?: string }) {
   const [name, setName] = React.useState("");
   const [whatsapp, setWhatsapp] = React.useState("");
+  // Editable, not a fixed label — this form is shown site-wide (homepage,
+  // any trip page), not just on Spiti Valley, so the person types in
+  // whichever trip/destination they're actually asking about. When a
+  // specific trip page passes `destination`, it just pre-fills this field
+  // (still editable) rather than locking it.
+  const [destinationInput, setDestinationInput] = React.useState(destination ?? "");
   const [travelTiming, setTravelTiming] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
@@ -64,6 +70,10 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
       setError("Enter a valid 10-digit WhatsApp number.");
       return;
     }
+    if (destinationInput.trim().length < 2) {
+      setError("Tell us which trip you're interested in.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -73,7 +83,7 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
         body: JSON.stringify({
           name: name.trim(),
           whatsappNumber: whatsapp,
-          destination,
+          destination: destinationInput.trim(),
           travelTiming: travelTiming.trim() || undefined,
           tripSlug,
           source: "trip2-lets-plan-your-trip",
@@ -139,9 +149,17 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
               </label>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3.5 py-2.5">
+              <label className="flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5">
                 <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <span className="w-full truncate text-sm text-foreground">{destination}</span>
+                <input
+                  type="text"
+                  name="destination"
+                  required
+                  placeholder="Which trip are you interested in?"
+                  value={destinationInput}
+                  onChange={(e) => setDestinationInput(e.target.value)}
+                  className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                />
               </label>
               <label className="relative flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5">
                 <button

@@ -24,6 +24,10 @@ export const homepageV2FeaturedTripSchema = z.object({
   tripSlug: z.string().min(1),
   tag: z.string().default(""),
   tagTone: z.enum(["brass", "teal", "stone"]).default("brass"),
+  /** Optional homepage-only cover image override — when set, this replaces
+   * the trip's own cover/hero image on the Featured Trips card here, without
+   * touching the trip's actual cover photo used everywhere else on the site. */
+  coverImage: imageAssetSchema.optional(),
   enabled: z.boolean().default(true),
 });
 

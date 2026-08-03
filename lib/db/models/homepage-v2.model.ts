@@ -48,6 +48,11 @@ export interface HomepageV2FeaturedTripDoc {
    * trip's own destination/theme for the tag pill. */
   tag: string;
   tagTone: "brass" | "teal" | "stone";
+  /** Optional homepage-only cover image override. When set (and not a
+   * placeholder), the Featured Trips card here uses this instead of the
+   * trip's own cover/hero image — lets admins pick a card-specific photo
+   * without touching the trip's actual listing/detail-page cover. */
+  coverImage?: unknown;
   enabled: boolean;
 }
 
@@ -117,6 +122,7 @@ const FeaturedTripSchema = new Schema<HomepageV2FeaturedTripDoc>(
     tripSlug: { type: String, required: true },
     tag: { type: String, default: "" },
     tagTone: { type: String, enum: ["brass", "teal", "stone"], default: "brass" },
+    coverImage: { type: ImageAssetSchema },
     enabled: { type: Boolean, default: true },
   },
   { _id: false }

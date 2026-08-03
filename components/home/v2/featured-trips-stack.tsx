@@ -19,20 +19,27 @@ export interface FeaturedTripCardData {
   href: string;
 }
 
-const TONE_CLASSES: Record<NonNullable<FeaturedTripCardData["tagTone"]>, string> = {
-  brass: "bg-primary text-primary-foreground",
-  teal: "bg-ub-teal-500 text-white",
-  stone: "bg-ub-stone-800 text-white",
+/** Outline-style badge classes per tag tone — translucent dark fill with a
+ * matching-tint border, per the reference screenshot's "CULTURE" /
+ * "ADVENTURE" pills (not the old solid-fill pill). */
+const OUTLINE_TONE_CLASSES: Record<NonNullable<FeaturedTripCardData["tagTone"]>, string> = {
+  brass: "border-primary/70 text-primary-foreground bg-primary/25",
+  teal: "border-ub-teal-300/80 text-white bg-ub-teal-500/25",
+  stone: "border-white/70 text-white bg-black/25",
 };
 
 /**
- * Homepage UI v2 — "Featured Trips" section, modeled on the reference
- * screenshot: large full-bleed trip photos stacked vertically, each with a
- * category tag, serif title, short description and a "View Trip" pill
- * button over a bottom gradient scrim.
+ * Homepage UI v2 — "Featured Trips" section, restyled to match the
+ * visitabudhabi.ae-style "Things To Do" reference: a centered heading with
+ * a "SEE ALL" link underneath, then full-bleed cover-image cards stacked
+ * vertically. Each card carries only an outlined category badge and a
+ * large bold heading over the photo — no description or button; the whole
+ * card is the tap target, per the reference.
  *
  * Static content only for now — accepts plain data, no lib/api dependency,
- * so real Trip documents can be mapped into this shape later.
+ * so real Trip documents can be mapped into this shape later. Each card's
+ * `imageUrl` already resolves (in `lib/api/home2.ts`) from either a
+ * homepage-only cover image override or the trip's own cover/hero image.
  */
 export function FeaturedTripsStack({
   heading = "Featured Trips",
@@ -49,9 +56,9 @@ export function FeaturedTripsStack({
         <h2 className="font-display text-3xl font-medium text-foreground sm:text-4xl">{heading}</h2>
         <Link
           href={seeAllHref}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-ub-teal-500 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-ub-teal-500 hover:underline"
         >
-          See all trips
+          See All
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
       </div>
@@ -64,35 +71,37 @@ export function FeaturedTripsStack({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.5, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-            className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl shadow-ub-lg sm:aspect-[16/10]"
           >
-            <img
-              src={trip.imageUrl}
-              alt={trip.imageAlt}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" aria-hidden="true" />
+            <Link
+              href={trip.href}
+              className="group relative flex aspect-[4/5] w-full flex-col items-center overflow-hidden rounded-[28px] shadow-ub-lg sm:aspect-[16/11]"
+            >
+              {/* Cover image — the card's full background, resolved from a
+                  homepage-only override or the trip's own cover photo. */}
+              <img
+                src={trip.imageUrl}
+                alt={trip.imageAlt}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                loading="lazy"
+              />
+              {/* Light, even scrim — just enough for badge/heading legibility
+                  without flattening the photo like the old bottom gradient. */}
+              <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
 
-            <div className="relative z-10 flex h-full flex-col justify-end gap-3 p-6 sm:p-8">
-              <span
-                className={cn(
-                  "w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-                  TONE_CLASSES[trip.tagTone ?? "brass"]
-                )}
-              >
-                {trip.tag}
-              </span>
-              <h3 className="font-display text-2xl font-medium leading-tight text-white sm:text-3xl">{trip.title}</h3>
-              <p className="max-w-md text-sm text-white/80 sm:text-base">{trip.description}</p>
-              <Link
-                href={trip.href}
-                className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-white/50 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/15"
-              >
-                View Trip
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </div>
+              <div className="relative z-10 flex h-full w-full flex-col items-center gap-4 px-6 pt-[18%] text-center sm:pt-[15%]">
+                <span
+                  className={cn(
+                    "w-fit rounded-md border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm sm:text-sm",
+                    OUTLINE_TONE_CLASSES[trip.tagTone ?? "brass"]
+                  )}
+                >
+                  {trip.tag}
+                </span>
+                <h3 className="max-w-xs font-sans text-2xl font-extrabold leading-tight text-white drop-shadow-md sm:max-w-sm sm:text-4xl">
+                  {trip.title}
+                </h3>
+              </div>
+            </Link>
           </motion.div>
         ))}
       </div>
