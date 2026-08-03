@@ -20,6 +20,7 @@ import { ThingsToExperienceV2, type ExperienceCardV2 } from "@/components/trip/v
 import { DidYouKnowV2, type DidYouKnowCardV2 } from "@/components/trip/v2/did-you-know-v2";
 import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
 import { FaqAccordionV2, type FaqV2 } from "@/components/trip/v2/faq-accordion-v2";
+import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
 
 const FALLBACK_HERO_IMAGE = "https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=2000&auto=format&fit=crop";
 const BACKDROP_A = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1600&auto=format&fit=crop";
@@ -266,6 +267,7 @@ export default async function Trip2Page({ params }: Params) {
       {maybeWrapWithBackdrop(globalBackdrops.didYouKnow, <DidYouKnowV2 facts={mapFacts(trip)} />)}
       <LetsPlanYourTripV2 destination={trip.leadFormDestination || trip.title} tripSlug={trip.slug} />
       <FaqAccordionV2 faqs={mapFaqs(trip)} />
+      <FloatingPillNavWired />
     </main>
   );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { getListedTrips } from "@/lib/api/trips";
+import { getSiteSettings } from "@/lib/api/site-settings";
 import { TripListing } from "@/components/trip/trip-listing";
 import { SectionHeading } from "@/components/primitives/section-heading";
 
@@ -17,8 +19,18 @@ export const metadata: Metadata = {
  * search/filter shell (`TripListing`) is a client component that narrows
  * this already-fetched list. Matches the earlier `/trips` + `TripDiscovery`
  * split, now against the real `Trip` type.
+ *
+ * Trip 2.0 (2026-08): when Site Settings' "Trips Version" is forced to
+ * "v2", the old Trip collection stops being a public surface entirely —
+ * this route redirects straight to `/trip2` so there is never a moment
+ * where both listings are reachable side by side.
  */
 export default async function TripsPage() {
+  const siteSettings = await getSiteSettings();
+  if (siteSettings.activeTripsVersion === "v2") {
+    redirect("/trip2");
+  }
+
   const trips = await getListedTrips();
 
   return (

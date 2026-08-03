@@ -13,6 +13,7 @@ import { ValuePropsSection } from "@/components/home/value-props-section";
 import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
+import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { PromoBannerSection } from "@/components/home/promo-banner-section";
 import { CtaSection } from "@/components/home/cta-section";
@@ -45,7 +46,10 @@ export const metadata: Metadata = {
  * Banner, CTA) is shared between both versions and keeps coming from
  * `getResolvedHomepage()` — only the hero + featured-trips content swap.
  * Section order/visibility below `hero`/`featuredTrips` stay admin-
- * controlled exactly as before.
+ * controlled exactly as before. When v2 is active, `FloatingPillNavWired`
+ * also renders — the reference-design floating search+menu pill, wired to
+ * the site's existing global search modal + nav drawer (same one used on
+ * Trip 2.0 pages).
  *
  * RootShell (header/footer/nav/search/sticky CTA) and ThemeProvider are
  * already wired in app/layout.tsx, so this file only supplies the
@@ -77,7 +81,7 @@ export default async function HomePage() {
     ) : null,
     featuredTrips: homepage.sectionVisibility.featuredTrips ? (
       homepage2 ? (
-        <FeaturedTripsStack key="featuredTrips" trips={homepage2.featuredTrips} />
+        <FeaturedTripsStack key="featuredTrips" trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} />
       ) : (
         <FeaturedTripsSection key="featuredTrips" trips={homepage.featuredTrips} />
       )
@@ -103,6 +107,7 @@ export default async function HomePage() {
     <PageFadeIn>
       <HomeJsonLd />
       {homepage.sectionOrder.map((key) => sectionRenderers[key] ?? null)}
+      {homepage2 && <FloatingPillNavWired />}
     </PageFadeIn>
   );
 }

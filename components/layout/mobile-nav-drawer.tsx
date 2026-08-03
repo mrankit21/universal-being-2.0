@@ -18,29 +18,47 @@ import { NavLink } from "@/components/layout/nav-link";
 import { ThemeModeToggle } from "@/components/layout/theme-mode-toggle";
 import { useCustomerAuth } from "@/components/layout/customer-auth-context";
 
+export interface MobileNavDrawerProps {
+  /** Controlled open state — pass this + `onOpenChange` to drive the drawer
+   * from an external trigger (e.g. Trip 2.0's `FloatingPillNav`). Omit both
+   * to keep the original self-contained/uncontrolled behavior. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in hamburger trigger — for when an external control
+   * (e.g. `FloatingPillNav`'s menu button) already opens this drawer. */
+  hideTrigger?: boolean;
+}
+
 /**
  * MobileNavDrawer — swipe-to-dismiss bottom sheet (vaul, per ui/drawer.tsx's
  * own rationale: "inherits native swipe-to-dismiss gestures"). Self-
- * contained: owns its own open state via Drawer's uncontrolled mode, so
- * MobileHeader just renders the trigger with no state to manage.
+ * contained by default: owns its own open state via Drawer's uncontrolled
+ * mode, so MobileHeader just renders the trigger with no state to manage.
+ * Optionally controllable (see `MobileNavDrawerProps`) so the exact same nav
+ * content can be triggered from elsewhere on the page, e.g. Trip 2.0's
+ * floating pill nav.
  */
-export function MobileNavDrawer() {
-  const [open, setOpen] = React.useState(false);
+export function MobileNavDrawer({ open: openProp, onOpenChange, hideTrigger }: MobileNavDrawerProps = {}) {
+  const [openState, setOpenState] = React.useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
   const { customer, isLoading, open: openAuth, logout } = useCustomerAuth();
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Open menu"
-          aria-expanded={open}
-        >
-          <Menu className="size-5" aria-hidden="true" />
-        </Button>
-      </DrawerTrigger>
+      {!hideTrigger && (
+        <DrawerTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Open menu"
+            aria-expanded={open}
+          >
+            <Menu className="size-5" aria-hidden="true" />
+          </Button>
+        </DrawerTrigger>
+      )}
       <DrawerContent>
         <DrawerHeader className="flex items-center justify-between pb-2">
           <div>

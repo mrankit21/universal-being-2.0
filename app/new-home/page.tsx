@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack, type FeaturedTripCardData } from "@/components/home/v2/featured-trips-stack";
+import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
 
 export const metadata: Metadata = {
   title: "New Homepage UI Preview — Universal Being",
@@ -73,6 +74,7 @@ export default function NewHomePreview() {
       <FloatingQuickLinks />
 
       <FeaturedTripsStack trips={MOCK_TRIPS} />
+      <FloatingPillNavWired />
     </main>
   );
 }

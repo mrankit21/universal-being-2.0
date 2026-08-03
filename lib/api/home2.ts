@@ -33,6 +33,12 @@ export interface ResolvedHomepageV2 {
   hero: ResolvedHomepageV2Hero;
   quickLinks: QuickLinkItem[];
   featuredTrips: FeaturedTripCardData[];
+  /** Where Featured Trips' "See all trips" link points — `/trip2` when
+   * Site Settings' "Trips Version" is forced to "v2", `/trips` otherwise.
+   * Computed here (not hardcoded in the component) so it always tracks
+   * the same `activeTripsVersion` toggle Featured Trips itself resolves
+   * against below. */
+  seeAllHref: string;
   source: "database" | "static";
 }
 
@@ -167,14 +173,33 @@ function trip2ToFeaturedCardV2(
 
 export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
   if (!isDatabaseConfigured()) {
-    return { hero: FALLBACK_HERO, quickLinks: FALLBACK_QUICK_LINKS, featuredTrips: FALLBACK_FEATURED_TRIPS, source: "static" };
+    return {
+      hero: FALLBACK_HERO,
+      quickLinks: FALLBACK_QUICK_LINKS,
+      featuredTrips: FALLBACK_FEATURED_TRIPS,
+      seeAllHref: "/trips",
+      source: "static",
+    };
   }
 
   try {
     await connectToDatabase();
+    // Fetched once up front — both the "no homepage doc yet" early return
+    // and the real Featured Trips resolution below need to know whether
+    // Trip 2.0 is active site-wide.
+    const siteSettings = await getSiteSettings();
+    const trip2Active = siteSettings.activeTripsVersion === "v2";
+    const seeAllHref = trip2Active ? "/trip2" : "/trips";
+
     const doc = (await HomepageV2Model.findOne().lean()) as (HomepageV2Document & { _id: unknown }) | null;
     if (!doc) {
-      return { hero: FALLBACK_HERO, quickLinks: FALLBACK_QUICK_LINKS, featuredTrips: FALLBACK_FEATURED_TRIPS, source: "static" };
+      return {
+        hero: FALLBACK_HERO,
+        quickLinks: FALLBACK_QUICK_LINKS,
+        featuredTrips: FALLBACK_FEATURED_TRIPS,
+        seeAllHref,
+        source: "static",
+      };
     }
 
     // Hero — DB content only counts once a heading has actually been set;
@@ -245,8 +270,6 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
     // of the chosen slugs have a Trip 2.0 page yet), fall back to every
     // published Trip 2.0 trip — still never the old collection.
     const chosen = (doc.featuredTrips ?? []).filter((f) => f.enabled);
-    const siteSettings = await getSiteSettings();
-    const trip2Active = siteSettings.activeTripsVersion === "v2";
     let featuredTrips: FeaturedTripCardData[] = [];
 
     if (trip2Active) {
@@ -277,9 +300,15 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       featuredTrips = FALLBACK_FEATURED_TRIPS;
     }
 
-    return { hero, quickLinks, featuredTrips, source: "database" };
+    return { hero, quickLinks, featuredTrips, seeAllHref, source: "database" };
   } catch (err) {
     console.error("[getResolvedHomepage2] MongoDB unreachable, falling back to static Homepage 2.0 content:", err);
-    return { hero: FALLBACK_HERO, quickLinks: FALLBACK_QUICK_LINKS, featuredTrips: FALLBACK_FEATURED_TRIPS, source: "static" };
+    return {
+      hero: FALLBACK_HERO,
+      quickLinks: FALLBACK_QUICK_LINKS,
+      featuredTrips: FALLBACK_FEATURED_TRIPS,
+      seeAllHref: "/trips",
+      source: "static",
+    };
   }
 }
