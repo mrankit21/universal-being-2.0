@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Phone, User, MapPin, Calendar, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const WHATSAPP_REGEX = /^[6-9]\d{9}$/;
 
@@ -32,6 +33,24 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const dateInputRef = React.useRef<HTMLInputElement | null>(null);
+  const todayISO = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  function openDatePicker() {
+    const el = dateInputRef.current;
+    if (!el) return;
+    el.focus();
+    // showPicker() opens the browser's real calendar UI on tap/click;
+    // fall back silently on browsers that don't support it (focus alone
+    // is enough to open the native picker on most mobile browsers).
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+      } catch {
+        // ignore — some browsers throw if not called from a direct user gesture
+      }
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -124,16 +143,35 @@ export function LetsPlanYourTripV2({ destination = "Spiti Valley", tripSlug }: {
                 <MapPin className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="w-full truncate text-sm text-foreground">{destination}</span>
               </label>
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5">
-                <Calendar className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <label className="relative flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2.5">
+                <button
+                  type="button"
+                  onClick={openDatePicker}
+                  aria-label="Open calendar"
+                  className="shrink-0 text-muted-foreground"
+                >
+                  <Calendar className="size-4" aria-hidden="true" />
+                </button>
                 <input
-                  type="text"
+                  ref={dateInputRef}
+                  type="date"
                   name="travelTiming"
-                  placeholder="When are you planning to go?"
+                  min={todayISO}
+                  aria-label="When are you planning to go?"
                   value={travelTiming}
                   onChange={(e) => setTravelTiming(e.target.value)}
-                  className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  onClick={openDatePicker}
+                  className={cn(
+                    "w-full bg-transparent text-sm text-foreground focus:outline-none",
+                    "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
+                    !travelTiming && "text-muted-foreground"
+                  )}
                 />
+                {!travelTiming ? (
+                  <span className="pointer-events-none absolute left-10 text-sm text-muted-foreground">
+                    When are you planning to go?
+                  </span>
+                ) : null}
               </label>
             </div>
 

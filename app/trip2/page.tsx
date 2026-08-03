@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { getPublishedTrip2Trips } from "@/lib/api/trip2";
 import { Trip2Listing } from "@/components/home/v2/trip2-listing";
 import { SectionHeading } from "@/components/primitives/section-heading";
-import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
 
 export const metadata: Metadata = {
   title: "Trips | Universal Being",
@@ -31,7 +30,6 @@ export default async function Trip2ListingPage() {
         className="mb-8"
       />
       <Trip2Listing trips={trips} />
-      <FloatingPillNavWired />
     </div>
   );
 }
