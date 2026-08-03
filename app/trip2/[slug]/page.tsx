@@ -229,7 +229,6 @@ export default async function Trip2Page({ params }: Params) {
         images={mapHeroImages(trip)}
         eyebrow={trip.location || undefined}
         heading={trip.title || "Untitled Trip"}
-        subheading={trip.shortDescription || undefined}
       />
       <TripTitleV2
         title={trip.title || "Untitled Trip"}

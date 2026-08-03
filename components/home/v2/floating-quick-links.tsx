@@ -60,7 +60,9 @@ export interface QuickLinkItem {
    *   full-width regardless of `wide`. When `gallery` has 2+ entries, the
    *   image and title auto-cycle (visitabudhabi.ae-style "Must-See" card).
    * - "image" — half-width card with a background photo and the title
-   *   overlaid at the bottom (e.g. "Hotels" in the reference).
+   *   overlaid at the bottom (e.g. "Hotels" in the reference). When
+   *   `gallery` has 2+ entries, the photo and title auto-cycle the same
+   *   way the "featured" tile does.
    * - "icon" — half-width (or full-width when `wide`) card with an icon
    *   chip and title, no photo (e.g. "Transport", "Build Your Itinerary").
    */
@@ -69,12 +71,14 @@ export interface QuickLinkItem {
    * Admin/DB-driven, so this is a string, not a component reference. */
   icon?: string;
   /** Background photo for "featured" and "image"-variant tiles. For
-   * "featured", this is only used as a fallback when `gallery` is empty. */
+   * either variant, this is only used as a fallback when `gallery` is
+   * empty. */
   imageUrl?: string;
   imageAlt?: string;
-  /** Auto-playing rotation for the "featured" tile — image + title cycle
-   * together every ~3.5s with a crossfade + slow Ken Burns zoom. The tag
-   * pill stays fixed (it's not per-slide). */
+  /** Auto-playing rotation for "featured" and "image" tiles — image +
+   * title cycle together every ~3.5s with a crossfade + slow Ken Burns
+   * zoom. On "featured", the tag pill stays fixed (it's not per-slide);
+   * "image" tiles have no tag, so only the photo + title rotate. */
   gallery?: QuickLinkGalleryImage[];
   /** Small pill label on the "featured" tile (e.g. "Featured", "Must-See"). */
   tag?: string;
@@ -263,22 +267,67 @@ function FeaturedTile({ item }: { item: QuickLinkItem }) {
   );
 }
 
+/** Auto-play interval for the Image tile's gallery, in ms — same cadence
+ * as the Featured tile's so both variants feel consistent. */
+const IMAGE_GALLERY_INTERVAL_MS = 3500;
+
 function ImageTile({ item }: { item: QuickLinkItem }) {
+  const slides: QuickLinkGalleryImage[] =
+    item.gallery && item.gallery.length > 0
+      ? item.gallery
+      : [{ imageUrl: item.imageUrl ?? "", imageAlt: item.imageAlt, title: item.title }];
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    // Reset to the first slide if the gallery itself changes (e.g. admin
+    // edits are live-previewed) so we never point past the end.
+    setIndex(0);
+  }, [slides.length]);
+
+  React.useEffect(() => {
+    if (slides.length < 2) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), IMAGE_GALLERY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
+  const active = slides[index];
+
   return (
     <Link
       href={item.href}
       className="group relative flex h-32 overflow-hidden rounded-xl shadow-ub-lg sm:h-36"
     >
-      {item.imageUrl ? (
-        <img
-          src={item.imageUrl}
-          alt={item.imageAlt ?? ""}
-          className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+      {active.imageUrl ? (
+        <AnimatePresence initial={false}>
+          <motion.img
+            key={index}
+            src={active.imageUrl}
+            alt={active.imageAlt ?? ""}
+            initial={{ opacity: 0, scale: 1.02 }}
+            animate={{ opacity: 1, scale: 1.1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              opacity: { duration: 0.6, ease: "easeInOut" },
+              scale: { duration: IMAGE_GALLERY_INTERVAL_MS / 1000 + 0.6, ease: "linear" },
+            }}
+            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        </AnimatePresence>
       ) : null}
       <span className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" aria-hidden="true" />
-      <span className="relative mt-auto block p-4 text-sm font-semibold uppercase tracking-wide text-white sm:text-base">
-        {item.title}
+      <span className="relative mt-auto block overflow-hidden p-4">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={index}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="block text-sm font-semibold uppercase tracking-wide text-white sm:text-base"
+          >
+            {active.title}
+          </motion.span>
+        </AnimatePresence>
       </span>
     </Link>
   );

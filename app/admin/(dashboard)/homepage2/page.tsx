@@ -239,16 +239,14 @@ export default function Homepage2Page() {
                   </div>
                 )}
 
-                {item.variant === "featured" ? (
+                {item.variant === "featured" || item.variant === "image" ? (
                   <div className="space-y-2 border-t border-border pt-3">
                     <div>
                       <p className="text-sm font-medium">Auto-Playing Gallery (optional)</p>
                       <p className="text-xs text-muted-foreground">
-                        Add 2 or more images to make this card auto-cycle every ~3.5s (crossfade + slow zoom),
-                        each with its own title — e.g. &quot;Must-See&quot; badge staying fixed while the photo and
-                        title rotate through Zayed National Museum → Qasr Al Watan → Sheikh Zayed Grand Mosque.
-                        The tag pill above stays fixed as the shared badge. Leave empty to just use the single
-                        Photo above with no rotation.
+                        {item.variant === "featured"
+                          ? "Add 2 or more images to make this card auto-cycle every ~3.5s (crossfade + slow zoom), each with its own title — e.g. \u201CMust-See\u201D badge staying fixed while the photo and title rotate through Zayed National Museum \u2192 Qasr Al Watan \u2192 Sheikh Zayed Grand Mosque. The tag pill above stays fixed as the shared badge. Leave empty to just use the single Photo above with no rotation."
+                          : "Add 2 or more images to make this card auto-cycle every ~3.5s (crossfade + slow zoom), each with its own title overlaid on the photo. Leave empty to just use the single Photo above with no rotation."}
                       </p>
                     </div>
                     <ArrayFieldEditor
