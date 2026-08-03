@@ -63,7 +63,6 @@ function blankTrip2(): any {
 
 const emptyQuickLink = () => ({ icon: "Sparkles", label: "", href: "#", order: 0 });
 const emptyGalleryImage = () => ({ image: { ...BLANK_IMAGE }, caption: "", order: 0 });
-const emptyHotelTier = () => ({ stars: 3, label: "", description: "" });
 const emptyItineraryDay = () => ({ day: 1, title: "", location: "", image: { ...BLANK_IMAGE }, description: "" });
 const emptyPickupVariant = () => ({ city: "", note: "", route: [] as string[], itinerary: [] as ReturnType<typeof emptyItineraryDay>[] });
 const emptyBatchDate = () => ({ startDate: "", endDate: "", seatsTotal: 16, seatsAvailable: 16, status: "open" });
@@ -346,35 +345,6 @@ export function Trip2Form({ tripId, initialValue }: { tripId?: string; initialVa
                 <ImageAssetField label="Photo" value={item.image ?? BLANK_IMAGE} onChange={(v) => update({ image: v })} category="trip-gallery" />
                 <FormField label="Caption (optional)">
                   <Input value={item.caption} onChange={(e) => update({ caption: e.target.value })} />
-                </FormField>
-              </div>
-            )}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Hotel Tiers</CardTitle>
-          <p className="text-sm text-muted-foreground">The 3/4/5-star category cards. The Hotels quick link jumps here.</p>
-        </CardHeader>
-        <CardContent>
-          <ArrayFieldEditor
-            items={value.hotelTiers ?? []}
-            onChange={(next) => set("hotelTiers", next)}
-            createItem={emptyHotelTier}
-            addLabel="Add Hotel Tier"
-            emptyMessage="No hotel tiers yet."
-            renderItem={(item: any, _i, update) => (
-              <div className="grid gap-3 sm:grid-cols-3">
-                <FormField label="Stars (1–5)">
-                  <Input type="number" min={1} max={5} value={item.stars} onChange={(e) => update({ stars: Number(e.target.value) })} />
-                </FormField>
-                <FormField label="Label">
-                  <Input value={item.label} onChange={(e) => update({ label: e.target.value })} placeholder="4 Star" />
-                </FormField>
-                <FormField label="Description">
-                  <Input value={item.description} onChange={(e) => update({ description: e.target.value })} placeholder="Elevated comfort & service" />
                 </FormField>
               </div>
             )}
