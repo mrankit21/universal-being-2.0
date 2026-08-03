@@ -33,6 +33,7 @@ export const MEDIA_CATEGORIES = [
   "banners",
   "general",
   "future-videos",
+  "trip-section-backdrop",
 ] as const;
 
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
@@ -48,6 +49,7 @@ export const MEDIA_CATEGORY_LABELS: Record<MediaCategory, string> = {
   banners: "Banners",
   general: "General",
   "future-videos": "Future Videos",
+  "trip-section-backdrop": "Trip Section Backdrop",
 };
 
 /** Legacy folder → new category mapping, used only as a read-time fallback

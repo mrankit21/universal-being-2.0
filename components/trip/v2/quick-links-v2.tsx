@@ -39,14 +39,14 @@ const DEFAULT_LINKS: QuickLinkV2[] = [
  */
 export function QuickLinksV2({ links = DEFAULT_LINKS }: { links?: QuickLinkV2[] }) {
   return (
-    <section className="w-full py-6 sm:py-8">
-      <div className="mx-auto flex max-w-3xl gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide snap-x snap-mandatory sm:gap-4 sm:px-6">
+    <section className="w-full border-y border-border/60 bg-card/40 py-4 sm:py-5">
+      <div className="mx-auto flex max-w-3xl items-start gap-6 overflow-x-auto px-4 pb-1 scrollbar-hide snap-x snap-mandatory sm:justify-between sm:gap-2 sm:overflow-visible sm:px-6">
         {links.map((link, i) => {
           const Icon = resolveTrip2Icon(link.icon);
           return (
             <motion.div
               key={link.id}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.4, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
@@ -54,12 +54,12 @@ export function QuickLinksV2({ links = DEFAULT_LINKS }: { links?: QuickLinkV2[] 
             >
               <Link
                 href={link.href}
-                className="flex w-20 flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-primary/50 hover:bg-primary/5 sm:w-24 sm:p-3.5"
+                className="flex flex-col items-center gap-1.5 text-center transition-colors hover:text-primary"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-10">
-                  <Icon className="size-4 sm:size-5" strokeWidth={1.75} aria-hidden="true" />
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary sm:size-9">
+                  <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
                 </span>
-                <span className="text-[11px] font-semibold leading-tight text-foreground sm:text-xs">{link.label}</span>
+                <span className="whitespace-nowrap text-[11px] font-semibold leading-tight text-foreground sm:text-xs">{link.label}</span>
               </Link>
             </motion.div>
           );

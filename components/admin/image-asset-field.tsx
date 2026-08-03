@@ -31,6 +31,7 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: "banners", label: "Banners" },
   { value: "general", label: "General" },
   { value: "future-videos", label: "Future Videos" },
+  { value: "trip-section-backdrop", label: "Trip Section Backdrop" },
 ];
 
 interface MediaAsset {
