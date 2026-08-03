@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Quote } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
+import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/use-theme";
 import type { Testimonial } from "@/data/home/testimonials";
 import { ThemeBackground } from "@/components/theme/theme-background";
@@ -53,7 +54,12 @@ export function TestimonialsSection({
     .slice(0, 2);
 
   const content = (
-    <div className="relative mx-auto max-w-3xl px-6 py-section-sm sm:py-section-md">
+    <div
+      className={cn(
+        "relative mx-auto max-w-3xl px-6 py-section-sm sm:py-section-md",
+        hasImage ? "py-24 sm:py-36" : null
+      )}
+    >
         <SectionHeading
           eyebrow="From past travelers"
           title="What the group chat says afterward"
@@ -77,16 +83,17 @@ export function TestimonialsSection({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: duration.slow, ease: ease.emphasized }}
+              className={hasImage ? "mx-auto max-w-sm sm:max-w-md" : undefined}
             >
-              <Card className="ub-glass border-none">
-                <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-                  <Quote className="size-6 text-ub-brass-500" aria-hidden="true" />
-                  <p className="text-balance font-display text-lg font-medium text-foreground sm:text-xl">
+              <Card className={cn("ub-glass border-none", hasImage ? "bg-white/90" : null)}>
+                <CardContent className="flex flex-col items-center gap-3 p-5 text-center sm:gap-4 sm:p-6">
+                  <Quote className="size-5 text-ub-brass-500" aria-hidden="true" />
+                  <p className="text-balance font-display text-base font-medium text-foreground sm:text-lg">
                     “{t.quote}”
                   </p>
                   <Rating value={t.rating} showValue={false} />
                   <div className="flex flex-col items-center gap-2">
-                    <span className="flex size-10 items-center justify-center rounded-full bg-ub-brass-500/15 text-sm font-medium text-ub-brass-700">
+                    <span className="flex size-9 items-center justify-center rounded-full bg-ub-brass-500/15 text-sm font-medium text-ub-brass-700">
                       {initials}
                     </span>
                     <div className="text-sm text-muted-foreground">

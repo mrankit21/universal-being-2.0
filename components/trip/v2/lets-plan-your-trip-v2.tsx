@@ -26,7 +26,20 @@ const WHATSAPP_REGEX = /^[6-9]\d{9}$/;
  * design — a failed request shows a toast and leaves the form open to
  * retry rather than silently pretending it worked.
  */
-export function LetsPlanYourTripV2({ destination, tripSlug }: { destination?: string; tripSlug?: string }) {
+export function LetsPlanYourTripV2({
+  destination,
+  tripSlug,
+  backgroundImageUrl,
+  backgroundImageAlt,
+}: {
+  destination?: string;
+  tripSlug?: string;
+  /** Optional full-bleed backdrop behind the card — e.g. a desert/camel
+   * shot. Unset keeps the plain gold-gradient card look. */
+  backgroundImageUrl?: string;
+  backgroundImageAlt?: string;
+}) {
+  const hasImage = Boolean(backgroundImageUrl);
   const [name, setName] = React.useState("");
   const [whatsapp, setWhatsapp] = React.useState("");
   // Editable, not a fixed label — this form is shown site-wide (homepage,
@@ -103,8 +116,34 @@ export function LetsPlanYourTripV2({ destination, tripSlug }: { destination?: st
   }
 
   return (
-    <section id="lets-plan-your-trip" className="w-full px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.06] via-card to-card">
+    <section
+      id="lets-plan-your-trip"
+      className={cn(
+        "relative w-full px-4 py-8 sm:px-6 sm:py-10",
+        hasImage ? "isolate overflow-hidden py-14 sm:py-20" : null
+      )}
+    >
+      {hasImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={backgroundImageUrl}
+            alt={backgroundImageAlt ?? ""}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
+        </>
+      ) : null}
+
+      <div
+        className={cn(
+          "relative mx-auto max-w-xl overflow-hidden rounded-2xl border",
+          hasImage
+            ? "border-white/25 bg-white/90 backdrop-blur-sm"
+            : "border-primary/25 bg-gradient-to-br from-primary/[0.06] via-card to-card"
+        )}
+      >
         <div className="px-6 pb-2 pt-6 sm:px-8 sm:pt-8">
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Still deciding?</span>
           <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Let&apos;s Plan Your Trip</h2>
