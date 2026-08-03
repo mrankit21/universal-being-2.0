@@ -78,6 +78,19 @@ export interface HomepageV2SectionBackgroundDoc {
   overlayOpacity: number;
 }
 
+/** "Find your destination" — the visitabudhabi.ae-style full-bleed banner
+ * that sits right under the Featured Trips stack: a heading + short body
+ * copy over a themed backdrop image (admins usually pick a crop that
+ * visually continues the Featured Trips section background above it). */
+export interface HomepageV2FindDestinationDoc {
+  heading: string;
+  body: string;
+  backgroundImage?: unknown;
+  backgroundImageMobile?: unknown;
+  overlayOpacity: number;
+  enabled: boolean;
+}
+
 export interface HomepageV2Document extends Document {
   hero: {
     eyebrow: string;
@@ -103,6 +116,9 @@ export interface HomepageV2Document extends Document {
    * same "themed backdrop + overlay opacity" pattern as
    * `featuredTripsSection`. Unset keeps the plain `bg-ub-teal-600` backdrop. */
   funFactsSection?: HomepageV2SectionBackgroundDoc;
+  /** "Find your destination" banner — right under Featured Trips. Unset/no
+   * heading falls back to the default reference copy. */
+  findDestination?: HomepageV2FindDestinationDoc;
   updatedBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -165,6 +181,21 @@ const SectionBackgroundSchema = new Schema<HomepageV2SectionBackgroundDoc>(
   { _id: false }
 );
 
+const FindDestinationSchema = new Schema<HomepageV2FindDestinationDoc>(
+  {
+    heading: { type: String, default: "Find your destination" },
+    body: {
+      type: String,
+      default: "Your next adventure is waiting. Discover amazing places with Universal Being.",
+    },
+    backgroundImage: { type: ImageAssetSchema },
+    backgroundImageMobile: { type: ImageAssetSchema },
+    overlayOpacity: { type: Number, default: 0.5 },
+    enabled: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 const HomepageV2Schema = new Schema<HomepageV2Document>(
   {
     hero: {
@@ -181,6 +212,7 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
     featuredTripsSection: { type: SectionBackgroundSchema, default: () => ({ overlayOpacity: 0.6 }) },
     funFacts: { type: [FunFactSchema], default: [] },
     funFactsSection: { type: SectionBackgroundSchema, default: () => ({ overlayOpacity: 0.6 }) },
+    findDestination: { type: FindDestinationSchema, default: () => ({}) },
     updatedBy: { type: String },
   },
   { timestamps: true }

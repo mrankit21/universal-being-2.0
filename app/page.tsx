@@ -13,6 +13,7 @@ import { ValuePropsSection } from "@/components/home/value-props-section";
 import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
+import { FindYourDestination } from "@/components/home/v2/find-your-destination";
 import { FunFactsZigzag } from "@/components/home/v2/fun-facts-zigzag";
 import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
@@ -92,6 +93,13 @@ export default async function HomePage() {
       homepage2 ? (
         <Fragment key="featuredTrips">
           <FeaturedTripsStack trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} background={homepage2.featuredTripsSection} />
+          {homepage2.findDestination.enabled ? (
+            <FindYourDestination
+              heading={homepage2.findDestination.heading}
+              body={homepage2.findDestination.body}
+              background={homepage2.findDestination.background}
+            />
+          ) : null}
           <FunFactsZigzag facts={homepage2.funFacts} background={homepage2.funFactsSection} />
         </Fragment>
       ) : (

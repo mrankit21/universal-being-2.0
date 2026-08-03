@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
+import { FindYourDestination } from "@/components/home/v2/find-your-destination";
 import { FloatingPillNavWired } from "@/components/home/v2/floating-pill-nav-wired";
 import { FunFactsZigzag } from "@/components/home/v2/fun-facts-zigzag";
 import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
  */
 export default async function NewHomePreview() {
   const [homepage2, homepage] = await Promise.all([getResolvedHomepage2(), getResolvedHomepage()]);
-  const { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, funFactsSection } = homepage2;
+  const { hero, quickLinks, featuredTrips, featuredTripsSection, findDestination, funFacts, funFactsSection } = homepage2;
 
   return (
     <main className="bg-background">
@@ -69,6 +70,14 @@ export default async function NewHomePreview() {
       <FloatingQuickLinks items={quickLinks} />
 
       <FeaturedTripsStack trips={featuredTrips} background={featuredTripsSection} />
+
+      {findDestination.enabled ? (
+        <FindYourDestination
+          heading={findDestination.heading}
+          body={findDestination.body}
+          background={findDestination.background}
+        />
+      ) : null}
 
       <FunFactsZigzag facts={funFacts} background={funFactsSection} />
 

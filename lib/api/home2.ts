@@ -31,6 +31,13 @@ export interface ResolvedHomepageV2Hero {
   imageMobileAlt?: string;
 }
 
+export interface ResolvedFindDestination {
+  enabled: boolean;
+  heading: string;
+  body: string;
+  background: ResolvedSectionBackground;
+}
+
 export interface ResolvedHomepageV2 {
   hero: ResolvedHomepageV2Hero;
   quickLinks: QuickLinkItem[];
@@ -38,6 +45,8 @@ export interface ResolvedHomepageV2 {
   /** Optional full-bleed background behind the whole Featured Trips
    * section — distinct from each card's own cover image. */
   featuredTripsSection: ResolvedSectionBackground;
+  /** "Find your destination" banner right under Featured Trips. */
+  findDestination: ResolvedFindDestination;
   funFacts: FunFactCardData[];
   /** Optional full-bleed background behind the whole Fun Facts section —
    * same pattern as `featuredTripsSection`. */
@@ -53,6 +62,12 @@ export interface ResolvedHomepageV2 {
 
 const DEFAULT_FEATURED_TRIPS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
 const DEFAULT_FUN_FACTS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
+const DEFAULT_FIND_DESTINATION: ResolvedFindDestination = {
+  enabled: true,
+  heading: "Find your destination",
+  body: "Your next adventure is waiting. Discover amazing places with Universal Being.",
+  background: { overlayOpacity: 0.5 },
+};
 
 const FALLBACK_HERO: ResolvedHomepageV2Hero = {
   eyebrow: "Journeys that stay with you",
@@ -238,6 +253,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
       featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
+      findDestination: DEFAULT_FIND_DESTINATION,
       funFacts: FALLBACK_FUN_FACTS,
       funFactsSection: DEFAULT_FUN_FACTS_SECTION,
       seeAllHref: "/trips",
@@ -261,6 +277,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
         quickLinks: FALLBACK_QUICK_LINKS,
         featuredTrips: FALLBACK_FEATURED_TRIPS,
         featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
+        findDestination: DEFAULT_FIND_DESTINATION,
         funFacts: FALLBACK_FUN_FACTS,
         funFactsSection: DEFAULT_FUN_FACTS_SECTION,
         seeAllHref,
@@ -413,7 +430,29 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       overlayOpacity: doc.funFactsSection?.overlayOpacity ?? DEFAULT_FUN_FACTS_SECTION.overlayOpacity,
     };
 
-    return { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, funFactsSection, seeAllHref, source: "database" };
+    // "Find your destination" banner — heading + body over an optional
+    // themed backdrop, same background pattern as the sections above.
+    // DB content only counts once a heading has actually been set.
+    const fdImg = doc.findDestination?.backgroundImage as ImgLike;
+    const fdImgMobile = doc.findDestination?.backgroundImageMobile as ImgLike;
+    const findDestination: ResolvedFindDestination = doc.findDestination?.heading
+      ? {
+          enabled: doc.findDestination.enabled ?? true,
+          heading: doc.findDestination.heading,
+          body: doc.findDestination.body || DEFAULT_FIND_DESTINATION.body,
+          background: {
+            backgroundImage:
+              fdImg?.url && !fdImg.isPlaceholder ? { url: fdImg.url, alt: fdImg.alt ?? "", isPlaceholder: false } : undefined,
+            backgroundImageMobile:
+              fdImgMobile?.url && !fdImgMobile.isPlaceholder
+                ? { url: fdImgMobile.url, alt: fdImgMobile.alt ?? "", isPlaceholder: false }
+                : undefined,
+            overlayOpacity: doc.findDestination?.overlayOpacity ?? DEFAULT_FIND_DESTINATION.background.overlayOpacity,
+          },
+        }
+      : DEFAULT_FIND_DESTINATION;
+
+    return { hero, quickLinks, featuredTrips, featuredTripsSection, findDestination, funFacts, funFactsSection, seeAllHref, source: "database" };
   } catch (err) {
     console.error("[getResolvedHomepage2] MongoDB unreachable, falling back to static Homepage 2.0 content:", err);
     return {
@@ -421,6 +460,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
       featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
+      findDestination: DEFAULT_FIND_DESTINATION,
       funFacts: FALLBACK_FUN_FACTS,
       funFactsSection: DEFAULT_FUN_FACTS_SECTION,
       seeAllHref: "/trips",

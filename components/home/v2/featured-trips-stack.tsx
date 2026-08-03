@@ -117,7 +117,7 @@ export function FeaturedTripsStack({
           >
             <Link
               href={trip.href}
-              className="group relative flex aspect-[4/5] w-full flex-col items-center overflow-hidden rounded-[28px] shadow-ub-lg sm:aspect-[16/11]"
+              className="group relative flex aspect-[3/2] w-full flex-col items-center overflow-hidden rounded-[28px] shadow-ub-lg sm:aspect-[16/9]"
             >
               {/* Cover image — the card's full background, resolved from a
                   homepage-only override or the trip's own cover photo. */}
