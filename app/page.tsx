@@ -13,6 +13,8 @@ import { ValuePropsSection } from "@/components/home/value-props-section";
 import { HeroParallax } from "@/components/home/v2/hero-parallax";
 import { FloatingQuickLinks } from "@/components/home/v2/floating-quick-links";
 import { FeaturedTripsStack } from "@/components/home/v2/featured-trips-stack";
+import { FunFactsZigzag } from "@/components/home/v2/fun-facts-zigzag";
+import { LetsPlanYourTripV2 } from "@/components/trip/v2/lets-plan-your-trip-v2";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { PromoBannerSection } from "@/components/home/promo-banner-section";
 import { CtaSection } from "@/components/home/cta-section";
@@ -50,6 +52,14 @@ export const metadata: Metadata = {
  * (`MobileHeader` → `MobileHeaderRight`, same one used on Trip 2.0 pages)
  * — no separate mount needed here.
  *
+ * v2-only sections (2026-08): when `homepage2` is active, "Fun Facts"
+ * (`FunFactsZigzag`, driven by `homepage2.funFacts` — Admin → Homepage 2.0)
+ * renders right after Featured Trips, and "Let's Plan Your Trip"
+ * (`LetsPlanYourTripV2`, already backend-connected via `/api/trip2-leads`)
+ * renders right after Testimonials — same placement as the `/new-home`
+ * preview route. Neither exists on v1; v1's `sectionOrder`/
+ * `sectionVisibility` from Admin → Homepage are untouched.
+ *
  * RootShell (header/footer/nav/search/sticky CTA) and ThemeProvider are
  * already wired in app/layout.tsx, so this file only supplies the
  * homepage-specific sections that render inside RootShell's <main>.
@@ -80,7 +90,10 @@ export default async function HomePage() {
     ) : null,
     featuredTrips: homepage.sectionVisibility.featuredTrips ? (
       homepage2 ? (
-        <FeaturedTripsStack key="featuredTrips" trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} />
+        <Fragment key="featuredTrips">
+          <FeaturedTripsStack trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} />
+          <FunFactsZigzag facts={homepage2.funFacts} />
+        </Fragment>
       ) : (
         <FeaturedTripsSection key="featuredTrips" trips={homepage.featuredTrips} />
       )
@@ -92,11 +105,10 @@ export default async function HomePage() {
       <ValuePropsSection key="valueProps" background={homepage.valuePropsSection} />
     ) : null,
     testimonials: homepage.sectionVisibility.testimonials ? (
-      <TestimonialsSection
-        key="testimonials"
-        testimonials={homepage.testimonials}
-        background={homepage.testimonialsSection}
-      />
+      <Fragment key="testimonials">
+        <TestimonialsSection testimonials={homepage.testimonials} background={homepage.testimonialsSection} />
+        {homepage2 ? <LetsPlanYourTripV2 /> : null}
+      </Fragment>
     ) : null,
     promoBanner: <PromoBannerSection key="promoBanner" config={homepage.promoBanner} />,
     cta: homepage.sectionVisibility.cta ? <CtaSection key="cta" config={homepage.ctaSection} /> : null,

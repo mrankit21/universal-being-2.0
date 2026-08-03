@@ -6,6 +6,7 @@ import { getPublishedTrip2CardBySlug, getPublishedTrip2Trips, type Trip2CardSumm
 import type { Trip } from "@/types/trip";
 import type { QuickLinkItem } from "@/components/home/v2/floating-quick-links";
 import type { FeaturedTripCardData } from "@/components/home/v2/featured-trips-stack";
+import type { FunFactCardData } from "@/components/home/v2/fun-facts-zigzag";
 
 /**
  * lib/api/home2.ts — same DB-first / static-fallback swap point as
@@ -33,6 +34,7 @@ export interface ResolvedHomepageV2 {
   hero: ResolvedHomepageV2Hero;
   quickLinks: QuickLinkItem[];
   featuredTrips: FeaturedTripCardData[];
+  funFacts: FunFactCardData[];
   /** Where Featured Trips' "See all trips" link points — `/trip2` when
    * Site Settings' "Trips Version" is forced to "v2", `/trips` otherwise.
    * Computed here (not hardcoded in the component) so it always tracks
@@ -132,6 +134,30 @@ const FALLBACK_FEATURED_TRIPS: FeaturedTripCardData[] = [
   },
 ];
 
+const FALLBACK_FUN_FACTS: FunFactCardData[] = [
+  {
+    id: "royal-heritage",
+    icon: "Mountain",
+    title: "Royal Heritage",
+    body: "Rajasthan is home to over 200 forts, more than any other state in India.",
+    learnMoreHref: "/destinations",
+  },
+  {
+    id: "highest-motorable",
+    icon: "Sun",
+    title: "Highest Motorable Roads",
+    body: "Spiti Valley sits along some of the highest motorable passes on Earth.",
+    learnMoreHref: "/destinations",
+  },
+  {
+    id: "coastline",
+    icon: "Globe",
+    title: "2,500 Years of Trade",
+    body: "Goa's coastline has welcomed traders and travellers for over two millennia.",
+    learnMoreHref: "/destinations",
+  },
+];
+
 function tripToFeaturedCardV2(
   trip: Trip,
   override: { tag?: string; tagTone?: "brass" | "teal" | "stone" }
@@ -177,6 +203,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       hero: FALLBACK_HERO,
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
+      funFacts: FALLBACK_FUN_FACTS,
       seeAllHref: "/trips",
       source: "static",
     };
@@ -197,6 +224,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
         hero: FALLBACK_HERO,
         quickLinks: FALLBACK_QUICK_LINKS,
         featuredTrips: FALLBACK_FEATURED_TRIPS,
+        funFacts: FALLBACK_FUN_FACTS,
         seeAllHref,
         source: "static",
       };
@@ -300,13 +328,31 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       featuredTrips = FALLBACK_FEATURED_TRIPS;
     }
 
-    return { hero, quickLinks, featuredTrips, seeAllHref, source: "database" };
+    // Fun facts — same "DB content only counts once something is actually
+    // enabled" rule as quick links, so an empty admin-created singleton
+    // still shows the reference zigzag cards instead of an empty section.
+    const enabledFunFacts = (doc.funFacts ?? [])
+      .filter((f) => f.enabled && (f.title || f.body))
+      .sort((a, b) => a.order - b.order);
+    const funFacts: FunFactCardData[] =
+      enabledFunFacts.length > 0
+        ? enabledFunFacts.map((f, i) => ({
+            id: `${i}-${f.title || "fact"}`,
+            icon: f.icon,
+            title: f.title,
+            body: f.body,
+            learnMoreHref: f.learnMoreHref || undefined,
+          }))
+        : FALLBACK_FUN_FACTS;
+
+    return { hero, quickLinks, featuredTrips, funFacts, seeAllHref, source: "database" };
   } catch (err) {
     console.error("[getResolvedHomepage2] MongoDB unreachable, falling back to static Homepage 2.0 content:", err);
     return {
       hero: FALLBACK_HERO,
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
+      funFacts: FALLBACK_FUN_FACTS,
       seeAllHref: "/trips",
       source: "static",
     };

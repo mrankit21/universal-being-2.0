@@ -21,6 +21,7 @@ import { ImageAssetField } from "@/components/admin/image-asset-field";
 import { ArrayFieldEditor } from "@/components/admin/array-field-editor";
 import { TripPickerField, type FeaturedTripEntry } from "@/components/admin/trip-picker-field";
 import { QUICK_LINK_ICON_NAMES } from "@/components/home/v2/floating-quick-links";
+import { FUN_FACT_ICON_NAMES } from "@/components/home/v2/fun-facts-zigzag";
 
 const BLANK_IMAGE = { provider: "placeholder", url: "", alt: "", width: 1600, height: 900, isPlaceholder: true };
 
@@ -42,6 +43,17 @@ function emptyQuickLink() {
 
 function emptyGalleryImage() {
   return { image: { ...BLANK_IMAGE }, title: "" };
+}
+
+function emptyFunFact() {
+  return {
+    title: "",
+    body: "",
+    icon: "Globe",
+    learnMoreHref: "",
+    order: 0,
+    enabled: true,
+  };
 }
 
 const TAG_TONES = ["brass", "teal", "stone"] as const;
@@ -262,6 +274,58 @@ export default function Homepage2Page() {
                     />
                   </div>
                 ) : null}
+              </div>
+            )}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Fun Facts</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            The &quot;Did you know?&quot; zigzag-edge card carousel. Add as many facts as you like — they
+            appear in the order set below, swipeable with dots underneath. Leave empty to show the
+            reference placeholder facts.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ArrayFieldEditor
+            items={data.funFacts ?? []}
+            onChange={(next) => set(["funFacts"], next)}
+            draggable
+            createItem={emptyFunFact}
+            addLabel="Add Fun Fact"
+            emptyMessage="No fun facts yet — add a &quot;Did you know?&quot; card."
+            renderItem={(item: any, index, update) => (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FormField label="Title">
+                  <Input value={item.title} onChange={(e) => update({ title: e.target.value })} />
+                </FormField>
+                <FormField label="Icon">
+                  <Select value={item.icon} onValueChange={(v) => update({ icon: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {FUN_FACT_ICON_NAMES.map((name) => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                <FormField label="Body text" className="sm:col-span-2">
+                  <Textarea rows={2} value={item.body} onChange={(e) => update({ body: e.target.value })} />
+                </FormField>
+                <FormField label="Learn More link (optional)">
+                  <Input
+                    value={item.learnMoreHref}
+                    onChange={(e) => update({ learnMoreHref: e.target.value })}
+                    placeholder="/destinations"
+                  />
+                </FormField>
+                <div className="flex items-center gap-2 self-end pb-1">
+                  <Switch checked={item.enabled} onCheckedChange={(v) => update({ enabled: v })} />
+                  <span className="text-sm text-muted-foreground">{item.enabled ? "Visible" : "Hidden"}</span>
+                </div>
               </div>
             )}
           />

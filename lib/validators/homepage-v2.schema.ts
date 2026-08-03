@@ -27,6 +27,15 @@ export const homepageV2FeaturedTripSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
+export const homepageV2FunFactSchema = z.object({
+  title: z.string().default(""),
+  body: z.string().default(""),
+  icon: z.string().default("Globe"),
+  learnMoreHref: z.string().default(""),
+  order: z.number().default(0),
+  enabled: z.boolean().default(true),
+});
+
 export const homepageV2Schema = z.object({
   hero: z.object({
     eyebrow: z.string().default(""),
@@ -39,6 +48,7 @@ export const homepageV2Schema = z.object({
   }),
   quickLinks: z.array(homepageV2QuickLinkSchema).default([]),
   featuredTrips: z.array(homepageV2FeaturedTripSchema).default([]),
+  funFacts: z.array(homepageV2FunFactSchema).default([]),
 });
 
 export type HomepageV2Input = z.infer<typeof homepageV2Schema>;

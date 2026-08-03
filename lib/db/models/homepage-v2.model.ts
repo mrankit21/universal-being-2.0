@@ -51,6 +51,19 @@ export interface HomepageV2FeaturedTripDoc {
   enabled: boolean;
 }
 
+/** One "Did you know" zigzag-card slide in the Fun Facts carousel
+ * (`components/home/v2/fun-facts-zigzag.tsx`). */
+export interface HomepageV2FunFactDoc {
+  title: string;
+  body: string;
+  /** Lucide icon name, resolved client-side against `FUN_FACT_ICONS` in
+   * `components/home/v2/fun-facts-zigzag.tsx`. */
+  icon: string;
+  learnMoreHref: string;
+  order: number;
+  enabled: boolean;
+}
+
 export interface HomepageV2Document extends Document {
   hero: {
     eyebrow: string;
@@ -68,6 +81,7 @@ export interface HomepageV2Document extends Document {
   };
   quickLinks: HomepageV2QuickLinkDoc[];
   featuredTrips: HomepageV2FeaturedTripDoc[];
+  funFacts: HomepageV2FunFactDoc[];
   updatedBy?: string;
   createdAt: string;
   updatedAt: string;
@@ -108,6 +122,18 @@ const FeaturedTripSchema = new Schema<HomepageV2FeaturedTripDoc>(
   { _id: false }
 );
 
+const FunFactSchema = new Schema<HomepageV2FunFactDoc>(
+  {
+    title: { type: String, default: "" },
+    body: { type: String, default: "" },
+    icon: { type: String, default: "Globe" },
+    learnMoreHref: { type: String, default: "" },
+    order: { type: Number, default: 0 },
+    enabled: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
 const HomepageV2Schema = new Schema<HomepageV2Document>(
   {
     hero: {
@@ -121,6 +147,7 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
     },
     quickLinks: { type: [QuickLinkSchema], default: [] },
     featuredTrips: { type: [FeaturedTripSchema], default: [] },
+    funFacts: { type: [FunFactSchema], default: [] },
     updatedBy: { type: String },
   },
   { timestamps: true }
