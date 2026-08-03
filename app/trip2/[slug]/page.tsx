@@ -222,7 +222,15 @@ export default async function Trip2Page({ params }: Params) {
 
   return (
     <main className="bg-background">
-      <TripHeroV2 bookHref={bookHref} imageUrl={heroImage.url} imageAlt={heroImage.alt} images={mapHeroImages(trip)} />
+      <TripHeroV2
+        bookHref={bookHref}
+        imageUrl={heroImage.url}
+        imageAlt={heroImage.alt}
+        images={mapHeroImages(trip)}
+        eyebrow={trip.location || undefined}
+        heading={trip.title || "Untitled Trip"}
+        subheading={trip.shortDescription || undefined}
+      />
       <TripTitleV2
         title={trip.title || "Untitled Trip"}
         description={trip.shortDescription || ""}

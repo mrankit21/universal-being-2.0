@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { ParallaxImageLayer } from "@/components/animation/parallax-image-layer";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,16 @@ export interface TripHeroV2Props {
    * in order — with dot indicators and left/right arrows. Omit/leave empty
    * for the original single-photo hero. */
   images?: TripHeroImageV2[];
+  /** Small uppercase label above the heading (e.g. the trip's location).
+   * Same slot as `HeroParallax`'s `eyebrow` on Homepage 2.0. Omit to hide. */
+  eyebrow?: string;
+  /** Large serif headline over the hero photo — same text template as
+   * Homepage 2.0's hero (`components/home/v2/hero-parallax.tsx`), typically
+   * the trip's title. Omit to keep the original image-only hero. */
+  heading?: string;
+  /** Short supporting line under the heading, same styling as Homepage
+   * 2.0's hero subheading — typically the trip's short description. */
+  subheading?: string;
 }
 
 /**
@@ -47,8 +58,16 @@ export interface TripHeroV2Props {
  * image mounts, swapped on tap/swipe/arrow click, so there's no layout
  * cost for a single-image hero (`images` empty ⇒ renders exactly as
  * before, no dots/arrows).
+ *
+ * Revision (2026-08, text template): brought back an optional text
+ * overlay (`eyebrow`/`heading`/`subheading`) using the exact same
+ * template as Homepage 2.0's hero (`HeroParallax`) — same eyebrow/serif-
+ * heading/subheading treatment and matching legibility scrim. Unlike that
+ * component, the CTA stays the existing "Book Now" pill rather than an
+ * "Explore Trips" button. All three props are optional so a hero with
+ * none of them set still renders exactly as the image-only version above.
  */
-export function TripHeroV2({ bookHref, imageUrl, imageAlt, images }: TripHeroV2Props) {
+export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, heading, subheading }: TripHeroV2Props) {
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const allImages = React.useMemo<TripHeroImageV2[]>(
     () => [{ imageUrl, imageAlt }, ...(images ?? [])],
@@ -57,6 +76,7 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images }: TripHeroV2P
   const [active, setActive] = React.useState(0);
   const touchStartX = React.useRef<number | null>(null);
   const hasGallery = allImages.length > 1;
+  const hasText = Boolean(eyebrow || heading || subheading);
 
   function go(delta: number) {
     setActive((prev) => (prev + delta + allImages.length) % allImages.length);
@@ -82,7 +102,50 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images }: TripHeroV2P
         imageUrl={allImages[active].imageUrl}
         imageAlt={allImages[active].imageAlt}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" aria-hidden="true" />
+      <div
+        className={cn(
+          "absolute inset-0",
+          hasText ? "bg-gradient-to-t from-black/85 via-black/30 to-black/40" : "bg-gradient-to-t from-black/60 via-black/10 to-transparent"
+        )}
+        aria-hidden="true"
+      />
+
+      {hasText ? (
+        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-4 px-6 pb-28 text-center sm:gap-6 sm:pb-32">
+          {eyebrow ? (
+            <motion.span
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="text-xs font-semibold uppercase tracking-[0.25em] text-primary sm:text-sm"
+            >
+              {eyebrow}
+            </motion.span>
+          ) : null}
+
+          {heading ? (
+            <motion.h1
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+              className="font-display text-4xl font-medium leading-[1.05] text-white sm:text-6xl md:text-7xl"
+            >
+              {heading}
+            </motion.h1>
+          ) : null}
+
+          {subheading ? (
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-xl text-sm text-white/85 sm:text-lg"
+            >
+              {subheading}
+            </motion.p>
+          ) : null}
+        </div>
+      ) : null}
 
       {hasGallery ? (
         <>

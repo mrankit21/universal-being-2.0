@@ -78,6 +78,9 @@ export default function NewTripPreview() {
         bookHref="/trips/spiti-valley/book"
         imageUrl="https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=2000&auto=format&fit=crop"
         imageAlt="Mountain valley above the clouds at sunset"
+        eyebrow="Himachal Pradesh, India"
+        heading="Spiti Valley, Reimagined"
+        subheading="A 7-day journey through the cold desert of the Himalayas — monasteries, high passes, and star-filled skies."
       />
       <TripTitleV2
         title="Spiti Valley, Reimagined"

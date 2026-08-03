@@ -47,3 +47,65 @@ export async function getAllPublishedTrip2Slugs(): Promise<string[]> {
     return [];
   }
 }
+
+/** Lightweight card-shaped projection of one published Trip 2.0 document —
+ * just enough to render a listing/featured card, without the full
+ * `ResolvedTrip2` payload (gallery, itinerary, FAQs, etc). */
+export interface Trip2CardSummary {
+  slug: string;
+  title: string;
+  shortDescription: string;
+  location: string;
+  heroImage?: { url?: string; alt?: string; isPlaceholder?: boolean };
+}
+
+/** Every published Trip 2.0 document, card-shaped. Used wherever a
+ * listing needs to show Trip 2.0 trips specifically (e.g. Homepage 2.0's
+ * Featured Trips when Site Settings' "Trips Version" is forced to "v2") —
+ * as opposed to `getResolvedTrip2`, which fetches one full trip by slug.
+ * Same empty-array-on-no-DB fallback as `getAllPublishedTrip2Slugs`. */
+export async function getPublishedTrip2Trips(): Promise<Trip2CardSummary[]> {
+  if (!isDatabaseConfigured()) return [];
+  try {
+    await connectToDatabase();
+    const docs = await Trip2Model.find({ status: "published" })
+      .select("slug title shortDescription location heroImage")
+      .lean();
+    return docs.map((d) => ({
+      slug: d.slug,
+      title: d.title,
+      shortDescription: d.shortDescription,
+      location: d.location,
+      heroImage: d.heroImage as Trip2CardSummary["heroImage"],
+    }));
+  } catch (err) {
+    console.error("[getPublishedTrip2Trips] MongoDB unreachable:", err);
+    return [];
+  }
+}
+
+/** One published Trip 2.0 document by slug, card-shaped — cheaper than
+ * `getResolvedTrip2` when only listing-card fields are needed (used to
+ * check "does a Trip 2.0 page exist for this admin-chosen slug" without
+ * pulling the whole document). Returns `null` when unpublished/missing,
+ * same as `getResolvedTrip2`. */
+export async function getPublishedTrip2CardBySlug(slug: string): Promise<Trip2CardSummary | null> {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    await connectToDatabase();
+    const doc = await Trip2Model.findOne({ slug, status: "published" })
+      .select("slug title shortDescription location heroImage")
+      .lean();
+    if (!doc) return null;
+    return {
+      slug: doc.slug,
+      title: doc.title,
+      shortDescription: doc.shortDescription,
+      location: doc.location,
+      heroImage: doc.heroImage as Trip2CardSummary["heroImage"],
+    };
+  } catch (err) {
+    console.error(`[getPublishedTrip2CardBySlug] MongoDB unreachable while resolving slug "${slug}":`, err);
+    return null;
+  }
+}

@@ -1,6 +1,8 @@
 import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { HomepageV2Model, type HomepageV2Document } from "@/lib/db/models";
 import { getTripBySlug, getFeaturedTrips as getStaticFeaturedFallback } from "@/lib/api/trips";
+import { getSiteSettings } from "@/lib/api/site-settings";
+import { getPublishedTrip2CardBySlug, getPublishedTrip2Trips, type Trip2CardSummary } from "@/lib/api/trip2";
 import type { Trip } from "@/types/trip";
 import type { QuickLinkItem } from "@/components/home/v2/floating-quick-links";
 import type { FeaturedTripCardData } from "@/components/home/v2/featured-trips-stack";
@@ -141,6 +143,28 @@ function tripToFeaturedCardV2(
   };
 }
 
+/** Same card mapping as `tripToFeaturedCardV2`, but for a Trip 2.0 document
+ * — links straight to `/trip2/[slug]` instead of the old `/trips/[slug]`.
+ * Used for Featured Trips whenever Site Settings' "Trips Version" is
+ * forced to "v2" (Trip 2.0 active site-wide), so the homepage's cards
+ * always point at the live Trip 2.0 page rather than the old one. */
+function trip2ToFeaturedCardV2(
+  trip: Trip2CardSummary,
+  override: { tag?: string; tagTone?: "brass" | "teal" | "stone" }
+): FeaturedTripCardData {
+  const hasCover = trip.heroImage?.url && !trip.heroImage.isPlaceholder;
+  return {
+    id: trip.slug,
+    tag: override.tag || trip.location,
+    tagTone: override.tagTone ?? "brass",
+    title: trip.title,
+    description: trip.shortDescription,
+    imageUrl: hasCover ? trip.heroImage!.url! : FALLBACK_FEATURED_TRIPS[0].imageUrl,
+    imageAlt: hasCover ? trip.heroImage!.alt || trip.title : trip.title,
+    href: `/trip2/${trip.slug}`,
+  };
+}
+
 export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
   if (!isDatabaseConfigured()) {
     return { hero: FALLBACK_HERO, quickLinks: FALLBACK_QUICK_LINKS, featuredTrips: FALLBACK_FEATURED_TRIPS, source: "static" };
@@ -210,20 +234,47 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
 
     // Featured trips — resolve chosen slugs against the real Trip
     // collection; fall back to "trip marked featured", then static seed.
+    //
+    // Trip 2.0 (2026-08): when Site Settings' "Trips Version" is forced
+    // to "v2", every trip on the site should be Trip 2.0 — so Featured
+    // Trips must never surface an old `/trips/[slug]` card here either.
+    // In that mode, each admin-chosen slug is resolved against the Trip
+    // 2.0 collection instead of the old Trip collection, and a slug with
+    // no matching *published* Trip 2.0 page is dropped rather than
+    // falling back to its old-Trip version. If that leaves nothing (none
+    // of the chosen slugs have a Trip 2.0 page yet), fall back to every
+    // published Trip 2.0 trip — still never the old collection.
     const chosen = (doc.featuredTrips ?? []).filter((f) => f.enabled);
+    const siteSettings = await getSiteSettings();
+    const trip2Active = siteSettings.activeTripsVersion === "v2";
     let featuredTrips: FeaturedTripCardData[] = [];
-    if (chosen.length > 0) {
-      const resolved = await Promise.all(chosen.map((f) => getTripBySlug(f.tripSlug)));
-      featuredTrips = resolved
-        .map((trip, i) => (trip ? tripToFeaturedCardV2(trip, chosen[i]) : null))
-        .filter((t): t is FeaturedTripCardData => Boolean(t));
+
+    if (trip2Active) {
+      if (chosen.length > 0) {
+        const resolved = await Promise.all(chosen.map((f) => getPublishedTrip2CardBySlug(f.tripSlug)));
+        featuredTrips = resolved
+          .map((trip, i) => (trip ? trip2ToFeaturedCardV2(trip, chosen[i]) : null))
+          .filter((t): t is FeaturedTripCardData => Boolean(t));
+      }
+      if (featuredTrips.length === 0) {
+        const allTrip2 = await getPublishedTrip2Trips();
+        featuredTrips = allTrip2.map((trip) => trip2ToFeaturedCardV2(trip, {}));
+      }
+    } else {
+      if (chosen.length > 0) {
+        const resolved = await Promise.all(chosen.map((f) => getTripBySlug(f.tripSlug)));
+        featuredTrips = resolved
+          .map((trip, i) => (trip ? tripToFeaturedCardV2(trip, chosen[i]) : null))
+          .filter((t): t is FeaturedTripCardData => Boolean(t));
+      }
+      if (featuredTrips.length === 0) {
+        const dbFeatured = await getStaticFeaturedFallback();
+        featuredTrips = dbFeatured.length > 0 ? dbFeatured.map((trip) => tripToFeaturedCardV2(trip, {})) : [];
+      }
     }
+
     if (featuredTrips.length === 0) {
-      const dbFeatured = await getStaticFeaturedFallback();
-      featuredTrips =
-        dbFeatured.length > 0
-          ? dbFeatured.map((trip) => tripToFeaturedCardV2(trip, {}))
-          : FALLBACK_FEATURED_TRIPS;
+      featuredTrips = FALLBACK_FEATURED_TRIPS;
     }
 
     return { hero, quickLinks, featuredTrips, source: "database" };
