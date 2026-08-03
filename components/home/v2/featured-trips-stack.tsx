@@ -131,7 +131,7 @@ export function FeaturedTripsStack({
                   without flattening the photo like the old bottom gradient. */}
               <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
 
-              <div className="relative z-10 flex h-full w-full flex-col items-center gap-4 px-6 pt-[18%] text-center sm:pt-[15%]">
+              <div className="relative z-10 flex h-full w-full flex-col items-center gap-4 px-6 pt-[8%] text-center sm:pt-[6%]">
                 <span
                   className={cn(
                     "w-fit rounded-md border px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm sm:text-sm",
