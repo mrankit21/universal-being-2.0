@@ -91,7 +91,7 @@ export default async function HomePage() {
     featuredTrips: homepage.sectionVisibility.featuredTrips ? (
       homepage2 ? (
         <Fragment key="featuredTrips">
-          <FeaturedTripsStack trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} />
+          <FeaturedTripsStack trips={homepage2.featuredTrips} seeAllHref={homepage2.seeAllHref} background={homepage2.featuredTripsSection} />
           <FunFactsZigzag facts={homepage2.funFacts} />
         </Fragment>
       ) : (

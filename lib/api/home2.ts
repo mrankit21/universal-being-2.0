@@ -7,6 +7,7 @@ import type { Trip } from "@/types/trip";
 import type { QuickLinkItem } from "@/components/home/v2/floating-quick-links";
 import type { FeaturedTripCardData } from "@/components/home/v2/featured-trips-stack";
 import type { FunFactCardData } from "@/components/home/v2/fun-facts-zigzag";
+import type { ResolvedSectionBackground } from "@/lib/api/home";
 
 /**
  * lib/api/home2.ts — same DB-first / static-fallback swap point as
@@ -34,6 +35,9 @@ export interface ResolvedHomepageV2 {
   hero: ResolvedHomepageV2Hero;
   quickLinks: QuickLinkItem[];
   featuredTrips: FeaturedTripCardData[];
+  /** Optional full-bleed background behind the whole Featured Trips
+   * section — distinct from each card's own cover image. */
+  featuredTripsSection: ResolvedSectionBackground;
   funFacts: FunFactCardData[];
   /** Where Featured Trips' "See all trips" link points — `/trip2` when
    * Site Settings' "Trips Version" is forced to "v2", `/trips` otherwise.
@@ -43,6 +47,8 @@ export interface ResolvedHomepageV2 {
   seeAllHref: string;
   source: "database" | "static";
 }
+
+const DEFAULT_FEATURED_TRIPS_SECTION: ResolvedSectionBackground = { overlayOpacity: 0.6 };
 
 const FALLBACK_HERO: ResolvedHomepageV2Hero = {
   eyebrow: "Journeys that stay with you",
@@ -227,6 +233,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       hero: FALLBACK_HERO,
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
+      featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
       funFacts: FALLBACK_FUN_FACTS,
       seeAllHref: "/trips",
       source: "static",
@@ -248,6 +255,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
         hero: FALLBACK_HERO,
         quickLinks: FALLBACK_QUICK_LINKS,
         featuredTrips: FALLBACK_FEATURED_TRIPS,
+        featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
         funFacts: FALLBACK_FUN_FACTS,
         seeAllHref,
         source: "static",
@@ -354,6 +362,21 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
       featuredTrips = FALLBACK_FEATURED_TRIPS;
     }
 
+    // Featured Trips section background — optional full-bleed backdrop
+    // behind the whole section (distinct from each card's own cover
+    // image). Unset/no image falls back to the plain section background,
+    // same rule as v1's Why Travel With Us / Testimonials backgrounds.
+    const ftsImg = doc.featuredTripsSection?.backgroundImage as ImgLike;
+    const ftsImgMobile = doc.featuredTripsSection?.backgroundImageMobile as ImgLike;
+    const featuredTripsSection: ResolvedSectionBackground = {
+      backgroundImage: ftsImg?.url && !ftsImg.isPlaceholder ? { url: ftsImg.url, alt: ftsImg.alt ?? "", isPlaceholder: false } : undefined,
+      backgroundImageMobile:
+        ftsImgMobile?.url && !ftsImgMobile.isPlaceholder
+          ? { url: ftsImgMobile.url, alt: ftsImgMobile.alt ?? "", isPlaceholder: false }
+          : undefined,
+      overlayOpacity: doc.featuredTripsSection?.overlayOpacity ?? DEFAULT_FEATURED_TRIPS_SECTION.overlayOpacity,
+    };
+
     // Fun facts — same "DB content only counts once something is actually
     // enabled" rule as quick links, so an empty admin-created singleton
     // still shows the reference zigzag cards instead of an empty section.
@@ -371,13 +394,14 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
           }))
         : FALLBACK_FUN_FACTS;
 
-    return { hero, quickLinks, featuredTrips, funFacts, seeAllHref, source: "database" };
+    return { hero, quickLinks, featuredTrips, featuredTripsSection, funFacts, seeAllHref, source: "database" };
   } catch (err) {
     console.error("[getResolvedHomepage2] MongoDB unreachable, falling back to static Homepage 2.0 content:", err);
     return {
       hero: FALLBACK_HERO,
       quickLinks: FALLBACK_QUICK_LINKS,
       featuredTrips: FALLBACK_FEATURED_TRIPS,
+      featuredTripsSection: DEFAULT_FEATURED_TRIPS_SECTION,
       funFacts: FALLBACK_FUN_FACTS,
       seeAllHref: "/trips",
       source: "static",

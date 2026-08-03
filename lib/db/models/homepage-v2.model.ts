@@ -69,6 +69,15 @@ export interface HomepageV2FunFactDoc {
   enabled: boolean;
 }
 
+/** Same "themed backdrop + overlay opacity" section background pattern as
+ * v1's Why Travel With Us / Testimonials sections — reused here for
+ * Featured Trips' optional full-section (not per-card) background. */
+export interface HomepageV2SectionBackgroundDoc {
+  backgroundImage?: unknown;
+  backgroundImageMobile?: unknown;
+  overlayOpacity: number;
+}
+
 export interface HomepageV2Document extends Document {
   hero: {
     eyebrow: string;
@@ -86,6 +95,9 @@ export interface HomepageV2Document extends Document {
   };
   quickLinks: HomepageV2QuickLinkDoc[];
   featuredTrips: HomepageV2FeaturedTripDoc[];
+  /** Optional full-bleed background behind the whole Featured Trips
+   * section. Unset renders the plain section background as before. */
+  featuredTripsSection?: HomepageV2SectionBackgroundDoc;
   funFacts: HomepageV2FunFactDoc[];
   updatedBy?: string;
   createdAt: string;
@@ -140,6 +152,15 @@ const FunFactSchema = new Schema<HomepageV2FunFactDoc>(
   { _id: false }
 );
 
+const SectionBackgroundSchema = new Schema<HomepageV2SectionBackgroundDoc>(
+  {
+    backgroundImage: { type: ImageAssetSchema },
+    backgroundImageMobile: { type: ImageAssetSchema },
+    overlayOpacity: { type: Number, default: 0.6 },
+  },
+  { _id: false }
+);
+
 const HomepageV2Schema = new Schema<HomepageV2Document>(
   {
     hero: {
@@ -153,6 +174,7 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
     },
     quickLinks: { type: [QuickLinkSchema], default: [] },
     featuredTrips: { type: [FeaturedTripSchema], default: [] },
+    featuredTripsSection: { type: SectionBackgroundSchema, default: () => ({ overlayOpacity: 0.6 }) },
     funFacts: { type: [FunFactSchema], default: [] },
     updatedBy: { type: String },
   },

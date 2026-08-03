@@ -6,6 +6,16 @@
  * dialog shape as `ImageAssetField` (search the real collection, click to
  * add), reordering/removal reuses `ArrayFieldEditor` (drag-and-drop +
  * up/down, same component every other repeater in the Admin Panel uses).
+ *
+ * Trips-version aware (2026-08 fix): the live homepage resolves Featured
+ * Trips against Trip 2.0 whenever Site Settings → "Trips Version" is
+ * forced to "v2" (`getResolvedHomepage2` in `lib/api/home2.ts`) — a slug
+ * chosen from the old Trip 1.0 collection simply won't match anything
+ * there, silently falling back to "every published Trip 2.0 trip" instead
+ * of the admin's actual picks. This field now checks that same site
+ * setting on load and searches whichever collection (`/api/admin/trips`
+ * or `/api/admin/trip2`) is actually live, so what you pick here is what
+ * shows up on the homepage.
  */
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Search, X } from "lucide-react";
@@ -25,7 +35,10 @@ interface AdminTripSummary {
   _id: string;
   slug: string;
   title: string;
-  destinationName: string;
+  /** Trip 1.0 summaries use `destinationName`, Trip 2.0 uses `location` —
+   * normalized to this single field so the picker UI doesn't care which
+   * collection it's searching. */
+  subtitle: string;
   status: string;
 }
 
@@ -41,33 +54,57 @@ export function TripPickerField({
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  // Which collection is actually live on the homepage right now — decides
+  // both the picker's search endpoint and the helper text shown above it.
+  const [tripsVersion, setTripsVersion] = useState<"v1" | "v2" | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/site-settings")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) setTripsVersion(json.data.activeTripsVersion === "v2" ? "v2" : "v1");
+        else setTripsVersion("v1");
+      })
+      .catch(() => setTripsVersion("v1"));
+  }, []);
 
   const load = useCallback(async () => {
+    if (!tripsVersion) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({ limit: "100" });
       if (search.trim()) params.set("q", search.trim());
-      const res = await fetch(`/api/admin/trips?${params.toString()}`);
+      const endpoint = tripsVersion === "v2" ? "/api/admin/trip2" : "/api/admin/trips";
+      const res = await fetch(`${endpoint}?${params.toString()}`);
       const json = await res.json();
       if (json.success) {
-        setTrips(json.data.trips);
+        const normalized: AdminTripSummary[] = json.data.trips.map(
+          (t: { _id: string; slug: string; title: string; destinationName?: string; location?: string; status: string }) => ({
+            _id: t._id,
+            slug: t.slug,
+            title: t.title,
+            subtitle: t.destinationName ?? t.location ?? "",
+            status: t.status,
+          })
+        );
+        setTrips(normalized);
         setLabels((prev) => {
           const next = { ...prev };
-          for (const t of json.data.trips as AdminTripSummary[]) next[t.slug] = t.title;
+          for (const t of normalized) next[t.slug] = t.title;
           return next;
         });
       }
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, tripsVersion]);
 
   useEffect(() => {
-    if (pickerOpen) {
+    if (pickerOpen && tripsVersion) {
       const t = setTimeout(load, 200);
       return () => clearTimeout(t);
     }
-  }, [pickerOpen, load]);
+  }, [pickerOpen, tripsVersion, load]);
 
   function addTrip(slug: string) {
     if (items.some((i) => i.tripSlug === slug)) return;
@@ -78,6 +115,12 @@ export function TripPickerField({
 
   return (
     <div className="space-y-3">
+      {tripsVersion ? (
+        <p className="text-xs text-muted-foreground">
+          Searching <strong>{tripsVersion === "v2" ? "Trip 2.0" : "Trip 1.0"}</strong> pages — the collection
+          currently live on the site (Site Settings → Trips Version).
+        </p>
+      ) : null}
       <ArrayFieldEditor<FeaturedTripEntry>
         items={items}
         onChange={onChange}
@@ -140,7 +183,7 @@ export function TripPickerField({
                   >
                     <span>
                       <span className="font-medium">{trip.title}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">{trip.destinationName} · {trip.status}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{trip.subtitle} · {trip.status}</span>
                     </span>
                     {isChosen ? <X className="size-4 text-muted-foreground" /> : <Plus className="size-4 text-muted-foreground" />}
                   </button>

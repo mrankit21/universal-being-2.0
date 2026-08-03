@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import type { ResolvedSectionBackground } from "@/lib/api/home";
 
 export interface FeaturedTripCardData {
   id: string;
@@ -45,26 +47,67 @@ export function FeaturedTripsStack({
   heading = "Featured Trips",
   seeAllHref = "/trips",
   trips,
+  background,
 }: {
   heading?: string;
   seeAllHref?: string;
   trips: FeaturedTripCardData[];
+  /** Optional full-bleed backdrop behind the whole section — distinct
+   * from each card's own cover image. Unset renders the plain section
+   * background, same as v1's Why Travel With Us / Testimonials sections. */
+  background?: ResolvedSectionBackground;
 }) {
-  return (
-    <section className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
-      <div className="mb-8 flex flex-col items-center gap-2 text-center sm:mb-10">
-        <h2 className="font-display text-3xl font-medium text-foreground sm:text-4xl">{heading}</h2>
-        <Link
-          href={seeAllHref}
-          className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-ub-teal-500 hover:underline"
-        >
-          See All
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Link>
-      </div>
+  const hasImage = Boolean(background?.backgroundImage);
 
-      <div className="flex flex-col gap-5 sm:gap-6">
-        {trips.map((trip, i) => (
+  return (
+    <div className={hasImage ? "relative isolate overflow-hidden" : undefined}>
+      {hasImage && background?.backgroundImage ? (
+        <>
+          <Image
+            src={(background.backgroundImageMobile ?? background.backgroundImage).url}
+            alt={(background.backgroundImageMobile ?? background.backgroundImage).alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 object-cover md:hidden"
+            unoptimized
+          />
+          <Image
+            src={background.backgroundImage.url}
+            alt={background.backgroundImage.alt}
+            fill
+            sizes="100vw"
+            className="absolute inset-0 hidden object-cover md:block"
+            unoptimized
+          />
+          <div
+            className="absolute inset-0 bg-black"
+            style={{ opacity: background.overlayOpacity }}
+            aria-hidden="true"
+          />
+        </>
+      ) : null}
+
+      <section className="relative mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
+        <div className="mb-8 flex flex-col items-center gap-2 text-center sm:mb-10">
+          <h2
+            className={cn(
+              "font-display text-3xl font-medium sm:text-4xl",
+              hasImage ? "text-white" : "text-foreground"
+            )}
+          >
+            {heading}
+          </h2>
+          <Link
+            href={seeAllHref}
+            className="inline-flex items-center gap-1 text-sm font-bold uppercase tracking-wide text-ub-teal-500 hover:underline"
+          >
+            See All
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-5 sm:gap-6">
+          {trips.map((trip, i) => (
           <motion.div
             key={trip.id}
             initial={{ opacity: 0, y: 24 }}
@@ -104,7 +147,8 @@ export function FeaturedTripsStack({
             </Link>
           </motion.div>
         ))}
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

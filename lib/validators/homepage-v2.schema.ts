@@ -40,6 +40,12 @@ export const homepageV2FunFactSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
+export const homepageV2SectionBackgroundSchema = z.object({
+  backgroundImage: imageAssetSchema.optional(),
+  backgroundImageMobile: imageAssetSchema.optional(),
+  overlayOpacity: z.number().min(0).max(1).default(0.6),
+});
+
 export const homepageV2Schema = z.object({
   hero: z.object({
     eyebrow: z.string().default(""),
@@ -52,6 +58,11 @@ export const homepageV2Schema = z.object({
   }),
   quickLinks: z.array(homepageV2QuickLinkSchema).default([]),
   featuredTrips: z.array(homepageV2FeaturedTripSchema).default([]),
+  /** Optional full-bleed background behind the whole Featured Trips
+   * section (not per-card) — same "themed backdrop + overlay opacity"
+   * pattern as v1's Why Travel With Us / Testimonials section
+   * backgrounds. Leave unset for the plain section background. */
+  featuredTripsSection: homepageV2SectionBackgroundSchema.optional(),
   funFacts: z.array(homepageV2FunFactSchema).default([]),
 });
 

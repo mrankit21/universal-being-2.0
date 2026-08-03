@@ -336,10 +336,12 @@ export default function Homepage2Page() {
         <CardHeader>
           <CardTitle className="text-base">Featured Trips</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Choose real trips from your Trips collection to feature on the homepage stack, in the order they
-            should appear. Tag and tag color are optional — leave blank to use the trip&apos;s destination.
-            Cover image is also optional — leave blank to use the trip&apos;s own cover photo, or upload one
-            here to use a different photo just for this homepage card (the trip&apos;s own page is unaffected).
+            Choose real trips to feature on the homepage stack, in the order they should appear — the picker
+            below automatically searches Trip 1.0 or Trip 2.0, whichever is live on the site (Site Settings →
+            Trips Version), so what you pick here always matches what shows up on the homepage. Tag and tag
+            color are optional — leave blank to use the trip&apos;s destination. Cover image is also optional
+            — leave blank to use the trip&apos;s own cover photo, or upload one here to use a different photo
+            just for this homepage card (the trip&apos;s own page is unaffected).
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -406,6 +408,48 @@ export default function Homepage2Page() {
               ))}
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Featured Trips — Section Background</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Optional full-bleed background image behind the whole Featured Trips section (distinct from each
+            card&apos;s own cover photo above). Leave empty for the plain section background.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <FormField label="Overlay Opacity (0–1)">
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={data.featuredTripsSection?.overlayOpacity ?? 0.6}
+              onChange={(e) =>
+                set(["featuredTripsSection", "overlayOpacity"], Math.min(1, Math.max(0, Number(e.target.value))))
+              }
+            />
+          </FormField>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Background Image"
+              value={data.featuredTripsSection?.backgroundImage ?? BLANK_IMAGE}
+              onChange={(v) => set(["featuredTripsSection", "backgroundImage"], v)}
+              category="banners"
+              hint="Leave empty for the plain background. Use Overlay Opacity to keep card text/badges readable over the image."
+            />
+          </div>
+          <div className="md:col-span-2">
+            <ImageAssetField
+              label="Mobile Background Image (optional)"
+              value={data.featuredTripsSection?.backgroundImageMobile ?? { ...BLANK_IMAGE, width: 1080, height: 1920 }}
+              onChange={(v) => set(["featuredTripsSection", "backgroundImageMobile"], v)}
+              category="banners"
+              hint="Optional dedicated crop for phone screens (portrait, e.g. 1080×1920). Leave empty to reuse the Background Image above."
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
