@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { ParallaxImageLayer } from "@/components/animation/parallax-image-layer";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,12 @@ export interface TripHeroV2Props {
  * (y: 0 -> 100%), layered inside the section's existing
  * `overflow-hidden`. Single-image heroes are unaffected since there's
  * never a second key to transition to.
+ *
+ * Revision (2026-08, autoplay): gallery slides now auto-advance every 2s
+ * on their own (same slide transition as manual swipe/arrow/dot), pausing
+ * while the tab is in the background and disabled entirely under
+ * `prefers-reduced-motion`. Manual interaction still works as before and
+ * simply restarts the 2s countdown from whatever slide it lands on.
  */
 export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, heading, subheading }: TripHeroV2Props) {
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -85,10 +91,24 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, head
   const touchStartX = React.useRef<number | null>(null);
   const hasGallery = allImages.length > 1;
   const hasText = Boolean(eyebrow || heading || subheading);
+  const prefersReducedMotion = useReducedMotion();
 
   function go(delta: number) {
     setActive((prev) => (prev + delta + allImages.length) % allImages.length);
   }
+
+  // Auto-advance every 2s once there's a gallery, pausing while the tab is
+  // hidden and skipping entirely under prefers-reduced-motion. Any manual
+  // interaction (arrow/dot/swipe) resets this same interval via the
+  // `active` dependency, so autoplay doesn't fight a tap right after it.
+  React.useEffect(() => {
+    if (!hasGallery || prefersReducedMotion) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      go(1);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [hasGallery, prefersReducedMotion, active, allImages.length]);
 
   return (
     <section

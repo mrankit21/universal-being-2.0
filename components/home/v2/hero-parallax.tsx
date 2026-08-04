@@ -62,6 +62,12 @@ export interface HeroParallaxProps {
  * tap/swipe/arrow/dot, same slide-down `AnimatePresence` transition and
  * gallery controls as Trip 2.0's hero (`TripHeroV2`). `images` empty ⇒
  * renders exactly as the single-photo version above, no dots/arrows.
+ *
+ * Revision (2026-08, autoplay): gallery slides now auto-advance every 2s
+ * on their own, pausing while the tab is in the background and disabled
+ * entirely under `prefers-reduced-motion`. Manual interaction still works
+ * as before and simply restarts the 2s countdown from whatever slide it
+ * lands on.
  */
 export function HeroParallax({
   eyebrow,
@@ -89,6 +95,19 @@ export function HeroParallax({
   function go(delta: number) {
     setActive((prev) => (prev + delta + allImages.length) % allImages.length);
   }
+
+  // Auto-advance every 2s once there's a gallery, pausing while the tab is
+  // hidden and skipping entirely under prefers-reduced-motion. Any manual
+  // interaction (arrow/dot/swipe) resets this same interval via the
+  // `active` dependency, so autoplay doesn't fight a tap right after it.
+  React.useEffect(() => {
+    if (!hasGallery || prefersReducedMotion) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      go(1);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [hasGallery, prefersReducedMotion, active, allImages.length]);
 
   return (
     <section
