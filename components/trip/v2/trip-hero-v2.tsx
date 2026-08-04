@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { ParallaxImageLayer } from "@/components/animation/parallax-image-layer";
 import { cn } from "@/lib/utils";
@@ -66,6 +66,14 @@ export interface TripHeroV2Props {
  * component, the CTA stays the existing "Book Now" pill rather than an
  * "Explore Trips" button. All three props are optional so a hero with
  * none of them set still renders exactly as the image-only version above.
+ *
+ * Revision (2026-08, slide transition): gallery slides no longer hard-cut
+ * when swapping (tap/swipe/arrow/dot). The active photo is wrapped in an
+ * `AnimatePresence`, keyed by index — the incoming photo drops in from
+ * above (y: -100% -> 0) while the outgoing one continues down and out
+ * (y: 0 -> 100%), layered inside the section's existing
+ * `overflow-hidden`. Single-image heroes are unaffected since there's
+ * never a second key to transition to.
  */
 export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, heading, subheading }: TripHeroV2Props) {
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -97,11 +105,22 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, head
         go(dx < 0 ? 1 : -1);
       }}
     >
-      <ParallaxImageLayer
-        containerRef={sectionRef}
-        imageUrl={allImages[active].imageUrl}
-        imageAlt={allImages[active].imageAlt}
-      />
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={active}
+          className="absolute inset-0"
+          initial={{ y: "-100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+        >
+          <ParallaxImageLayer
+            containerRef={sectionRef}
+            imageUrl={allImages[active].imageUrl}
+            imageAlt={allImages[active].imageAlt}
+          />
+        </motion.div>
+      </AnimatePresence>
       <div
         className={cn(
           "absolute inset-0",
