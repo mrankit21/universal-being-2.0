@@ -42,7 +42,9 @@ import { expireIfDue } from "@/lib/trip/booking-expiry";
 import { validateCoupon, redeemCoupon } from "@/lib/coupons/validate-coupon";
 import { CouponModel, CouponRedemptionModel } from "@/lib/db/models/coupon.model";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
-import { notifyBookingCreated } from "@/lib/notifications/dispatch";
+// notifyBookingCreated is intentionally not called from this route anymore
+// — see the comment where the booking hold is created below. Still used by
+// the admin "Resend Email" tool (app/api/admin/bookings/[id]/notify).
 import { bookingsRateLimit } from "@/lib/rate-limit/client";
 import { enforceRateLimit } from "@/lib/rate-limit/enforce";
 import { getClientIp } from "@/lib/rate-limit/get-client-ip";
@@ -338,7 +340,13 @@ export async function POST(req: NextRequest) {
         razorpayOrder = null;
       }
 
-      await notifyBookingCreated(booking).catch(() => null);
+      // Ankit (2026-08): no email at this stage — customers were getting a
+      // "Seat Reserved" email for a booking that's still just a pending,
+      // unpaid hold. The very first customer email should be the payment
+      // confirmation once notifySlotPaid() fires (see the payment webhook /
+      // verify route), not this temporary-reservation notice. Admins can
+      // still trigger it manually from Admin → Bookings → Resend Email if
+      // they ever want to nudge a customer about an expiring hold.
 
       return created({
         ...toEntity(booking.toObject()),

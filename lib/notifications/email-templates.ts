@@ -13,6 +13,7 @@
  * not a JS-importable module.
  */
 import { contactContent } from "@/data/shared/real-content";
+import { absoluteUrl } from "@/lib/seo/site-url";
 
 export const EMAIL_COLORS = {
   ink: "#15130f",
@@ -138,9 +139,17 @@ export function emailLayout(opts: EmailLayoutOptions): string {
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:14px; overflow:hidden; border:1px solid ${c.border};">
           <tr>
-            <td style="background:${c.ink}; padding:26px 32px; text-align:center;">
-              <span style="font-family:Georgia,'Times New Roman',serif; font-size:19px; letter-spacing:3px; color:${c.brass}; text-transform:uppercase;">Universal Being</span>
-              <div style="height:2px; width:46px; background:${c.brass}; margin:12px auto 0;"></div>
+            <td style="background:${c.ink}; padding:24px 32px; text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                <tr>
+                  <td style="padding-right:10px; vertical-align:middle;">
+                    <img src="${absoluteUrl("/brand/email-logo-mark.png")}" width="30" height="30" alt="UniversalBeing" style="display:block; border-radius:7px;" />
+                  </td>
+                  <td style="vertical-align:middle;">
+                    <span style="font-family:Georgia,'Times New Roman',serif; font-size:20px; letter-spacing:0.4px; color:${c.brass};">UniversalBeing</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr>
@@ -160,7 +169,7 @@ export function emailLayout(opts: EmailLayoutOptions): string {
                   &nbsp;&middot;&nbsp;
                   <a href="mailto:${contactContent.email}" style="color:${c.teal}; text-decoration:none;">${esc(contactContent.email)}</a>
                 </p>
-                <p style="margin:14px 0 0; color:${c.stoneLight};">This is a transactional email about your booking with Universal Being.</p>
+                <p style="margin:14px 0 0; color:${c.stoneLight};">This is a transactional email about your booking with UniversalBeing.</p>
               </div>
             </td>
           </tr>

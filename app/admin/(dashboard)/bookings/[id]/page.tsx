@@ -407,6 +407,7 @@ function PaymentManagementCard({ booking, onChanged }: { booking: any; onChanged
           <a href={`/api/bookings/${bookingId}/ticket`} target="_blank" rel="noreferrer">
             <Button variant="outline" size="sm">Download Ticket</Button>
           </a>
+          <Button variant="outline" size="sm" disabled={busy} onClick={() => resend("booking-created")}>Resend Seat Reserved Email</Button>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => resend("payment-success")}>Resend Payment Email</Button>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => resend("remaining-payment-reminder")}>Resend Reminder</Button>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => resend("invoice")}>Email Invoice</Button>

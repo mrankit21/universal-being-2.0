@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <AdminSidebar permissions={permissions} />
       <div className="flex flex-1 flex-col">
         <AdminHeader userName={user.name || user.email} role={user.role} permissions={permissions} />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
       </div>
       <Toaster />
     </div>

@@ -23,8 +23,8 @@ export function AdminHeader({
         <AdminMobileNav permissions={permissions} />
         <div className="font-serif text-lg font-semibold md:hidden">Universal Being Admin</div>
       </div>
-      <div className="ml-auto flex items-center gap-4">
-        <div className="text-right text-sm">
+      <div className="ml-auto flex items-center gap-2 sm:gap-4">
+        <div className="hidden text-right text-sm sm:block">
           <p className="font-medium leading-tight">{userName}</p>
           <p className="capitalize leading-tight text-muted-foreground">{role}</p>
         </div>

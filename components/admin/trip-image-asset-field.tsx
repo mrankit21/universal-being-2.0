@@ -214,7 +214,7 @@ export function TripImageAssetField({
           </p>
 
           {loading ? (
-            <div className="grid max-h-96 grid-cols-4 gap-3 overflow-y-auto">
+            <div className="grid max-h-96 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="aspect-square rounded-md" />
               ))}
@@ -224,7 +224,7 @@ export function TripImageAssetField({
               No images uploaded for this Trip yet. Use &ldquo;Upload from device&rdquo; above.
             </p>
           ) : (
-            <div className="grid max-h-96 grid-cols-4 gap-3 overflow-y-auto">
+            <div className="grid max-h-96 grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
               {assets.map((asset) => {
                 const isSelected = !!value.url && asset.url === value.url;
                 return (
