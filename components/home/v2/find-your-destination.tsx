@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
@@ -24,9 +23,11 @@ const DEFAULT_BACKGROUND_IMAGE = {
  * that visually continues the Featured Trips section image above it; when
  * none is set yet, `DEFAULT_BACKGROUND_IMAGE` keeps the section themed.
  *
- * Enlarged (2026-08) to be the dominant section on the page — a tall,
- * hero-scale banner (not just a slim strip) now that Fun Facts has been
- * removed from Homepage 2.0.
+ * Sized by the image itself (2026-08, Ankit): a plain `<img>` in normal
+ * flow, not `fill` + `object-cover` in a fixed-height box — so a tall
+ * portrait upload renders at its own full height with no cropping
+ * ("jitni lambi photo hai utna lamba section hona chahiye"), matching the
+ * same treatment as "Still Deciding?" (`lets-plan-your-trip-v2.tsx`).
  */
 export function FindYourDestination({
   heading = "Find your destination",
@@ -44,29 +45,15 @@ export function FindYourDestination({
   const overlayOpacity = background?.overlayOpacity ?? 0.35;
 
   return (
-    <section
-      className={cn(
-        "relative flex min-h-[640px] w-full items-center justify-center overflow-hidden py-24 sm:min-h-[860px] sm:py-32",
-        className
-      )}
-    >
-      <Image
-        src={mobileImage.url}
-        alt={mobileImage.alt}
-        fill
-        sizes="100vw"
-        className="absolute inset-0 object-cover md:hidden"
-        unoptimized
-        priority={false}
-      />
-      <Image
+    <section className={cn("relative isolate w-full overflow-hidden", className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={mobileImage.url} alt={mobileImage.alt} className="block h-auto w-full md:hidden" loading="lazy" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={desktopImage.url}
         alt={desktopImage.alt}
-        fill
-        sizes="100vw"
-        className="absolute inset-0 hidden object-cover md:block"
-        unoptimized
-        priority={false}
+        className="hidden h-auto w-full md:block"
+        loading="lazy"
       />
       <div className="absolute inset-0 bg-black" style={{ opacity: overlayOpacity }} aria-hidden="true" />
 
@@ -75,7 +62,7 @@ export function FindYourDestination({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative mx-auto w-full max-w-2xl px-4 text-center sm:px-6"
+        className="absolute inset-0 mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 text-center sm:px-6"
       >
         <h2 className="font-display text-4xl font-bold text-white sm:text-6xl">{heading}</h2>
         <p className="mx-auto mt-5 max-w-lg text-base text-white/85 sm:text-lg">{body}</p>
