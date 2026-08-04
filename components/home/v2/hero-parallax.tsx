@@ -14,6 +14,15 @@ export interface HeroParallaxImage {
   imageAlt: string;
 }
 
+/** Left <-> right slide for the gallery — `custom` carries the direction
+ * (1 = next, -1 = prev) so the incoming photo enters from the side it's
+ * "coming from" and the outgoing one exits toward the opposite side. */
+const heroSlideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%" }),
+  center: { x: 0 },
+  exit: (dir: number) => ({ x: dir > 0 ? "-100%" : "100%" }),
+};
+
 export interface HeroParallaxProps {
   eyebrow?: string;
   heading: string;
@@ -30,8 +39,8 @@ export interface HeroParallaxProps {
   imageMobileAlt?: string;
   /** Extra photos beyond the primary `imageUrl`/`imageAlt`. When non-empty,
    * the hero becomes a swipeable gallery — primary image first, then these,
-   * in order — with dot indicators and left/right arrows, same "slide
-   * down" transition as Trip 2.0's hero gallery
+   * in order — with dot indicators and left/right arrows and a matching
+   * left/right slide transition, same as Trip 2.0's hero gallery
    * (`components/trip/v2/trip-hero-v2.tsx`). Omit/leave empty for the
    * original single-photo hero. */
   images?: HeroParallaxImage[];
@@ -68,6 +77,13 @@ export interface HeroParallaxProps {
  * entirely under `prefers-reduced-motion`. Manual interaction still works
  * as before and simply restarts the 2s countdown from whatever slide it
  * lands on.
+ *
+ * Revision (2026-08, left/right direction): swapped the transition from a
+ * vertical drop to a horizontal slide — the incoming photo enters from
+ * the right and the outgoing one exits left on "next" (arrow/swipe-left/
+ * autoplay), reversed on "prev". Direction is tracked in state and fed to
+ * Framer Motion's `custom` so the *exiting* element (captured by
+ * `AnimatePresence` right before removal) animates the correct way too.
  */
 export function HeroParallax({
   eyebrow,
@@ -89,10 +105,12 @@ export function HeroParallax({
     [imageUrl, imageAlt, images]
   );
   const [active, setActive] = React.useState(0);
+  const [direction, setDirection] = React.useState(1);
   const touchStartX = React.useRef<number | null>(null);
   const hasGallery = allImages.length > 1;
 
   function go(delta: number) {
+    setDirection(delta);
     setActive((prev) => (prev + delta + allImages.length) % allImages.length);
   }
 
@@ -126,16 +144,17 @@ export function HeroParallax({
     >
       {/* Active photo — the primary/only photo when `images` is empty, or
           the current slide of the gallery. Wrapped in AnimatePresence so
-          swapping slides slides the incoming photo down from above while
-          the outgoing one continues down and out, instead of a hard cut. */}
-      <AnimatePresence initial={false}>
+          swapping slides in from the side instead of a hard cut. */}
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={active}
+          custom={direction}
           className="absolute inset-0"
-          initial={{ y: "-100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+          variants={heroSlideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.6, ease: [0.65, 0, 0.35, 1] }}
         >
           <ParallaxImageLayer
             containerRef={sectionRef}

@@ -13,6 +13,15 @@ export interface TripHeroImageV2 {
   imageAlt: string;
 }
 
+/** Left <-> right slide for the gallery — `custom` carries the direction
+ * (1 = next, -1 = prev) so the incoming photo enters from the side it's
+ * "coming from" and the outgoing one exits toward the opposite side. */
+const heroSlideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%" }),
+  center: { x: 0 },
+  exit: (dir: number) => ({ x: dir > 0 ? "-100%" : "100%" }),
+};
+
 export interface TripHeroV2Props {
   bookHref: string;
   imageUrl: string;
@@ -69,17 +78,21 @@ export interface TripHeroV2Props {
  *
  * Revision (2026-08, slide transition): gallery slides no longer hard-cut
  * when swapping (tap/swipe/arrow/dot). The active photo is wrapped in an
- * `AnimatePresence`, keyed by index — the incoming photo drops in from
- * above (y: -100% -> 0) while the outgoing one continues down and out
- * (y: 0 -> 100%), layered inside the section's existing
- * `overflow-hidden`. Single-image heroes are unaffected since there's
- * never a second key to transition to.
+ * `AnimatePresence`, keyed by index, sliding left/right (see the 2026-08
+ * "left/right" revision below for the current direction).
  *
  * Revision (2026-08, autoplay): gallery slides now auto-advance every 2s
  * on their own (same slide transition as manual swipe/arrow/dot), pausing
  * while the tab is in the background and disabled entirely under
  * `prefers-reduced-motion`. Manual interaction still works as before and
  * simply restarts the 2s countdown from whatever slide it lands on.
+ *
+ * Revision (2026-08, left/right direction): swapped the transition from a
+ * vertical drop to a horizontal slide — the incoming photo enters from
+ * the right and the outgoing one exits left on "next" (arrow/swipe-left/
+ * autoplay), reversed on "prev". Direction is tracked in state and fed to
+ * Framer Motion's `custom` so the *exiting* element (captured by
+ * `AnimatePresence` right before removal) animates the correct way too.
  */
 export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, heading, subheading }: TripHeroV2Props) {
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -88,12 +101,14 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, head
     [imageUrl, imageAlt, images]
   );
   const [active, setActive] = React.useState(0);
+  const [direction, setDirection] = React.useState(1);
   const touchStartX = React.useRef<number | null>(null);
   const hasGallery = allImages.length > 1;
   const hasText = Boolean(eyebrow || heading || subheading);
   const prefersReducedMotion = useReducedMotion();
 
   function go(delta: number) {
+    setDirection(delta);
     setActive((prev) => (prev + delta + allImages.length) % allImages.length);
   }
 
@@ -125,14 +140,16 @@ export function TripHeroV2({ bookHref, imageUrl, imageAlt, images, eyebrow, head
         go(dx < 0 ? 1 : -1);
       }}
     >
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} custom={direction}>
         <motion.div
           key={active}
+          custom={direction}
           className="absolute inset-0"
-          initial={{ y: "-100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+          variants={heroSlideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.6, ease: [0.65, 0, 0.35, 1] }}
         >
           <ParallaxImageLayer
             containerRef={sectionRef}
