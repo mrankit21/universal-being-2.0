@@ -66,6 +66,7 @@ export const homepageV2Schema = z.object({
     ctaHref: z.string().default("/trips"),
     imageDesktop: imageAssetSchema.optional(),
     imageMobile: imageAssetSchema.optional(),
+    heroImages: z.array(imageAssetSchema).default([]),
   }),
   quickLinks: z.array(homepageV2QuickLinkSchema).default([]),
   featuredTrips: z.array(homepageV2FeaturedTripSchema).default([]),

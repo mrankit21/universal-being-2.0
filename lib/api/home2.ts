@@ -29,6 +29,10 @@ export interface ResolvedHomepageV2Hero {
   /** Falls back to imageUrl/imageAlt when no dedicated mobile crop is set. */
   imageMobileUrl?: string;
   imageMobileAlt?: string;
+  /** Extra photos beyond imageUrl/imageAlt — when non-empty, `HeroParallax`
+   * renders a swipeable/auto-cycling gallery instead of a single still
+   * photo, same as Trip 2.0's hero. */
+  images?: { imageUrl: string; imageAlt: string }[];
 }
 
 export interface ResolvedFindDestination {
@@ -290,6 +294,9 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
     type ImgLike = { url?: string; alt?: string; isPlaceholder?: boolean } | undefined;
     const heroImgDesktop = doc.hero?.imageDesktop as ImgLike;
     const heroImgMobile = doc.hero?.imageMobile as ImgLike;
+    const heroExtraImages = ((doc.hero?.heroImages ?? []) as ImgLike[])
+      .filter((img): img is { url: string; alt?: string; isPlaceholder?: boolean } => Boolean(img?.url && !img.isPlaceholder))
+      .map((img) => ({ imageUrl: img.url, imageAlt: img.alt || FALLBACK_HERO.imageAlt }));
     const hero: ResolvedHomepageV2Hero =
       doc.hero?.heading
         ? {
@@ -302,6 +309,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
             imageAlt: heroImgDesktop?.alt || FALLBACK_HERO.imageAlt,
             imageMobileUrl: heroImgMobile?.url && !heroImgMobile.isPlaceholder ? heroImgMobile.url : undefined,
             imageMobileAlt: heroImgMobile?.alt || undefined,
+            images: heroExtraImages.length > 0 ? heroExtraImages : undefined,
           }
         : FALLBACK_HERO;
 

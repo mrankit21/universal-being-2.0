@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FormField } from "@/components/admin/form-field";
 import { ImageAssetField } from "@/components/admin/image-asset-field";
+import { GalleryUploadField } from "@/components/admin/gallery-upload-field";
 import { ArrayFieldEditor } from "@/components/admin/array-field-editor";
 import { TripPickerField, type FeaturedTripEntry } from "@/components/admin/trip-picker-field";
 import { QUICK_LINK_ICON_NAMES } from "@/components/home/v2/floating-quick-links";
@@ -160,6 +161,30 @@ export default function Homepage2Page() {
             Mobile falls back to the desktop image if left blank — but a wide laptop photo often crops
             badly on a phone, so uploading a separate portrait/tighter crop here is recommended.
           </p>
+          <div className="md:col-span-2">
+            <p className="mb-1 text-sm font-medium">Additional Hero Images</p>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Add more photos to turn the hero into a swipeable, auto-cycling gallery (Desktop image above shown
+              first, then these, in order — each swap slides down/up like Trip 2.0&rsquo;s hero). Leave empty to
+              keep a single still photo.
+            </p>
+            <GalleryUploadField
+              category="banners"
+              usage="homepage-hero-image"
+              onUploaded={(assets) => set(["hero", "heroImages"], [...(data.hero.heroImages ?? []), ...assets])}
+            />
+            <ArrayFieldEditor
+              items={data.hero.heroImages ?? []}
+              onChange={(next) => set(["hero", "heroImages"], next)}
+              draggable
+              createItem={() => ({ ...BLANK_IMAGE })}
+              addLabel="Add Hero Image"
+              emptyMessage="No additional hero images yet — hero will show as a single still photo."
+              renderItem={(item: any, _i, update) => (
+                <ImageAssetField label="Photo" value={item ?? BLANK_IMAGE} onChange={(v) => update(v)} category="banners" />
+              )}
+            />
+          </div>
         </CardContent>
       </Card>
 

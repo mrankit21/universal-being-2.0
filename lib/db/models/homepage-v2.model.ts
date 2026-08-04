@@ -105,6 +105,12 @@ export interface HomepageV2Document extends Document {
      * phone screen, so this lets admins supply a separate portrait/tighter
      * crop instead of relying on `bg-cover` alone. */
     imageMobile?: unknown;
+    /** Extra photos beyond `imageDesktop`. When non-empty, the live hero
+     * becomes a swipeable/auto-cycling gallery — `imageDesktop` shown
+     * first, then these, in order — same "slide down" transition as
+     * Trip 2.0's hero gallery (`components/trip/v2/trip-hero-v2.tsx`).
+     * Leave empty to keep a single still photo. */
+    heroImages?: unknown[];
   };
   quickLinks: HomepageV2QuickLinkDoc[];
   featuredTrips: HomepageV2FeaturedTripDoc[];
@@ -206,6 +212,7 @@ const HomepageV2Schema = new Schema<HomepageV2Document>(
       ctaHref: { type: String, default: "/trips" },
       imageDesktop: { type: ImageAssetSchema },
       imageMobile: { type: ImageAssetSchema },
+      heroImages: { type: [ImageAssetSchema], default: [] },
     },
     quickLinks: { type: [QuickLinkSchema], default: [] },
     featuredTrips: { type: [FeaturedTripSchema], default: [] },

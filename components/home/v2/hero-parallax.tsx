@@ -2,12 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowDown } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { ParallaxImageLayer } from "@/components/animation/parallax-image-layer";
 import { cn } from "@/lib/utils";
+
+export interface HeroParallaxImage {
+  imageUrl: string;
+  imageAlt: string;
+}
 
 export interface HeroParallaxProps {
   eyebrow?: string;
@@ -23,6 +28,13 @@ export interface HeroParallaxProps {
    * laptop-shot photo often crops badly on a phone even with `bg-cover`. */
   imageMobileUrl?: string;
   imageMobileAlt?: string;
+  /** Extra photos beyond the primary `imageUrl`/`imageAlt`. When non-empty,
+   * the hero becomes a swipeable gallery — primary image first, then these,
+   * in order — with dot indicators and left/right arrows, same "slide
+   * down" transition as Trip 2.0's hero gallery
+   * (`components/trip/v2/trip-hero-v2.tsx`). Omit/leave empty for the
+   * original single-photo hero. */
+  images?: HeroParallaxImage[];
   className?: string;
 }
 
@@ -44,6 +56,12 @@ export interface HeroParallaxProps {
  * Static content only for now — no data-fetching, so this can sit at a
  * preview route and be swapped for CMS-driven props later without
  * changing its shape.
+ *
+ * Revision (2026-08, multi-image): optionally cycles through several
+ * photos (`images`, from the "Additional Hero Images" admin field) on
+ * tap/swipe/arrow/dot, same slide-down `AnimatePresence` transition and
+ * gallery controls as Trip 2.0's hero (`TripHeroV2`). `images` empty ⇒
+ * renders exactly as the single-photo version above, no dots/arrows.
  */
 export function HeroParallax({
   eyebrow,
@@ -55,23 +73,97 @@ export function HeroParallax({
   imageAlt,
   imageMobileUrl,
   imageMobileAlt,
+  images,
   className,
 }: HeroParallaxProps) {
   const prefersReducedMotion = useReducedMotion();
   const sectionRef = React.useRef<HTMLElement | null>(null);
+  const allImages = React.useMemo<HeroParallaxImage[]>(
+    () => [{ imageUrl, imageAlt }, ...(images ?? [])],
+    [imageUrl, imageAlt, images]
+  );
+  const [active, setActive] = React.useState(0);
+  const touchStartX = React.useRef<number | null>(null);
+  const hasGallery = allImages.length > 1;
+
+  function go(delta: number) {
+    setActive((prev) => (prev + delta + allImages.length) % allImages.length);
+  }
 
   return (
     <section
       ref={sectionRef}
       className={cn("relative isolate flex h-[100svh] min-h-[620px] w-full flex-col justify-end overflow-hidden", className)}
+      onTouchStart={(e) => {
+        touchStartX.current = e.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null) return;
+        const dx = (e.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+        touchStartX.current = null;
+        if (!hasGallery || Math.abs(dx) < 40) return;
+        go(dx < 0 ? 1 : -1);
+      }}
     >
-      <ParallaxImageLayer
-        containerRef={sectionRef}
-        imageUrl={imageUrl}
-        imageAlt={imageAlt}
-        imageMobileUrl={imageMobileUrl}
-        imageMobileAlt={imageMobileAlt}
-      />
+      {/* Active photo — the primary/only photo when `images` is empty, or
+          the current slide of the gallery. Wrapped in AnimatePresence so
+          swapping slides slides the incoming photo down from above while
+          the outgoing one continues down and out, instead of a hard cut. */}
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={active}
+          className="absolute inset-0"
+          initial={{ y: "-100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ duration: 0.75, ease: [0.65, 0, 0.35, 1] }}
+        >
+          <ParallaxImageLayer
+            containerRef={sectionRef}
+            imageUrl={allImages[active].imageUrl}
+            imageAlt={allImages[active].imageAlt}
+            imageMobileUrl={active === 0 ? imageMobileUrl : undefined}
+            imageMobileAlt={active === 0 ? imageMobileAlt : undefined}
+          />
+        </motion.div>
+      </AnimatePresence>
+
+      {hasGallery ? (
+        <>
+          <button
+            type="button"
+            aria-label="Previous photo"
+            onClick={() => go(-1)}
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          >
+            <ChevronLeft className="size-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next photo"
+            onClick={() => go(1)}
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+          >
+            <ChevronRight className="size-5" aria-hidden="true" />
+          </button>
+          <div className="absolute inset-x-0 bottom-24 z-20 flex items-center justify-center gap-1.5 sm:bottom-28">
+            {allImages.map((img, i) => (
+              <button
+                key={img.imageUrl + i}
+                type="button"
+                aria-label={`Show photo ${i + 1}`}
+                aria-current={i === active}
+                onClick={() => setActive(i)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === active ? "w-5 bg-white" : "w-1.5 bg-white/50 hover:bg-white/70"
+                )}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+
       {/* Legibility scrim */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/40" aria-hidden="true" />
 
