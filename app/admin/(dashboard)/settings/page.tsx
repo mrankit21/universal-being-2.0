@@ -99,6 +99,8 @@ export default function SiteSettingsPage() {
             Choose which homepage goes live at <code>/</code>. Switching this never deletes either
             version&apos;s content — edit each one any time from its own panel (Homepage /
             Homepage 2.0) and the live site picks up whichever is selected here.
+            &quot;Auto (by device)&quot; shows Homepage 2.0 to visitors on phones/tablets and the
+            original Homepage to visitors on laptops/desktops — no manual switching needed.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
@@ -111,6 +113,7 @@ export default function SiteSettingsPage() {
               <SelectContent>
                 <SelectItem value="v1">Homepage (original)</SelectItem>
                 <SelectItem value="v2">Homepage 2.0 (new)</SelectItem>
+                <SelectItem value="auto">Auto (phone = 2.0, laptop = original)</SelectItem>
               </SelectContent>
             </Select>
           </FormField>
@@ -126,6 +129,9 @@ export default function SiteSettingsPage() {
             Version&quot; field (in that Trip&apos;s editor) says. Switching this to &quot;Trip 2.0&quot;
             forces every trip that has a matching published Trip 2.0 page to use the new design — a trip
             with no published Trip 2.0 page yet keeps showing its original page either way.
+            &quot;Auto (by device)&quot; forces Trip 2.0 only for visitors on phones/tablets; visitors on
+            laptops/desktops keep seeing each trip&apos;s own &quot;Page Version&quot; field, same as
+            &quot;Trips (original)&quot; does today.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
@@ -138,6 +144,7 @@ export default function SiteSettingsPage() {
               <SelectContent>
                 <SelectItem value="v1">Trips (original)</SelectItem>
                 <SelectItem value="v2">Trip 2.0 (new)</SelectItem>
+                <SelectItem value="auto">Auto (phone = 2.0, laptop = original)</SelectItem>
               </SelectContent>
             </Select>
           </FormField>

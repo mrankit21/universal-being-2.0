@@ -17,13 +17,17 @@ import { contactContent } from "@/data/shared/real-content";
  */
 
 export interface ResolvedSiteSettings {
-  /** Homepage Version toggle (Homepage 2.0) — "v1" or "v2". Defaults to
-   * "v1" when unset (fresh installs, or the DB isn't configured) so the
-   * live site never breaks because of this field. */
-  activeHomepageVersion: "v1" | "v2";
-  /** Trips Version toggle (Trip 2.0) — "v1" or "v2". Defaults to "v1"
-   * when unset, same fallback rule as `activeHomepageVersion`. */
-  activeTripsVersion: "v1" | "v2";
+  /** Homepage Version toggle (Homepage 2.0) — "v1", "v2", or "auto".
+   * Defaults to "v1" when unset (fresh installs, or the DB isn't
+   * configured) so the live site never breaks because of this field.
+   * "auto" means per-visitor device resolution (mobile → v2, desktop →
+   * v1) — pass the raw value through `resolveVersion()` from
+   * `lib/utils/device-version.ts` to get the concrete version to render;
+   * don't compare this field to `"v2"` directly anywhere new. */
+  activeHomepageVersion: "v1" | "v2" | "auto";
+  /** Trips Version toggle (Trip 2.0) — "v1", "v2", or "auto". Defaults to
+   * "v1" when unset, same fallback rule as `activeHomepageVersion`. */
+  activeTripsVersion: "v1" | "v2" | "auto";
   brandStory: string;
   contact: { whatsappHref: string; phoneHref: string; email: string; address: string };
   socialLinks: { platform: string; href: string; label: string; icon?: { url: string; alt: string } }[];
@@ -116,8 +120,10 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
       | undefined;
 
     return {
-      activeHomepageVersion: doc.activeHomepageVersion === "v2" ? "v2" : "v1",
-      activeTripsVersion: doc.activeTripsVersion === "v2" ? "v2" : "v1",
+      activeHomepageVersion:
+        doc.activeHomepageVersion === "v2" || doc.activeHomepageVersion === "auto" ? doc.activeHomepageVersion : "v1",
+      activeTripsVersion:
+        doc.activeTripsVersion === "v2" || doc.activeTripsVersion === "auto" ? doc.activeTripsVersion : "v1",
       brandStory: doc.brandStory || staticSiteConfig.brandStory,
       contact: {
         whatsappHref: doc.contact?.whatsapp ? toWhatsappHref(doc.contact.whatsapp) : staticSiteConfig.contact.whatsappHref,

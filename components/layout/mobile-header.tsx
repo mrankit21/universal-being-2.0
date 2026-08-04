@@ -1,6 +1,7 @@
 import { Logo } from "@/components/layout/logo";
 import { MobileHeaderRight } from "@/components/layout/mobile-header-right";
 import { getSiteSettings } from "@/lib/api/site-settings";
+import { resolveVersion } from "@/lib/utils/device-version";
 
 /**
  * MobileHeader — server component; the only client work (drawer open
@@ -19,12 +20,17 @@ import { getSiteSettings } from "@/lib/api/site-settings";
  */
 export async function MobileHeader() {
   const siteSettings = await getSiteSettings();
+  // "auto" resolves by device (User-Agent) same as app/page.tsx — see
+  // lib/utils/device-version.ts. This header is CSS-hidden above `md`
+  // regardless, but resolving here keeps it consistent with whichever
+  // homepage this same request's `/` would actually render.
+  const homepage2Active = (await resolveVersion(siteSettings.activeHomepageVersion)) === "v2";
 
   return (
     <header className="ub-glass ub-nav-blue sticky top-0 z-40 flex h-12 w-full items-center justify-between border-b border-border/60 px-4 md:hidden">
       <Logo />
       <div className="flex items-center gap-2">
-        <MobileHeaderRight homepage2Active={siteSettings.activeHomepageVersion === "v2"} />
+        <MobileHeaderRight homepage2Active={homepage2Active} />
       </div>
     </header>
   );

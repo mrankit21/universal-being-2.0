@@ -2,6 +2,7 @@ import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { HomepageV2Model, type HomepageV2Document } from "@/lib/db/models";
 import { getTripBySlug, getFeaturedTrips as getStaticFeaturedFallback } from "@/lib/api/trips";
 import { getSiteSettings } from "@/lib/api/site-settings";
+import { resolveVersion } from "@/lib/utils/device-version";
 import { getPublishedTrip2CardBySlug, getPublishedTrip2Trips, type Trip2CardSummary } from "@/lib/api/trip2";
 import type { Trip } from "@/types/trip";
 import type { QuickLinkItem } from "@/components/home/v2/floating-quick-links";
@@ -271,7 +272,7 @@ export async function getResolvedHomepage2(): Promise<ResolvedHomepageV2> {
     // and the real Featured Trips resolution below need to know whether
     // Trip 2.0 is active site-wide.
     const siteSettings = await getSiteSettings();
-    const trip2Active = siteSettings.activeTripsVersion === "v2";
+    const trip2Active = (await resolveVersion(siteSettings.activeTripsVersion)) === "v2";
     const seeAllHref = trip2Active ? "/trip2" : "/trips";
 
     const doc = (await HomepageV2Model.findOne().lean()) as (HomepageV2Document & { _id: unknown }) | null;

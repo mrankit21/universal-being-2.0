@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import { getResolvedHomepage } from "@/lib/api/home";
 import { getResolvedHomepage2 } from "@/lib/api/home2";
 import { getSiteSettings } from "@/lib/api/site-settings";
+import { resolveVersion } from "@/lib/utils/device-version";
 import { opacityStepToPercent } from "@/lib/theme/section-backdrop-opacity";
 import { getHomepageVisibleDestinations } from "@/lib/api/destinations";
 import { HeroSection } from "@/components/home/hero-section";
@@ -35,9 +36,11 @@ export const metadata: Metadata = {
  * homepage), Homepage 2.0 (version toggle).
  *
  * This is an async Server Component. It first reads Site Settings'
- * `activeHomepageVersion` ("v1" or "v2") — set from Admin Panel → Site
- * Settings → Homepage Version — and renders whichever hero + featured
- * trips layout is selected:
+ * `activeHomepageVersion` ("v1", "v2", or "auto") — set from Admin Panel →
+ * Site Settings → Homepage Version — resolves it through
+ * `resolveVersion()` (auto = phone → v2, laptop/desktop → v1, by
+ * User-Agent; see lib/utils/device-version.ts), and renders whichever
+ * hero + featured trips layout that resolves to:
  *
  *   - "v1": `HeroSection` + `PackageIncludesStrip` + `FeaturedTripsSection`,
  *     driven by `getResolvedHomepage()` (Admin Panel → Homepage).
@@ -74,7 +77,11 @@ export default async function HomePage() {
     getSiteSettings(),
   ]);
 
-  const isV2 = siteSettings.activeHomepageVersion === "v2";
+  // "auto" (2026-08) resolves per-visitor by device — phone → Homepage
+  // 2.0, laptop/desktop → original — instead of one fixed value for
+  // everyone. An explicit "v1"/"v2" in Site Settings still applies to
+  // every device exactly as before. See lib/utils/device-version.ts.
+  const isV2 = (await resolveVersion(siteSettings.activeHomepageVersion)) === "v2";
   const homepage2 = isV2 ? await getResolvedHomepage2() : null;
 
   // Same global backdrop as Admin → Trip 2.0 Backdrops → "Still Deciding?" —

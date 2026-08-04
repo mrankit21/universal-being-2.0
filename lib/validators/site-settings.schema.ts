@@ -10,8 +10,8 @@ export const siteSettingsSchema = z.object({
   brandName: z.string().min(1),
   tagline: z.string().default(""),
   brandStory: z.string().default(""),
-  activeHomepageVersion: z.enum(["v1", "v2"]).default("v1"),
-  activeTripsVersion: z.enum(["v1", "v2"]).default("v1"),
+  activeHomepageVersion: z.enum(["v1", "v2", "auto"]).default("v1"),
+  activeTripsVersion: z.enum(["v1", "v2", "auto"]).default("v1"),
   contact: z.object({
     phone: z.string().default(""),
     whatsapp: z.string().default(""),

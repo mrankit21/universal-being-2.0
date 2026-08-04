@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getTripBySlug, getTripSlugs, getRelatedTrips, getTripReviewTestimonials, getCircuitSiblings } from "@/lib/api/trips";
 import { getResolvedTrip2 } from "@/lib/api/trip2";
 import { getSiteSettings } from "@/lib/api/site-settings";
+import { resolveVersion } from "@/lib/utils/device-version";
 import { TripModel } from "@/lib/db/models";
 import { isDatabaseConfigured, connectToDatabase } from "@/lib/db/mongoose";
 import { absoluteUrl } from "@/lib/seo/site-url";
@@ -122,7 +123,12 @@ export default async function TripDetailPage({ params }: TripPageProps) {
     versionDoc = await TripModel.findOne({ slug }).select("activeVersion").lean();
   }
   const siteSettings = await getSiteSettings();
-  const effectiveVersion = siteSettings.activeTripsVersion === "v2" ? "v2" : (versionDoc?.activeVersion ?? "v1");
+  // "auto" (2026-08): resolves to "v2" on phones/tablets and "v1" on
+  // laptops/desktops for this request, same rule app/page.tsx uses —
+  // see lib/utils/device-version.ts. An explicit "v1"/"v2" here still
+  // forces that version for every device, unchanged from before.
+  const siteWideVersion = await resolveVersion(siteSettings.activeTripsVersion);
+  const effectiveVersion = siteWideVersion === "v2" ? "v2" : (versionDoc?.activeVersion ?? "v1");
   if (effectiveVersion === "v2") {
     const trip2 = await getResolvedTrip2(slug);
     if (trip2) redirect(`/trip2/${slug}`);

@@ -44,16 +44,19 @@ export interface SiteSettingsDocument extends Document {
    * Featured Trips grid). "v2" = Homepage 2.0 (Hero Parallax + Floating
    * Quick Links + Featured Trips Stack), fully admin-controlled via the
    * "Homepage 2.0" panel. Switching this never deletes either version's
-   * content — it only changes which one `app/page.tsx` renders. */
-  activeHomepageVersion: "v1" | "v2";
+   * content — it only changes which one `app/page.tsx` renders. "auto"
+   * (2026-08) resolves per-visitor by device instead of one fixed value
+   * for everyone — see `lib/utils/device-version.ts`. */
+  activeHomepageVersion: "v1" | "v2" | "auto";
   /** Trips Version toggle (Trip 2.0), same idea as `activeHomepageVersion`
    * but for `/trips/[slug]`. "v1" (default) leaves each Trip's own
    * "Page Version" field (Trip Editor) in control — unchanged from
    * before this toggle existed. "v2" forces every trip over to its
    * Trip 2.0 design wherever a matching published Trip 2.0 page exists,
    * regardless of that trip's individual "Page Version" field — a single
-   * site-wide switch, same spirit as Homepage Version. */
-  activeTripsVersion: "v1" | "v2";
+   * site-wide switch, same spirit as Homepage Version. "auto" resolves
+   * per-visitor by device, same as `activeHomepageVersion`'s "auto". */
+  activeTripsVersion: "v1" | "v2" | "auto";
   contact: {
     phone: string;
     whatsapp: string;
@@ -114,8 +117,8 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
     brandName: { type: String, required: true, default: "Universal Being" },
     tagline: { type: String, default: "" },
     brandStory: { type: String, default: "" },
-    activeHomepageVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
-    activeTripsVersion: { type: String, enum: ["v1", "v2"], default: "v1" },
+    activeHomepageVersion: { type: String, enum: ["v1", "v2", "auto"], default: "v1" },
+    activeTripsVersion: { type: String, enum: ["v1", "v2", "auto"], default: "v1" },
     contact: {
       phone: { type: String, default: "" },
       whatsapp: { type: String, default: "" },
