@@ -123,17 +123,31 @@ export default async function TripDetailPage({ params }: TripPageProps) {
     versionDoc = await TripModel.findOne({ slug }).select("activeVersion").lean();
   }
   const siteSettings = await getSiteSettings();
-  // "auto" (2026-08): resolves to "v2" on phones/tablets and "v1" on
-  // laptops/desktops for this request, same rule app/page.tsx uses —
-  // see lib/utils/device-version.ts. An explicit "v1"/"v2" here still
-  // forces that version for every device, unchanged from before.
+  // "auto" (2026-08, strict): device decides outright — v2 on phones,
+  // v1 on laptops, every time. Unlike an explicit "v1"/"v2" site-wide
+  // force (where each trip's own "Page Version" field can still override,
+  // by design — see the Admin Panel copy for that toggle), "auto" is
+  // never overridden by the per-trip field, and it never silently falls
+  // back to v1 just because a Trip 2.0 page hasn't been published yet —
+  // that trip 404s on phone in auto mode instead, exactly like visiting
+  // /trip2/[slug] directly for a trip with no Trip 2.0 content would.
+  const isAutoTripsVersion = siteSettings.activeTripsVersion === "auto";
+  // Resolved per-request from User-Agent when "auto" — see
+  // lib/utils/device-version.ts. An explicit "v1"/"v2" here still forces
+  // that version for every device, unchanged from before.
   const siteWideVersion = await resolveVersion(siteSettings.activeTripsVersion);
-  const effectiveVersion = siteWideVersion === "v2" ? "v2" : (versionDoc?.activeVersion ?? "v1");
+  const effectiveVersion = isAutoTripsVersion
+    ? siteWideVersion
+    : siteWideVersion === "v2"
+      ? "v2"
+      : (versionDoc?.activeVersion ?? "v1");
   if (effectiveVersion === "v2") {
     const trip2 = await getResolvedTrip2(slug);
     if (trip2) redirect(`/trip2/${slug}`);
-    // No matching published Trip 2.0 page yet — fall through and keep
-    // serving the original design rather than 404ing a live trip page.
+    if (isAutoTripsVersion) notFound();
+    // Manual "v1"/"v2" force only: no matching published Trip 2.0 page
+    // yet — fall through and keep serving the original design rather
+    // than 404ing a live trip page.
   }
 
   const relatedTrips = await getRelatedTrips(trip);

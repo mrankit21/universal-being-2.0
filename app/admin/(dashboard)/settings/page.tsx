@@ -129,9 +129,10 @@ export default function SiteSettingsPage() {
             Version&quot; field (in that Trip&apos;s editor) says. Switching this to &quot;Trip 2.0&quot;
             forces every trip that has a matching published Trip 2.0 page to use the new design — a trip
             with no published Trip 2.0 page yet keeps showing its original page either way.
-            &quot;Auto (by device)&quot; forces Trip 2.0 only for visitors on phones/tablets; visitors on
-            laptops/desktops keep seeing each trip&apos;s own &quot;Page Version&quot; field, same as
-            &quot;Trips (original)&quot; does today.
+            &quot;Auto (by device)&quot; is strict and ignores each trip&apos;s own &quot;Page
+            Version&quot; field entirely: visitors on phones/tablets always get Trip 2.0 (a trip with
+            no published Trip 2.0 page shows a not-found page for them, no fallback to the original),
+            and visitors on laptops/desktops always get the original design.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
