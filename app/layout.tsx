@@ -1,114 +1,480 @@
-import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { Fraunces, Inter, Alex_Brush } from "next/font/google";
-
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import { RootShell } from "@/components/layout/root-shell";
-import { BrandProvider } from "@/components/layout/brand-provider";
-import { getActiveAnnouncement } from "@/lib/api/announcements";
-import { getSiteBrand } from "@/lib/api/site-brand";
-import { getSiteUrl } from "@/lib/seo/site-url";
-
-import "./globals.css";
-import "@/styles/themes.css";
-
-/**
- * Phase 2's DESIGN_SYSTEM.md deferred font loading and ThemeProvider wiring
- * to this file explicitly ("the runtime theme-switching engine ... is
- * Phase 3+"). Assigning the CSS variable names globals.css already declares
- * (`--ub-font-display` / `--ub-font-sans`) means every component that
- * already reaches for `font-display`/`font-sans` needs no changes at all.
- */
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--ub-font-display",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--ub-font-sans",
-  display: "swap",
-});
-
-const alexBrush = Alex_Brush({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--ub-font-script",
-  display: "swap",
-});
-
-/**
- * Step 8 fix: this used to be a static `export const metadata` with no
- * `icons`/`openGraph.images` at all — Admin → Settings → Brand Assets let
- * you upload a Favicon, Apple Touch Icon, and OG Image (Step 7.6B §7,
- * `SiteSettingsModel.favicon/appleTouchIcon/ogImage`), but nothing ever
- * read those fields back out, so every page kept showing the generic
- * `public/favicon.png` / no share-preview image regardless of what was
- * uploaded. `generateMetadata` runs per-request (same as this file's
- * `RootLayout`), so it can call the DB-first `getSiteBrand()` — which is
- * wrapped in React `cache()`, so this and `RootLayout`'s call below share
- * one Mongo round trip, not two. Falls back to the static `public/`
- * assets only when nothing has been uploaded yet, same DB-first/
- * static-fallback rule every other brand field already follows.
- */
-export async function generateMetadata(): Promise<Metadata> {
-  const brand = await getSiteBrand();
-  const siteUrl = getSiteUrl();
-
-  return {
-    metadataBase: new URL(siteUrl),
-    title: brand.brandName,
-    description: brand.tagline || "Curated trips, themed to the destination.",
-    icons: {
-      icon: brand.favicon?.url || "/favicon.png",
-      apple: brand.appleTouchIcon?.url || "/brand/app-icon.png",
-    },
-    openGraph: {
-      title: brand.brandName,
-      description: brand.tagline,
-      url: siteUrl,
-      siteName: brand.brandName,
-      images: brand.ogImage
-        ? [{ url: brand.ogImage.url, width: brand.ogImage.width, height: brand.ogImage.height, alt: brand.ogImage.alt || brand.brandName }]
-        : undefined,
-    },
-  };
+Aug 08 11:25:42.37
+GET
+500
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/trips/udaipur-heritage-walk
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/udaipur-heritage-walk'
+ 
 }
-
-/**
- * Root layout — resolves the default themeKey ("brand") and hands it to
- * ThemeProvider. A trip detail page or the homepage will later pass its own
- * resolved themeKey down by wrapping its subtree in a nested ThemeProvider
- * (or by lifting themeKey resolution here once trip data fetching lands) —
- * either way, no page ever writes `if (theme === ...)` itself.
- *
- * Phase 4 adds RootShell inside ThemeProvider: the Global Layout (header,
- * footer, announcement bar, mobile bottom nav, sticky CTA, global search)
- * needs the active ThemeConfig (nav/footer/CTA style, glass intensity) for
- * every render, so it must sit inside — not beside — the theme boundary.
- * `children` (the actual page) renders inside RootShell's <main>, so every
- * route automatically inherits the full Global Layout with no per-page
- * wiring.
- *
- * Step 7.6C-B Part 2: this is now an async Server Component so it can call
- * `getActiveAnnouncement()` (MongoDB first, static seed fallback) once and
- * hand the result to RootShell as a prop — RootShell no longer imports
- * `data/layout/announcement.ts` directly, closing the last static-data gap
- * on every page (announcement bar renders on all routes via this layout).
- */
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [announcement, brand] = await Promise.all([getActiveAnnouncement(), getSiteBrand()]);
-
-  return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable} ${alexBrush.variable}`} suppressHydrationWarning>
-      <body>
-        <ThemeProvider themeKey="brand">
-          <BrandProvider brand={brand}>
-            <RootShell announcement={announcement}>{children}</RootShell>
-          </BrandProvider>
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+Aug 08 11:25:42.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/destinations
+Aug 08 11:25:42.13
+GET
+---
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/coupons/popup-active
+Aug 08 11:25:42.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/saved
+Aug 08 11:25:42.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/about
+Aug 08 11:25:42.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/trips
+Aug 08 11:25:42.13
+GET
+401
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/customer/auth/me
+Aug 08 11:25:42.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/saved
+Aug 08 11:25:40.44
+GET
+500
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/trips/udaipur-heritage-walk
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/udaipur-heritage-walk'
+ 
+}
+Aug 08 11:25:40.24
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/about
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/about'
+ 
+}
+Aug 08 11:25:40.20
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/saved
+Aug 08 11:25:40.17
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/trips
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips'
+ 
+}
+Aug 08 11:25:40.11
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/destinations
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations'
+ 
+}
+Aug 08 11:25:39.64
+GET
+401
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/customer/auth/me
+Aug 08 11:25:39.64
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/saved
+Aug 08 11:25:39.64
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/api/coupons/popup-active
+Aug 08 11:25:39.41
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/
+Aug 08 11:25:38.69
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/
+Aug 08 11:25:38.13
+GET
+200
+universal-being-2-0-1lh037ljk-ankit25.vercel.app
+/
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/'
+ 
+}
+Aug 08 11:16:20.08
+GET
+200
+universalbeing.in
+/trips/udaipur-mount-abu-kumbhalgarh-royal-trip
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/udaipur-mount-abu-kumbhalgarh-royal-trip'
+ 
+}
+Aug 08 11:16:19.11
+GET
+200
+universalbeing.in
+/trips/dharamshala-mcleodganj-stranger-trip
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/dharamshala-mcleodganj-stranger-trip'
+ 
+}
+Aug 08 11:16:19.11
+GET
+200
+universalbeing.in
+/trips/jibhi-tirthan-valley-premium-tour
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/jibhi-tirthan-valley-premium-tour'
+ 
+}
+Aug 08 11:16:16.94
+GET
+200
+universalbeing.in
+/destinations/chopta
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/chopta'
+ 
+}
+Aug 08 11:16:15.88
+GET
+200
+universalbeing.in
+/trips/manali-quick-trail
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/manali-quick-trail'
+ 
+}
+Aug 08 11:16:12.93
+GET
+200
+universalbeing.in
+/destinations/udaipur
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/udaipur'
+ 
+}
+Aug 08 11:16:11.14
+GET
+200
+universalbeing.in
+/trips/ladakh-quick-loop
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/ladakh-quick-loop'
+ 
+}
+Aug 08 11:16:10.55
+GET
+200
+universalbeing.in
+/destinations/spiti
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/spiti'
+ 
+}
+Aug 08 11:16:09.61
+GET
+500
+universalbeing.in
+/trips/spiti-valley-expedition
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/spiti-valley-expedition'
+ 
+}
+Aug 08 11:16:09.33
+GET
+200
+universalbeing.in
+/trips/jibhi-weekend-retreat
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/jibhi-weekend-retreat'
+ 
+}
+Aug 08 11:16:05.84
+GET
+200
+universalbeing.in
+/destinations/manali
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/manali'
+ 
+}
+Aug 08 11:16:04.82
+GET
+500
+universalbeing.in
+/trips/chopta-tungnath-trek
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/chopta-tungnath-trek'
+ 
+}
+Aug 08 11:16:04.23
+GET
+200
+universalbeing.in
+/destinations/ladakh
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/ladakh'
+ 
+}
+Aug 08 11:16:03.77
+GET
+200
+universalbeing.in
+/destinations/jibhi
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations/jibhi'
+ 
+}
+Aug 08 11:16:03.35
+GET
+500
+universalbeing.in
+/trips/manali-snow-trail
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/manali-snow-trail'
+ 
+}
+Aug 08 11:16:03.20
+GET
+200
+universalbeing.in
+/trips/chopta-tungnath-dash
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/chopta-tungnath-dash'
+ 
+}
+Aug 08 11:16:02.50
+GET
+500
+universalbeing.in
+/trips/ladakh-himalayan-circuit
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/ladakh-himalayan-circuit'
+ 
+}
+Aug 08 11:15:59.19
+GET
+200
+universalbeing.in
+/trips/spiti-quick
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/spiti-quick'
+ 
+}
+Aug 08 11:15:58.41
+GET
+200
+universalbeing.in
+/trips/udaipur-weekend
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/udaipur-weekend'
+ 
+}
+Aug 08 11:15:58.41
+GET
+500
+universalbeing.in
+/trips/udaipur-heritage-walk
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/udaipur-heritage-walk'
+ 
+}
+Aug 08 11:15:58.33
+GET
+200
+universalbeing.in
+/api/coupons/popup-active
+Aug 08 11:15:58.30
+GET
+200
+universalbeing.in
+/trips
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips'
+ 
+}
+Aug 08 11:15:58.30
+GET
+200
+universalbeing.in
+/saved
+Aug 08 11:15:58.30
+GET
+200
+universalbeing.in
+/destinations
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/destinations'
+ 
+}
+Aug 08 11:15:58.29
+GET
+401
+universalbeing.in
+/api/customer/auth/me
+Aug 08 11:15:58.29
+GET
+200
+universalbeing.in
+/api/saved
+Aug 08 11:15:57.48
+GET
+200
+universalbeing.in
+/
+Aug 08 11:15:53.45
+GET
+200
+universalbeing.in
+/
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/'
+ 
+}
+Aug 08 10:59:21.34
+GET
+304
+universalbeing.in
+/trips/jibhi-tirthan-valley-premium-tour
+4
+[Error: An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details. A digest property is included on this error instance which may provide additional details about the nature of the error.] {
+ 
+  digest: 'DYNAMIC_SERVER_USAGE',
+ 
+  page: '/trips/jibhi-tirthan-valley-premium-tour'
+ 
 }
