@@ -14,6 +14,7 @@ export interface PromoLeadDocument extends Document {
   whatsappNumber: string;
   couponCode: string;
   source?: string;
+  contacted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +25,9 @@ const PromoLeadSchema = new Schema<PromoLeadDocument>(
     whatsappNumber: { type: String, required: true, index: true },
     couponCode: { type: String, required: true },
     source: { type: String },
+    // Mirrors Trip2Lead's `contacted` flag so both lead types share one
+    // admin follow-up queue (see app/api/admin/leads).
+    contacted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

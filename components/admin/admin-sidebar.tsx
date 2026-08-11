@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Sparkles,
   Layers,
+  PhoneCall,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ const ICONS: Record<string, LucideIcon> = {
   RotateCcw,
   Sparkles,
   Layers,
+  PhoneCall,
 };
 
 export function AdminSidebar({ permissions }: { permissions: Permission[] }) {

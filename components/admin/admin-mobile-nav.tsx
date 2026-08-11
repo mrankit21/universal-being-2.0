@@ -25,6 +25,7 @@ import {
   Ticket,
   RotateCcw,
   Sparkles,
+  PhoneCall,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,7 @@ const ICONS: Record<string, LucideIcon> = {
   Ticket,
   RotateCcw,
   Sparkles,
+  PhoneCall,
 };
 
 export function AdminMobileNav({ permissions }: { permissions: Permission[] }) {

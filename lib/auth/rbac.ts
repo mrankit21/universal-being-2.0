@@ -35,7 +35,9 @@ export type Permission =
   | "coupons:read"
   | "coupons:write"
   | "refunds:read"
-  | "refunds:write";
+  | "refunds:write"
+  | "leads:read"
+  | "leads:write";
 
 const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
   admin: [
@@ -64,6 +66,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "coupons:write",
     "refunds:read",
     "refunds:write",
+    "leads:read",
+    "leads:write",
   ],
   manager: [
     "dashboard:view",
@@ -88,6 +92,8 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "coupons:write",
     "refunds:read",
     "refunds:write",
+    "leads:read",
+    "leads:write",
   ],
   editor: [
     "dashboard:view",
