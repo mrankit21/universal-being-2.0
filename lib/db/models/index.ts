@@ -19,3 +19,4 @@ export * from "./saved-item.model";
 export * from "./promo-lead.model";
 export * from "./trip2.model";
 export * from "./trip2-lead.model";
+export * from "./salesperson.model";

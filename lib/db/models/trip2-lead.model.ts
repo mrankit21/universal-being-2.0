@@ -20,6 +20,7 @@ export interface Trip2LeadDocument extends Document {
   tripSlug?: string;
   source?: string;
   contacted: boolean;
+  assignedTo?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +36,11 @@ const Trip2LeadSchema = new Schema<Trip2LeadDocument>(
     // Lets the admin panel mark a lead as "called back" without deleting
     // it — a lightweight follow-up queue rather than a full CRM.
     contacted: { type: Boolean, default: false },
+    // Name of the Salesperson (lib/db/models/salesperson.model.ts) this
+    // lead is assigned to for follow-up. Stored as a plain name string
+    // rather than an ObjectId ref — the admin Leads page treats the
+    // salesperson list as a lightweight tag set, not a full relation.
+    assignedTo: { type: String },
   },
   { timestamps: true }
 );

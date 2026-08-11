@@ -15,6 +15,7 @@ export interface PromoLeadDocument extends Document {
   couponCode: string;
   source?: string;
   contacted: boolean;
+  assignedTo?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +29,9 @@ const PromoLeadSchema = new Schema<PromoLeadDocument>(
     // Mirrors Trip2Lead's `contacted` flag so both lead types share one
     // admin follow-up queue (see app/api/admin/leads).
     contacted: { type: Boolean, default: false },
+    // See the matching comment on Trip2LeadDocument — plain Salesperson
+    // name, not an ObjectId ref.
+    assignedTo: { type: String },
   },
   { timestamps: true }
 );

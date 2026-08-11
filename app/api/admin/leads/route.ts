@@ -24,6 +24,7 @@ export interface AdminLeadRow {
   tripSlug?: string;
   source?: string;
   contacted: boolean;
+  assignedTo?: string;
   createdAt: string;
 }
 
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
         tripSlug: l.tripSlug,
         source: l.source,
         contacted: l.contacted,
+        assignedTo: l.assignedTo,
         createdAt: l.createdAt,
       })),
       ...promoLeads.map((l) => ({
@@ -61,6 +63,7 @@ export async function GET(req: NextRequest) {
         detail: `Coupon: ${l.couponCode}`,
         source: l.source,
         contacted: l.contacted,
+        assignedTo: l.assignedTo,
         createdAt: l.createdAt,
       })),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
