@@ -30,7 +30,7 @@ export function DesktopHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 hidden w-full rounded-b-2xl md:block ub-nav-blue",
+        "sticky top-0 z-40 hidden w-full md:block ub-nav-blue",
         "transition-[height,background-color,backdrop-filter] duration-ub-base ease-ub-standard",
         navStyle === "glass" && "ub-glass border-b border-border/60",
         navStyle === "solid" && "border-b border-border bg-background/95",
