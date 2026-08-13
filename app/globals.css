@@ -516,7 +516,7 @@
    the header/nav automatically become legible on the blue fill.
    ========================================================================== */
 .ub-nav-blue {
-  background-color: #b34700 !important;
+  background-color: var(--ub-header-color, #b34700) !important;
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -525,15 +525,19 @@
   --foreground: #ffffff;
   --muted-foreground: rgba(255, 255, 255, 0.75);
   --primary: #ffffff;
-  --primary-foreground: #b34700;
+  --primary-foreground: var(--ub-header-color, #b34700);
   --border: rgba(255, 255, 255, 0.2);
 }
 
 /* Same idea as .ub-nav-blue, but solid black — used for the mobile bottom
    nav pill (Home/Destinations/Trips/Saved) which stays black while the
-   top header stays blue. */
+   top header stays blue. Both colors are admin-configurable (Admin →
+   Site Settings → Header & Navigation Colors) via the `--ub-header-color`
+   / `--ub-bottomnav-color` custom properties set on `:root` by
+   `SiteHeader`; the hex fallbacks here keep the original look intact
+   whenever the admin hasn't set a custom color yet. */
 .ub-nav-black {
-  background-color: #1d2610 !important;
+  background-color: var(--ub-bottomnav-color, #1d2610) !important;
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -542,6 +546,6 @@
   --foreground: #ffffff;
   --muted-foreground: rgba(255, 255, 255, 0.7);
   --primary: #ffffff;
-  --primary-foreground: #1d2610;
+  --primary-foreground: var(--ub-bottomnav-color, #1d2610);
   --border: rgba(255, 255, 255, 0.15);
 }

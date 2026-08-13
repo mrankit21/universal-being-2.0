@@ -27,7 +27,7 @@ export async function MobileHeader() {
   const homepage2Active = (await resolveVersion(siteSettings.activeHomepageVersion)) === "v2";
 
   return (
-    <header className="ub-glass ub-nav-blue sticky top-0 z-40 flex h-12 w-full items-center justify-between border-b border-border/60 px-4 md:hidden">
+    <header className="ub-glass ub-nav-blue sticky top-0 z-40 flex h-12 w-full items-center justify-between rounded-b-2xl border-b border-border/60 px-4 shadow-sm md:hidden">
       <Logo />
       <div className="flex items-center gap-2">
         <MobileHeaderRight homepage2Active={homepage2Active} />

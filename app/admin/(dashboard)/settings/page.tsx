@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { FormField } from "@/components/admin/form-field";
 import { ImageAssetField } from "@/components/admin/image-asset-field";
 
@@ -149,6 +150,80 @@ export default function SiteSettingsPage() {
               </SelectContent>
             </Select>
           </FormField>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Header & Navigation Colors</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Sets the background color of the site header (desktop + mobile) and the mobile bottom
+            pill nav (Home/Destinations/Trips/Saved). Leave either one blank to keep the original
+            brand color.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <FormField label="Header Color" hint="Desktop header + mobile top header.">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={data.headerColor ?? "#b34700"}
+                  onChange={(e) => set(["headerColor"], e.target.value)}
+                  className="h-10 w-14 shrink-0 p-1"
+                />
+                <Input
+                  value={data.headerColor ?? "#b34700"}
+                  onChange={(e) => set(["headerColor"], e.target.value)}
+                  placeholder="#b34700"
+                  className="font-mono uppercase"
+                />
+              </div>
+            </FormField>
+            <FormField label="Bottom Pill Nav Color" hint="Mobile-only floating nav (Home/Destinations/Trips/Saved).">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  value={data.bottomNavColor ?? "#1d2610"}
+                  onChange={(e) => set(["bottomNavColor"], e.target.value)}
+                  className="h-10 w-14 shrink-0 p-1"
+                />
+                <Input
+                  value={data.bottomNavColor ?? "#1d2610"}
+                  onChange={(e) => set(["bottomNavColor"], e.target.value)}
+                  placeholder="#1d2610"
+                  className="font-mono uppercase"
+                />
+              </div>
+            </FormField>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Preview</Label>
+            <div className="overflow-hidden rounded-2xl border border-border">
+              <div
+                className="flex h-12 items-center justify-between px-4 text-sm font-medium text-white"
+                style={{ backgroundColor: data.headerColor || "#b34700" }}
+              >
+                <span>Universal Being</span>
+                <span className="text-xs text-white/80">Header</span>
+              </div>
+              <div className="flex items-center justify-center gap-6 bg-muted/40 px-4 py-6 text-xs text-muted-foreground">
+                Page content
+              </div>
+              <div className="flex justify-center bg-muted/20 p-3">
+                <div
+                  className="flex items-center gap-4 rounded-full px-4 py-2 text-xs font-medium text-white shadow-md"
+                  style={{ backgroundColor: data.bottomNavColor || "#1d2610" }}
+                >
+                  <span>Home</span>
+                  <span>Destinations</span>
+                  <span>Trips</span>
+                  <span>Saved</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

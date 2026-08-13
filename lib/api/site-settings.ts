@@ -28,6 +28,13 @@ export interface ResolvedSiteSettings {
   /** Trips Version toggle (Trip 2.0) — "v1", "v2", or "auto". Defaults to
    * "v1" when unset, same fallback rule as `activeHomepageVersion`. */
   activeTripsVersion: "v1" | "v2" | "auto";
+  /** Header background color (hex). Always resolved — falls back to the
+   * original brand color when the admin hasn't set a custom one, so
+   * every consumer can use this directly without its own fallback. */
+  headerColor: string;
+  /** Mobile bottom pill nav (Home/Destinations/Trips/Saved) background
+   * color (hex). Same always-resolved rule as `headerColor`. */
+  bottomNavColor: string;
   brandStory: string;
   contact: { whatsappHref: string; phoneHref: string; email: string; address: string };
   socialLinks: { platform: string; href: string; label: string; icon?: { url: string; alt: string } }[];
@@ -75,10 +82,19 @@ function resolveGlobalBackdrop(
   return { image: { url: img.url, alt: img.alt ?? "" }, opacityStep: raw?.opacityStep ?? 6 };
 }
 
+/** Original hardcoded brand colors — see `.ub-nav-blue` / `.ub-nav-black`
+ * in `app/globals.css`. Kept here as the single source of truth for the
+ * "no custom color set yet" fallback, used by both `staticSiteSettings()`
+ * and the DB-resolution branch below. */
+const DEFAULT_HEADER_COLOR = "#b34700";
+const DEFAULT_BOTTOMNAV_COLOR = "#1d2610";
+
 function staticSiteSettings(): ResolvedSiteSettings {
   return {
     activeHomepageVersion: "v1",
     activeTripsVersion: "v1",
+    headerColor: DEFAULT_HEADER_COLOR,
+    bottomNavColor: DEFAULT_BOTTOMNAV_COLOR,
     brandStory: staticSiteConfig.brandStory,
     contact: { ...staticSiteConfig.contact, address: contactContent.officeAddress },
     socialLinks: staticSiteConfig.socialLinks,
@@ -124,6 +140,8 @@ export async function getSiteSettings(): Promise<ResolvedSiteSettings> {
         doc.activeHomepageVersion === "v2" || doc.activeHomepageVersion === "auto" ? doc.activeHomepageVersion : "v1",
       activeTripsVersion:
         doc.activeTripsVersion === "v2" || doc.activeTripsVersion === "auto" ? doc.activeTripsVersion : "v1",
+      headerColor: doc.headerColor || DEFAULT_HEADER_COLOR,
+      bottomNavColor: doc.bottomNavColor || DEFAULT_BOTTOMNAV_COLOR,
       brandStory: doc.brandStory || staticSiteConfig.brandStory,
       contact: {
         whatsappHref: doc.contact?.whatsapp ? toWhatsappHref(doc.contact.whatsapp) : staticSiteConfig.contact.whatsappHref,

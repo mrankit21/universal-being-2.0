@@ -68,9 +68,11 @@ export function RootShell({
             >
               Skip to content
             </a>
+            {/* Offer strip now sits below the header (previously above it)
+                — same AnnouncementBar/config, just reordered. */}
             <HideOnAdmin>
-              <AnnouncementBar config={announcement} />
               <SiteHeader />
+              <AnnouncementBar config={announcement} />
             </HideOnAdmin>
 
             <main id="main-content" className="min-h-[60vh]">

@@ -12,6 +12,14 @@ export const siteSettingsSchema = z.object({
   brandStory: z.string().default(""),
   activeHomepageVersion: z.enum(["v1", "v2", "auto"]).default("v1"),
   activeTripsVersion: z.enum(["v1", "v2", "auto"]).default("v1"),
+  headerColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color like #b34700")
+    .optional(),
+  bottomNavColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Must be a hex color like #1d2610")
+    .optional(),
   contact: z.object({
     phone: z.string().default(""),
     whatsapp: z.string().default(""),

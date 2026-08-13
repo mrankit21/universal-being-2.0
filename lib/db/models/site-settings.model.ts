@@ -57,6 +57,15 @@ export interface SiteSettingsDocument extends Document {
    * site-wide switch, same spirit as Homepage Version. "auto" resolves
    * per-visitor by device, same as `activeHomepageVersion`'s "auto". */
   activeTripsVersion: "v1" | "v2" | "auto";
+  /** Header background color (desktop + mobile header), hex string e.g.
+   * "#b34700". Admin → Site Settings → Header & Navigation Colors.
+   * Unset/empty falls back to the original hardcoded brand color — see
+   * `.ub-nav-blue` in `app/globals.css`. */
+  headerColor?: string;
+  /** Mobile bottom pill nav (Home/Destinations/Trips/Saved) background
+   * color, hex string. Same fallback rule as `headerColor` — see
+   * `.ub-nav-black` in `app/globals.css`. */
+  bottomNavColor?: string;
   contact: {
     phone: string;
     whatsapp: string;
@@ -119,6 +128,8 @@ const SiteSettingsSchema = new Schema<SiteSettingsDocument>(
     brandStory: { type: String, default: "" },
     activeHomepageVersion: { type: String, enum: ["v1", "v2", "auto"], default: "v1" },
     activeTripsVersion: { type: String, enum: ["v1", "v2", "auto"], default: "v1" },
+    headerColor: { type: String },
+    bottomNavColor: { type: String },
     contact: {
       phone: { type: String, default: "" },
       whatsapp: { type: String, default: "" },
