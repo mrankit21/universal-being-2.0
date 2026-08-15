@@ -7,7 +7,7 @@
 import mongoose, { Schema, model, type Model, type Document } from "mongoose";
 const models = mongoose.models;
 
-export type AdminRole = "admin" | "manager" | "editor";
+export type AdminRole = "admin" | "manager" | "editor" | "sales_executive";
 
 export interface UserDocument extends Document {
   id: string;
@@ -26,7 +26,7 @@ const UserSchema = new Schema<UserDocument>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ["admin", "manager", "editor"], default: "editor" },
+    role: { type: String, enum: ["admin", "manager", "editor", "sales_executive"], default: "editor" },
     active: { type: Boolean, default: true },
     lastLoginAt: { type: String },
   },

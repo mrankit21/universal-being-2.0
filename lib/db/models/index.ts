@@ -20,3 +20,5 @@ export * from "./promo-lead.model";
 export * from "./trip2.model";
 export * from "./trip2-lead.model";
 export * from "./salesperson.model";
+export * from "./crm-lead.model";
+export * from "./crm-lead-activity.model";

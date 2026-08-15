@@ -1,9 +1,21 @@
 /**
- * Role-based access control matrix (requirement #10/#11). Three roles:
- *   - admin:   full access, including User Management and Site Settings.
- *   - manager: everything except User Management (can't create/edit admins).
- *   - editor:  content-only — trips, destinations, homepage, media,
- *              announcements. No settings, users, or booking status changes.
+ * Role-based access control matrix (requirement #10/#11). Four roles:
+ *   - admin:            full access, including User Management and Site
+ *                        Settings. Maps to the roadmap's "Super Admin"
+ *                        for CRM purposes — sees every lead.
+ *   - manager:           everything except User Management. Maps to the
+ *                        roadmap's "Sales Manager" for CRM purposes —
+ *                        also sees every lead (team performance).
+ *   - editor:            content-only — trips, destinations, homepage,
+ *                        media, announcements. No settings, users,
+ *                        booking status changes, or CRM access.
+ *   - sales_executive:   the roadmap's "Sales Executive" — CRM-only
+ *                        access (dashboard + leads), nothing else. Lead
+ *                        visibility is scoped to "their own assigned
+ *                        leads only" at the query layer, not here — see
+ *                        `lib/crm/scope.ts`. This role intentionally
+ *                        does NOT get trips/destinations/bookings/etc.
+ *                        so a sales hire can't touch site content.
  *
  * `can()` is the single choke point every API route and admin page calls —
  * new permissions get added here once, not re-implemented per route.
@@ -112,6 +124,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "bookings:read",
     "coupons:read",
   ],
+  sales_executive: ["dashboard:view", "leads:read", "leads:write"],
 };
 
 export function can(role: AdminRole, permission: Permission): boolean {

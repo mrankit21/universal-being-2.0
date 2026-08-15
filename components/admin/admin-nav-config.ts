@@ -29,6 +29,7 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "Coupons", href: "/admin/coupons", icon: "Ticket", permission: "coupons:read" },
   { label: "Refunds", href: "/admin/refunds", icon: "RotateCcw", permission: "refunds:read" },
   { label: "Leads", href: "/admin/leads", icon: "PhoneCall", permission: "leads:read" },
+  { label: "CRM", href: "/admin/crm", icon: "Kanban", permission: "leads:read" },
   { label: "Users", href: "/admin/users", icon: "Users", permission: "users:read" },
   { label: "Site Settings", href: "/admin/settings", icon: "Settings", permission: "settings:read" },
 ];

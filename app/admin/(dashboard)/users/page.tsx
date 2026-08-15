@@ -1,6 +1,6 @@
 "use client";
 
-/** User Management (requirement #10/#11): admin/manager/editor roles. */
+/** User Management (requirement #10/#11): admin/manager/editor/sales_executive roles. */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -18,7 +18,7 @@ interface UserRow {
   _id: string;
   name: string;
   email: string;
-  role: "admin" | "manager" | "editor";
+  role: "admin" | "manager" | "editor" | "sales_executive";
   active: boolean;
 }
 
@@ -86,7 +86,7 @@ export default function UsersPage() {
   const columns: Column<UserRow>[] = [
     { header: "Name", cell: (u) => u.name },
     { header: "Email", cell: (u) => u.email },
-    { header: "Role", cell: (u) => <Badge className="capitalize">{u.role}</Badge> },
+    { header: "Role", cell: (u) => <Badge className="capitalize">{u.role.replace("_", " ")}</Badge> },
     {
       header: "Active",
       cell: (u) => <Switch checked={u.active} onCheckedChange={() => toggleActive(u)} />,
@@ -108,7 +108,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">User Management</h1>
-        <p className="text-sm text-muted-foreground">Admin, Manager, and Editor roles with different levels of access.</p>
+        <p className="text-sm text-muted-foreground">Admin, Manager, Editor, and Sales Executive roles with different levels of access.</p>
       </div>
 
       <Card>
@@ -124,6 +124,7 @@ export default function UsersPage() {
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="sales_executive">Sales Executive</SelectItem>
               </SelectContent>
             </Select>
           </FormField>
