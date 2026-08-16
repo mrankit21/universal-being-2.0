@@ -32,6 +32,7 @@ import { verifyWebhookSignature } from "@/lib/payments/razorpay";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
 import { ensureInvoiceForBooking } from "@/lib/payments/invoicing";
 import { notifySlotPaid, notifyPaymentFailed } from "@/lib/notifications/dispatch";
+import { linkLeadOnPaymentReceived } from "@/lib/crm/booking-link";
 
 interface RazorpayEntity {
   id: string;
@@ -147,6 +148,9 @@ export async function POST(req: NextRequest) {
         await booking.save();
         await ensureInvoiceForBooking(booking).catch(() => null);
         await notifySlotPaid(booking).catch(() => null);
+        await linkLeadOnPaymentReceived(booking).catch((crmErr) =>
+          console.error("[payments/webhook] CRM linkLeadOnPaymentReceived failed (payment was still recorded):", crmErr)
+        );
       }
       break;
     }

@@ -29,7 +29,18 @@ export interface ExternalLeadInput {
   metaLeadId?: string; // dedupe key — only set for Meta-sourced leads
   metaCreatedTime?: string; // Meta's own event timestamp
   destination?: string;
+  travelTiming?: string;
   createdTime?: string; // the platform's own event time, if it has one
+
+  // Only set when this ingestion IS the booking flow itself (Phase 7 —
+  // "Booking Started" / "Payment Pending" sources). Every other caller
+  // omits these and gets the normal status:"new" behavior.
+  status?: "new" | "payment_pending" | "booked";
+  bookingId?: string;
+  tripSlug?: string;
+  pickupVariantName?: string;
+  amountPaid?: number;
+  remainingAmount?: number;
 }
 
 /** Creates a CrmLead from an automated source, or returns the existing
@@ -58,6 +69,7 @@ export async function ingestExternalLead(
       whatsappNumber: input.whatsappNumber || input.phone,
       email: input.email,
       destination: input.destination,
+      travelTiming: input.travelTiming,
       source: input.source,
       platform: input.platform,
       campaign: input.campaign,
@@ -68,7 +80,12 @@ export async function ingestExternalLead(
       adId: input.adId,
       metaLeadId: input.metaLeadId,
       metaCreatedTime: input.metaCreatedTime,
-      status: "new",
+      status: input.status || "new",
+      bookingId: input.bookingId,
+      tripSlug: input.tripSlug,
+      pickupVariantName: input.pickupVariantName,
+      amountPaid: input.amountPaid,
+      remainingAmount: input.remainingAmount,
       assignedTo,
       assignedAt: assignedTo ? now : undefined,
       lastActivityAt: now,

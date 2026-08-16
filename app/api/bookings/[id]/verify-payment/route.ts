@@ -23,6 +23,7 @@ import { toEntity } from "@/lib/api/db-mappers";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
 import { ensureInvoiceForBooking } from "@/lib/payments/invoicing";
 import { notifySlotPaid, notifyPaymentFailed } from "@/lib/notifications/dispatch";
+import { linkLeadOnPaymentReceived } from "@/lib/crm/booking-link";
 
 const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
@@ -114,6 +115,12 @@ export async function POST(req: NextRequest, { params }: Params) {
     }).catch(() => null);
     await ensureInvoiceForBooking(booking).catch(() => null);
     await notifySlotPaid(booking).catch(() => null);
+    // CRM Phase 7 — Status = BOOKED, link Booking ID/Trip/Pickup
+    // Variant/Amount Paid/Remaining Amount. Best-effort, same as the
+    // invoice/notification calls right above.
+    await linkLeadOnPaymentReceived(booking).catch((crmErr) =>
+      console.error("[verify-payment] CRM linkLeadOnPaymentReceived failed (payment was still recorded):", crmErr)
+    );
 
     return ok(toEntity(booking.toObject()));
   } catch (err) {

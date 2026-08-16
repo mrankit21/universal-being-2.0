@@ -4,14 +4,15 @@
  *
  * This is the new, full sales-pipeline lead record. It is deliberately
  * kept separate from the pre-existing `Trip2LeadModel` / `PromoLeadModel`
- * (see those files) rather than replacing them in this phase — those two
- * collections are still what the live "Let's Plan Your Trip" card and the
- * coupon popup write to, and the roadmap's Phase 1 explicitly says not to
- * touch Booking or add Meta/WhatsApp integration yet. Wiring website
- * forms to create `CrmLead` rows directly is Phase 6 ("Website + WhatsApp
- * Leads"); Meta Lead Ads is Phase 5. Until then this collection is
- * populated by manual entry (Admin -> CRM -> New Lead) and, from Phase 6
- * onward, automatically.
+ * (see those files) rather than replacing them — those two collections
+ * still exist and are still what `/admin/leads` (the older lightweight
+ * follow-up queue) reads. As of Phase 6, `/api/trip2-leads` and
+ * `/api/promo-leads` dual-write: every "Let's Plan Your Trip" / promo
+ * popup submission creates both a `Trip2Lead`/`PromoLead` row (unchanged)
+ * AND a `CrmLead` row (via `ingestExternalLead()`), so the full pipeline
+ * sees every website enquiry without the older admin page breaking.
+ * Meta Lead Ads (Phase 5) and WhatsApp (Phase 6) populate this
+ * automatically too; manual entry (Admin -> CRM -> New Lead) always did.
  *
  * `leadId` is a short human-facing code ("LD-2026-0001") generated via
  * `lib/crm/id.ts` on the atomic `Counter` collection — same pattern as
@@ -71,11 +72,14 @@ export interface CrmLeadDocument extends Document {
   nextFollowUpAt?: string;
   followUpStatus?: "none" | "scheduled" | "overdue" | "done";
 
-  // Booking linkage (Phase 7 fills these in automatically — present now
-  // so the schema doesn't need another migration later)
+  // Booking linkage — set automatically by lib/crm/booking-link.ts
+  // (Phase 7) as a lead moves through Booking Started -> Payment
+  // Pending -> Booked.
   bookingId?: string;
   tripSlug?: string;
+  pickupVariantName?: string;
   amountPaid?: number;
+  remainingAmount?: number;
 
   notes?: string;
 
@@ -121,7 +125,9 @@ const CrmLeadSchema = new Schema<CrmLeadDocument>(
 
     bookingId: { type: String },
     tripSlug: { type: String },
+    pickupVariantName: { type: String },
     amountPaid: { type: Number },
+    remainingAmount: { type: Number },
 
     notes: { type: String },
   },

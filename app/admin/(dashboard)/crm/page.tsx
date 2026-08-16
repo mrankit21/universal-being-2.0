@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Search, Plus, AlertTriangle, CalendarClock, User } from "lucide-react";
+import { Search, Plus, AlertTriangle, CalendarClock, User, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -169,6 +169,11 @@ export default function CrmLeadsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/admin/crm/dashboard">
+            <Button variant="outline">
+              <LayoutDashboard className="mr-1.5 size-4" /> Dashboard
+            </Button>
+          </Link>
           <Link href="/admin/crm/follow-ups">
             <Button variant="outline">
               <CalendarClock className="mr-1.5 size-4" /> Follow-ups

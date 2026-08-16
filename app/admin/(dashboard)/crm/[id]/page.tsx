@@ -50,7 +50,9 @@ interface CrmLeadDetail {
   noResponse: boolean;
   bookingId?: string;
   tripSlug?: string;
+  pickupVariantName?: string;
   amountPaid?: number;
+  remainingAmount?: number;
   notes?: string;
   createdAt: string;
 }
@@ -341,9 +343,19 @@ export default function CrmLeadDetailPage() {
                   <p className="text-xs text-muted-foreground">Trip</p>
                   <p>{lead.tripSlug ?? "—"}</p>
                 </div>
+                {lead.pickupVariantName ? (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pickup Variant</p>
+                    <p>{lead.pickupVariantName}</p>
+                  </div>
+                ) : null}
                 <div>
                   <p className="text-xs text-muted-foreground">Amount paid</p>
                   <p>{lead.amountPaid ? `₹${lead.amountPaid.toLocaleString("en-IN")}` : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Remaining amount</p>
+                  <p>{lead.remainingAmount ? `₹${lead.remainingAmount.toLocaleString("en-IN")}` : "—"}</p>
                 </div>
               </CardContent>
             </Card>

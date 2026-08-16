@@ -49,6 +49,7 @@ import { bookingsRateLimit } from "@/lib/rate-limit/client";
 import { enforceRateLimit } from "@/lib/rate-limit/enforce";
 import { getClientIp } from "@/lib/rate-limit/get-client-ip";
 import { isIpWhitelisted } from "@/lib/rate-limit/whitelist";
+import { linkLeadOnBookingStarted } from "@/lib/crm/booking-link";
 
 export async function POST(req: NextRequest) {
   try {
@@ -347,6 +348,12 @@ export async function POST(req: NextRequest) {
       // verify route), not this temporary-reservation notice. Admins can
       // still trigger it manually from Admin → Bookings → Resend Email if
       // they ever want to nudge a customer about an expiring hold.
+
+      // CRM Phase 7 — "Booking Started" / "Payment Pending" lead source.
+      // Best-effort: a CRM hiccup must never affect the booking itself.
+      await linkLeadOnBookingStarted(booking).catch((crmErr) =>
+        console.error("[bookings] CRM linkLeadOnBookingStarted failed (booking was still created):", crmErr)
+      );
 
       return created({
         ...toEntity(booking.toObject()),
