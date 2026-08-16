@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
+import { MessageCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { ResolvedSectionBackground } from "@/lib/api/home";
+import { contactContent } from "@/data/shared/real-content";
 
 /** Default full-bleed backdrop (aerial beach/coastline) used whenever the
  * admin hasn't picked a background image in Admin → Homepage 2.0. Keeps the
@@ -28,6 +30,14 @@ const DEFAULT_BACKGROUND_IMAGE = {
  * portrait upload renders at its own full height with no cropping
  * ("jitni lambi photo hai utna lamba section hona chahiye"), matching the
  * same treatment as "Still Deciding?" (`lets-plan-your-trip-v2.tsx`).
+ *
+ * WhatsApp CTA (2026-08, CRM Phase 6): a "Chat on WhatsApp" button below
+ * the body copy, same `wa.me` link + number as `/contact`
+ * (`contactContent.whatsapp`) — this is a direct entry point into the
+ * CRM's WhatsApp inbound webhook: a visitor's first message here creates
+ * a CRM lead automatically (see `lib/crm/reply.ts` /
+ * `app/api/webhooks/whatsapp/route.ts`), same as a click on the contact
+ * page's existing WhatsApp links.
  */
 export function FindYourDestination({
   heading = "Find your destination",
@@ -66,6 +76,14 @@ export function FindYourDestination({
       >
         <h2 className="font-display text-4xl font-bold text-white sm:text-6xl">{heading}</h2>
         <p className="mx-auto mt-5 max-w-lg text-base text-white/85 sm:text-lg">{body}</p>
+        <a
+          href={`https://wa.me/${contactContent.whatsapp.replace(/\D/g, "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:brightness-105"
+        >
+          <MessageCircle className="size-4" /> Chat on WhatsApp
+        </a>
       </motion.div>
     </section>
   );

@@ -79,7 +79,7 @@ export function CtaSection({ config }: { config: ResolvedCtaSection }) {
             </Button>
           </MotionCta>
           <MotionCta>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" className="border-0 bg-[#25D366] text-white shadow-ub-md hover:bg-[#25D366]/90 hover:text-white">
               <a href={siteConfig.contact.whatsappHref} target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="size-4" aria-hidden="true" />
                 Chat on WhatsApp

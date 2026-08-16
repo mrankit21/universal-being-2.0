@@ -19,7 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { NewLeadDialog } from "@/components/admin/crm/new-lead-dialog";
-import { CRM_LEAD_STATUSES, CRM_LEAD_STATUS_LABELS, type CrmLeadStatus } from "@/lib/crm/constants";
+import {
+  CRM_LEAD_STATUSES,
+  CRM_LEAD_STATUS_LABELS,
+  CRM_LEAD_SOURCES,
+  CRM_LEAD_SOURCE_LABELS,
+  type CrmLeadStatus,
+  type CrmLeadSource,
+} from "@/lib/crm/constants";
 
 interface CrmLeadRow {
   id: string;
@@ -60,6 +67,7 @@ export default function CrmLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<CrmLeadStatus | "all">("all");
+  const [source, setSource] = useState<CrmLeadSource | "all">("all");
   const [noResponseOnly, setNoResponseOnly] = useState(false);
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
@@ -82,6 +90,7 @@ export default function CrmLeadsPage() {
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     if (status !== "all") params.set("status", status);
+    if (source !== "all") params.set("source", source);
     if (noResponseOnly) params.set("noResponse", "true");
     if (myLeadsOnly && me && !isExecutive) params.set("assignedTo", me.name);
     const res = await fetch(`/api/admin/crm/leads?${params.toString()}`);
@@ -89,7 +98,7 @@ export default function CrmLeadsPage() {
     if (json.success) setLeads(json.data);
     else toast.error(json.error);
     setLoading(false);
-  }, [q, status, noResponseOnly, myLeadsOnly, me, isExecutive]);
+  }, [q, status, source, noResponseOnly, myLeadsOnly, me, isExecutive]);
 
   useEffect(() => {
     const t = setTimeout(load, 250); // debounce search typing
@@ -211,6 +220,18 @@ export default function CrmLeadsPage() {
         >
           <AlertTriangle className="mr-1 size-3.5" /> No Response &gt; 2 Days {noResponseCount > 0 ? `(${noResponseCount})` : ""}
         </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">Source:</span>
+        <Button size="sm" variant={source === "all" ? "primary" : "outline"} onClick={() => setSource("all")}>
+          All
+        </Button>
+        {CRM_LEAD_SOURCES.map((s) => (
+          <Button key={s} size="sm" variant={source === s ? "primary" : "outline"} onClick={() => setSource(s)}>
+            {CRM_LEAD_SOURCE_LABELS[s]}
+          </Button>
+        ))}
       </div>
 
       <DataTable columns={columns} rows={leads} loading={loading} rowKey={(l) => l.id} emptyMessage="No leads found." />
