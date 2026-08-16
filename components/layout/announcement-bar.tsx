@@ -86,12 +86,12 @@ export function AnnouncementBar({ config }: AnnouncementBarProps) {
       role="region"
       aria-label="Announcement"
       className={cn(
-        "group relative flex w-full items-center gap-2 bg-primary py-2 text-sm text-primary-foreground",
-        config.dismissible ? "pl-4 pr-10" : "px-4",
+        "group relative flex w-full items-center gap-1.5 bg-primary py-1 text-xs text-primary-foreground",
+        config.dismissible ? "pl-3 pr-8" : "px-3",
         !reducedMotion && "overflow-hidden"
       )}
     >
-      <Icon className="size-4 shrink-0" aria-hidden="true" />
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
       {reducedMotion ? (
         <p className="min-w-0 truncate text-center">{message}</p>
       ) : (
@@ -109,9 +109,9 @@ export function AnnouncementBar({ config }: AnnouncementBarProps) {
           type="button"
           onClick={() => setDismissed(true)}
           aria-label="Dismiss announcement"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-sm p-1 hover:bg-primary-foreground/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground"
         >
-          <X className="size-3.5" aria-hidden="true" />
+          <X className="size-3" aria-hidden="true" />
         </button>
       )}
     </div>

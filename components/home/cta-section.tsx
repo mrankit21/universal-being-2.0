@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MessageCircle, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useTheme } from "@/hooks/use-theme";
-import { siteConfig } from "@/data/layout/site-config";
 import { ThemeBackground } from "@/components/theme/theme-background";
 import { Button } from "@/components/ui/button";
-import { NewsletterForm } from "@/components/layout/newsletter-form";
 import { FloatingElements } from "@/components/animation/floating-elements";
 import { MotionCta } from "@/components/animation/motion-cta";
 import { revealViewport, fadeInUp } from "@/lib/motion-tokens";
@@ -21,8 +19,12 @@ import type { ResolvedCtaSection } from "@/lib/api/home";
  *
  * Step 7.6C-B Part 1: heading/body/CTA/background image now come from the
  * resolved `ctaSection` config (admin-editable, database-first) instead of
- * being hardcoded — the WhatsApp button and newsletter form are unchanged
- * (out of this CMS phase's scope).
+ * being hardcoded.
+ *
+ * 2026-08: trimmed down to just the "Book now" CTA — the WhatsApp button
+ * and the "Get trip drops in your inbox" newsletter form were removed
+ * per request, so this is now a single clean call-to-action instead of
+ * three competing ones.
  */
 export function CtaSection({ config }: { config: ResolvedCtaSection }) {
   const { theme } = useTheme();
@@ -69,28 +71,14 @@ export function CtaSection({ config }: { config: ResolvedCtaSection }) {
         </h2>
         <p className="max-w-xl text-base text-muted-foreground sm:text-lg">{config.body}</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <MotionCta glow>
-            <Button asChild size="lg" className="shadow-ub-md">
-              <Link href={config.ctaHref}>
-                {config.ctaLabel}
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
-            </Button>
-          </MotionCta>
-          <MotionCta>
-            <Button asChild size="lg" className="border-0 bg-[#25D366] text-white shadow-ub-md hover:bg-[#25D366]/90 hover:text-white">
-              <a href={siteConfig.contact.whatsappHref} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="size-4" aria-hidden="true" />
-                Chat on WhatsApp
-              </a>
-            </Button>
-          </MotionCta>
-        </div>
-
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <NewsletterForm />
-        </div>
+        <MotionCta glow>
+          <Button asChild size="lg" className="shadow-ub-md">
+            <Link href={config.ctaHref}>
+              {config.ctaLabel}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </MotionCta>
       </motion.div>
     </section>
   );
