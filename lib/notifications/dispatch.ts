@@ -12,7 +12,7 @@
  * operation that already succeeded.
  */
 import { sendEmail } from "./email";
-import { sendWhatsApp } from "./whatsapp";
+import { sendWhatsApp, sendWhatsAppDocument } from "./whatsapp";
 import { emailLayout, detailsCard, ctaButton, paragraph, note, esc, formatEmailDateRange, formatEmailDateTime } from "./email-templates";
 import { absoluteUrl } from "@/lib/seo/site-url";
 import type { BookingDocument } from "@/lib/db/models/booking.model";
@@ -226,12 +226,22 @@ export async function notifyInvoiceIssued(booking: Booking, invoicePdf: Buffer, 
     ].join(""),
   });
 
-  await sendEmail({
-    to: booking.customerEmail,
-    subject: `Invoice ${invoiceNumber} — ${booking.tripTitle}`,
-    html,
-    attachments: [{ filename: `${invoiceNumber}.pdf`, content: invoicePdf, contentType: "application/pdf" }],
-  });
+  await Promise.allSettled([
+    sendEmail({
+      to: booking.customerEmail,
+      subject: `Invoice ${invoiceNumber} — ${booking.tripTitle}`,
+      html,
+      attachments: [{ filename: `${invoiceNumber}.pdf`, content: invoicePdf, contentType: "application/pdf" }],
+    }),
+    booking.customerPhone
+      ? sendWhatsAppDocument({
+          to: booking.customerPhone,
+          pdf: invoicePdf,
+          filename: `${invoiceNumber}.pdf`,
+          caption: `Invoice ${invoiceNumber} — ${booking.tripTitle}`,
+        })
+      : Promise.resolve(),
+  ]);
 }
 
 export async function notifyTicketIssued(booking: Booking, ticketPdf: Buffer) {
@@ -252,12 +262,17 @@ export async function notifyTicketIssued(booking: Booking, ticketPdf: Buffer) {
     ].join(""),
   });
 
-  await sendEmail({
-    to: booking.customerEmail,
-    subject: `Your e-ticket — ${booking.tripTitle}`,
-    html,
-    attachments: [{ filename: "e-ticket.pdf", content: ticketPdf, contentType: "application/pdf" }],
-  });
+  await Promise.allSettled([
+    sendEmail({
+      to: booking.customerEmail,
+      subject: `Your e-ticket — ${booking.tripTitle}`,
+      html,
+      attachments: [{ filename: "e-ticket.pdf", content: ticketPdf, contentType: "application/pdf" }],
+    }),
+    booking.customerPhone
+      ? sendWhatsAppDocument({ to: booking.customerPhone, pdf: ticketPdf, filename: "e-ticket.pdf", caption: `Your e-ticket — ${booking.tripTitle}` })
+      : Promise.resolve(),
+  ]);
 }
 
 export async function notifyAdmin(subject: string, html: string) {

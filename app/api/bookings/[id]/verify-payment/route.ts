@@ -22,8 +22,15 @@ import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { toEntity } from "@/lib/api/db-mappers";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
 import { ensureInvoiceForBooking } from "@/lib/payments/invoicing";
-import { notifySlotPaid, notifyPaymentFailed } from "@/lib/notifications/dispatch";
+import { notifySlotPaid, notifyPaymentFailed, notifyInvoiceIssued, notifyTicketIssued } from "@/lib/notifications/dispatch";
+import { generateInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { generateTicketPdf } from "@/lib/pdf/ticket-pdf";
 import { linkLeadOnPaymentReceived } from "@/lib/crm/booking-link";
+
+// Invoice/ticket PDFs render via headless Chrome (lib/pdf/render-html-to-pdf.ts),
+// which needs the Node.js runtime and more time than the default limit.
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
 const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
@@ -113,8 +120,25 @@ export async function POST(req: NextRequest, { params }: Params) {
       status: "captured",
       notes: "Verified client-side via Razorpay Checkout handler.",
     }).catch(() => null);
-    await ensureInvoiceForBooking(booking).catch(() => null);
+    const invoice = await ensureInvoiceForBooking(booking).catch(() => null);
     await notifySlotPaid(booking).catch(() => null);
+
+    // Best-effort: send the invoice PDF (and, once fully paid, the
+    // e-ticket) over email + WhatsApp automatically. Never blocks or
+    // fails the payment response — same admin-triggerable "resend" path
+    // (app/api/admin/bookings/[id]/notify/route.ts) covers the case where
+    // delivery fails here.
+    if (invoice) {
+      await generateInvoicePdf(invoice)
+        .then((pdf) => notifyInvoiceIssued(booking, pdf, invoice.invoiceNumber))
+        .catch((err) => console.error("[verify-payment] auto invoice send failed:", err));
+    }
+    if (booking.paymentStatus === "paid") {
+      await generateTicketPdf(booking)
+        .then((pdf) => notifyTicketIssued(booking, pdf))
+        .catch((err) => console.error("[verify-payment] auto ticket send failed:", err));
+    }
+
     // CRM Phase 7 — Status = BOOKED, link Booking ID/Trip/Pickup
     // Variant/Amount Paid/Remaining Amount. Best-effort, same as the
     // invoice/notification calls right above.

@@ -95,15 +95,39 @@ async function getBrowser() {
   return puppeteer.launch({ headless: true });
 }
 
-export async function renderHtmlToPdf(html: string): Promise<Buffer> {
+export interface RenderHtmlToPdfOptions {
+  /** Fixed-canvas mode (the e-ticket's default): exact pixel width/height,
+   * single page, no auto-pagination. Omit both to use TICKET_WIDTH/HEIGHT. */
+  width?: number;
+  height?: number;
+  /** A4 mode (the invoice): standard paper size, height auto-flows with
+   * content instead of a fixed pixel canvas. */
+  format?: "A4";
+}
+
+export async function renderHtmlToPdf(html: string, opts?: RenderHtmlToPdfOptions): Promise<Buffer> {
   const browser = await getBrowser();
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: TICKET_WIDTH, height: TICKET_HEIGHT });
+
+    if (opts?.format === "A4") {
+      await page.setViewport({ width: opts.width ?? 794, height: opts.height ?? 1123 });
+      await page.setContent(html, { waitUntil: "networkidle0" });
+      const pdf = await page.pdf({
+        format: "A4",
+        printBackground: true,
+        margin: { top: 0, bottom: 0, left: 0, right: 0 },
+      });
+      return Buffer.from(pdf);
+    }
+
+    const width = opts?.width ?? TICKET_WIDTH;
+    const height = opts?.height ?? TICKET_HEIGHT;
+    await page.setViewport({ width, height });
     await page.setContent(html, { waitUntil: "networkidle0" });
     const pdf = await page.pdf({
-      width: TICKET_WIDTH,
-      height: TICKET_HEIGHT,
+      width,
+      height,
       printBackground: true,
       pageRanges: "1",
       margin: { top: 0, bottom: 0, left: 0, right: 0 },

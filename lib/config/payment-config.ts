@@ -38,6 +38,20 @@ export function getGstConfig() {
   };
 }
 
+/** Business contact + registration details for the invoice header/footer.
+ * All optional — blank fields are simply omitted from the invoice layout,
+ * so this can be filled in gradually without a code change. */
+export function getBusinessInfo() {
+  return {
+    phone: process.env.BUSINESS_PHONE || "",
+    email: process.env.BUSINESS_EMAIL || "",
+    website: process.env.BUSINESS_WEBSITE || "",
+    udyamNumber: process.env.BUSINESS_UDYAM_NUMBER || "",
+    msmeUan: process.env.BUSINESS_MSME_UAN || "",
+    signatoryName: process.env.BUSINESS_SIGNATORY_NAME || "",
+  };
+}
+
 /** Payment retry — Part 3. No hard ceiling by default ("unlimited future
  * support" per spec); PAYMENT_MAX_RETRY_ATTEMPTS is an optional safety cap
  * an operator can set to stop abuse (e.g. someone hammering retry). */

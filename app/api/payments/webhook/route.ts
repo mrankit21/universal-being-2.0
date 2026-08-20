@@ -31,8 +31,15 @@ import { BookingModel } from "@/lib/db/models/booking.model";
 import { verifyWebhookSignature } from "@/lib/payments/razorpay";
 import { logPaymentEvent } from "@/lib/payments/payment-history";
 import { ensureInvoiceForBooking } from "@/lib/payments/invoicing";
-import { notifySlotPaid, notifyPaymentFailed } from "@/lib/notifications/dispatch";
+import { notifySlotPaid, notifyPaymentFailed, notifyInvoiceIssued, notifyTicketIssued } from "@/lib/notifications/dispatch";
+import { generateInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { generateTicketPdf } from "@/lib/pdf/ticket-pdf";
 import { linkLeadOnPaymentReceived } from "@/lib/crm/booking-link";
+
+// Invoice/ticket PDFs render via headless Chrome (lib/pdf/render-html-to-pdf.ts),
+// which needs the Node.js runtime and more time than the default limit.
+export const runtime = "nodejs";
+export const maxDuration = 30;
 
 interface RazorpayEntity {
   id: string;
@@ -146,8 +153,18 @@ export async function POST(req: NextRequest) {
           { status: booking.status, note: `Confirmed via Razorpay webhook (${body.event}).`, changedAt: now },
         ];
         await booking.save();
-        await ensureInvoiceForBooking(booking).catch(() => null);
+        const invoice = await ensureInvoiceForBooking(booking).catch(() => null);
         await notifySlotPaid(booking).catch(() => null);
+        if (invoice) {
+          await generateInvoicePdf(invoice)
+            .then((pdf) => notifyInvoiceIssued(booking, pdf, invoice.invoiceNumber))
+            .catch((err) => console.error("[payments/webhook] auto invoice send failed:", err));
+        }
+        if (booking.paymentStatus === "paid") {
+          await generateTicketPdf(booking)
+            .then((pdf) => notifyTicketIssued(booking, pdf))
+            .catch((err) => console.error("[payments/webhook] auto ticket send failed:", err));
+        }
         await linkLeadOnPaymentReceived(booking).catch((crmErr) =>
           console.error("[payments/webhook] CRM linkLeadOnPaymentReceived failed (payment was still recorded):", crmErr)
         );
