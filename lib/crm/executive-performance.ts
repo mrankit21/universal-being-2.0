@@ -232,7 +232,7 @@ export async function getExecutiveDetail(
     .lean();
 
   const recentConversions: ConversionEvent[] = bookedActivities
-    .map((a) => {
+    .map((a): ConversionEvent | null => {
       const lead = leadById.get(a.leadId);
       if (!lead) return null;
       return {
