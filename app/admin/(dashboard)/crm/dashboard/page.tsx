@@ -8,6 +8,12 @@
  * here and a Manager/Admin sees the team's; only the labels ("My" vs
  * plain) change client-side based on role.
  *
+ * Every panel here — including the metrics — renders as a compact list
+ * (icon + label + value rows in a Card, divided by hairlines) rather than
+ * big standalone boxes. That keeps the whole page scannable in one
+ * consistent rhythm on both phone and laptop, instead of a wall of large
+ * tiles that mostly show whitespace around a single number.
+ *
  * No charting library — matches the existing hand-rolled-SVG convention
  * (`components/admin/leads-trend-chart.tsx`); breakdown lists use plain
  * proportional bars instead of a pie/donut for the same reason.
@@ -15,9 +21,22 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowLeft, Users, UserX, Clock, AlertTriangle, TrendingUp, IndianRupee, CalendarClock } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  UserX,
+  Clock,
+  AlertTriangle,
+  TrendingUp,
+  IndianRupee,
+  CalendarClock,
+  UserCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CRM_LEAD_STATUS_LABELS, type CrmLeadStatus, type CrmLeadSource } from "@/lib/crm/constants";
+import { STATUS_DOT } from "@/components/admin/crm/status-badge";
+import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
 
 interface DashboardMetrics {
   todaysLeads: number;
@@ -51,6 +70,16 @@ interface ExecutivePerformanceRow {
   conversionRate: number;
 }
 
+interface AssignmentActivityRow {
+  id: string;
+  leadId: string;
+  name: string;
+  assignedTo: string;
+  source: string;
+  status: string;
+  at: string;
+}
+
 interface DashboardData {
   metrics: DashboardMetrics;
   leadsPerDay: { date: string; count: number }[];
@@ -58,28 +87,61 @@ interface DashboardData {
   byCampaign: BreakdownRow[];
   byDestination: BreakdownRow[];
   byExecutive: ExecutivePerformanceRow[];
+  recentAssignments: AssignmentActivityRow[];
 }
 
 function formatMoney(n: number): string {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
-function MetricCard({ label, value, icon, tone }: { label: string; value: string | number; icon: ReactNode; tone?: "urgent" | "good" }) {
+function formatDay(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+}
+
+/** One row inside a StatListCard — icon, label, value. This replaces the
+ * old standalone MetricCard boxes; several of these stacked in one Card
+ * read as a single compact list instead of a grid of tiles. */
+function StatRow({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  icon: ReactNode;
+  tone?: "urgent" | "good";
+}) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-4">
+    <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="flex min-w-0 items-center gap-3">
         <div
-          className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
+          className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
             tone === "urgent" ? "bg-rose-100 text-rose-600" : tone === "good" ? "bg-emerald-100 text-emerald-600" : "bg-muted text-muted-foreground"
           }`}
         >
           {icon}
         </div>
-        <div>
-          <p className="text-xl font-semibold leading-tight">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
+        <span className="truncate text-sm text-muted-foreground">{label}</span>
+      </div>
+      <span className={`shrink-0 text-sm font-semibold ${tone === "urgent" ? "text-rose-600" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+function StatListCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="divide-y p-0">{children}</CardContent>
     </Card>
   );
 }
@@ -107,6 +169,56 @@ function BreakdownList({ title, rows, showRevenue }: { title: string; rows: Brea
                 <div className="h-full rounded-full bg-primary" style={{ width: `${(r.count / max) * 100}%` }} />
               </div>
             </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Lead assignment activity — "which lead, assigned to whom, on which
+ * day and at what time". A flat list is deliberate here (matches the
+ * rest of the page): each row is one assignment event, most recent
+ * first, so a manager can scan today's assignment activity at a glance
+ * without opening every lead. */
+function AssignmentActivityList({ rows }: { rows: AssignmentActivityRow[] }) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Lead Assignment Activity</CardTitle>
+      </CardHeader>
+      <CardContent className="divide-y p-0">
+        {rows.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">No assignments yet.</p>
+        ) : (
+          rows.map((r) => (
+            <Link
+              key={r.id}
+              href={`/admin/crm/${r.id}`}
+              className="flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-accent"
+            >
+              <span
+                className={`size-2 shrink-0 rounded-full ${STATUS_DOT[r.status as CrmLeadStatus] ?? "bg-muted-foreground"}`}
+                title={CRM_LEAD_STATUS_LABELS[r.status as CrmLeadStatus] ?? r.status}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="truncate font-medium">{r.name}</span>
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">{r.leadId}</span>
+                </div>
+                <div className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                  <UserCheck className="size-3 shrink-0" />
+                  <span className="truncate">assigned to {r.assignedTo}</span>
+                  <span
+                    className={`ml-1 size-1.5 shrink-0 rounded-full ${SOURCE_DOT[r.source as CrmLeadSource] ?? "bg-muted-foreground"}`}
+                  />
+                </div>
+              </div>
+              <div className="shrink-0 text-right text-xs text-muted-foreground">
+                <div>{formatDay(r.at)}</div>
+                <div>{formatTime(r.at)}</div>
+              </div>
+            </Link>
           ))
         )}
       </CardContent>
@@ -180,30 +292,40 @@ export default function CrmDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <MetricCard label={my("Today's Leads")} value={m.todaysLeads} icon={<Users className="size-4" />} />
-        <MetricCard label={my("New Leads")} value={m.newLeads} icon={<Users className="size-4" />} />
-        {!isExecutive ? <MetricCard label="Assigned Leads" value={m.assignedLeads} icon={<Users className="size-4" />} /> : null}
-        {!isExecutive ? <MetricCard label="Unassigned Leads" value={m.unassignedLeads} icon={<UserX className="size-4" />} /> : null}
-        <MetricCard label={my("Today's Follow-ups")} value={m.todaysFollowUps} icon={<Clock className="size-4" />} />
-        <MetricCard
-          label={my("Overdue Follow-ups")}
-          value={m.overdueFollowUps}
-          icon={<CalendarClock className="size-4" />}
-          tone={m.overdueFollowUps > 0 ? "urgent" : undefined}
-        />
-        <MetricCard
-          label={my("No Response > 2 Days")}
-          value={m.noResponse}
-          icon={<AlertTriangle className="size-4" />}
-          tone={m.noResponse > 0 ? "urgent" : undefined}
-        />
-        <MetricCard label={my("Interested Leads")} value={m.interestedLeads} icon={<Users className="size-4" />} />
-        <MetricCard label={my("Payment Pending")} value={m.paymentPending} icon={<Clock className="size-4" />} />
-        <MetricCard label={my("Booked Leads")} value={m.bookedLeads} icon={<TrendingUp className="size-4" />} tone="good" />
-        <MetricCard label={my("Lost Leads")} value={m.lostLeads} icon={<UserX className="size-4" />} />
-        <MetricCard label={my("Revenue")} value={formatMoney(m.revenue)} icon={<IndianRupee className="size-4" />} tone="good" />
-        <MetricCard label={my("Conversion Rate")} value={`${m.conversionRate}%`} icon={<TrendingUp className="size-4" />} tone="good" />
+      {/* Metrics — three short lists instead of a dozen big tiles. Same
+          numbers as before, grouped by what they're about. */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatListCard title={my("Leads")}>
+          <StatRow label={my("Today's Leads")} value={m.todaysLeads} icon={<Users className="size-4" />} />
+          <StatRow label={my("New Leads")} value={m.newLeads} icon={<Users className="size-4" />} />
+          {!isExecutive ? <StatRow label="Assigned Leads" value={m.assignedLeads} icon={<UserCheck className="size-4" />} /> : null}
+          {!isExecutive ? <StatRow label="Unassigned Leads" value={m.unassignedLeads} icon={<UserX className="size-4" />} /> : null}
+        </StatListCard>
+
+        <StatListCard title="Follow-ups & Response">
+          <StatRow label={my("Today's Follow-ups")} value={m.todaysFollowUps} icon={<Clock className="size-4" />} />
+          <StatRow
+            label={my("Overdue Follow-ups")}
+            value={m.overdueFollowUps}
+            icon={<CalendarClock className="size-4" />}
+            tone={m.overdueFollowUps > 0 ? "urgent" : undefined}
+          />
+          <StatRow
+            label={my("No Response > 2 Days")}
+            value={m.noResponse}
+            icon={<AlertTriangle className="size-4" />}
+            tone={m.noResponse > 0 ? "urgent" : undefined}
+          />
+        </StatListCard>
+
+        <StatListCard title="Pipeline & Revenue">
+          <StatRow label={my("Interested Leads")} value={m.interestedLeads} icon={<Users className="size-4" />} />
+          <StatRow label={my("Payment Pending")} value={m.paymentPending} icon={<Clock className="size-4" />} />
+          <StatRow label={my("Booked Leads")} value={m.bookedLeads} icon={<TrendingUp className="size-4" />} tone="good" />
+          <StatRow label={my("Lost Leads")} value={m.lostLeads} icon={<UserX className="size-4" />} />
+          <StatRow label={my("Revenue")} value={formatMoney(m.revenue)} icon={<IndianRupee className="size-4" />} tone="good" />
+          <StatRow label={my("Conversion Rate")} value={`${m.conversionRate}%`} icon={<TrendingUp className="size-4" />} tone="good" />
+        </StatListCard>
       </div>
 
       <Card>
@@ -214,6 +336,10 @@ export default function CrmDashboardPage() {
           <LeadsPerDayChart data={data.leadsPerDay} />
         </CardContent>
       </Card>
+
+      {/* Which lead, assigned to whom, which day, what time — the
+          assignment activity feed. */}
+      <AssignmentActivityList rows={data.recentAssignments} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <BreakdownList title={my("Leads by Platform")} rows={data.byPlatform} />

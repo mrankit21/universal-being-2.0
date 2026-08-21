@@ -19,10 +19,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { NewLeadDialog } from "@/components/admin/crm/new-lead-dialog";
 import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
+import { STATUS_DOT } from "@/components/admin/crm/status-badge";
+import { StatusFilter, type StatusFilterValue } from "@/components/admin/crm/status-filter";
 import { SalespersonLeaderboard } from "@/components/admin/crm/leaderboard-strip";
 import { LeadAssigneeSelect, type Salesperson } from "@/components/admin/lead-assignee-select";
 import {
-  CRM_LEAD_STATUSES,
   CRM_LEAD_STATUS_LABELS,
   CRM_LEAD_SOURCES,
   CRM_LEAD_SOURCE_LABELS,
@@ -68,9 +69,12 @@ export default function CrmLeadsPage() {
   const [leads, setLeads] = useState<CrmLeadRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<CrmLeadStatus | "all">("all");
+  // Unified with the "No Response > 2 Days" row folded into the same
+  // dropdown as a selectable pseudo-status — see StatusFilter.
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
+  const status: CrmLeadStatus | "all" = statusFilter === "no_response" ? "all" : statusFilter;
+  const noResponseOnly = statusFilter === "no_response";
   const [source, setSource] = useState<CrmLeadSource | "all">("all");
-  const [noResponseOnly, setNoResponseOnly] = useState(false);
   // "all" | "unassigned" | "me" | a specific salesperson's name.
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [newLeadOpen, setNewLeadOpen] = useState(false);
@@ -181,7 +185,12 @@ export default function CrmLeadsPage() {
     },
     {
       header: "Status",
-      cell: (l) => <Badge className={STATUS_BADGE[l.status]}>{CRM_LEAD_STATUS_LABELS[l.status]}</Badge>,
+      cell: (l) => (
+        <Badge className={`gap-1.5 ${STATUS_BADGE[l.status]}`}>
+          <span className={`size-1.5 shrink-0 rounded-full ${STATUS_DOT[l.status]}`} />
+          {CRM_LEAD_STATUS_LABELS[l.status]}
+        </Badge>
+      ),
     },
     {
       header: "Assigned to",
@@ -231,29 +240,31 @@ export default function CrmLeadsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
-          <p className="text-sm text-muted-foreground">
-            Sales pipeline — Meta, website, WhatsApp, and manual leads.
-            {isExecutive ? " Showing your assigned leads." : null}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/crm/dashboard">
-            <Button variant="outline">
-              <LayoutDashboard className="mr-1.5 size-4" /> Dashboard
-            </Button>
-          </Link>
-          <Link href="/admin/crm/follow-ups">
-            <Button variant="outline">
-              <CalendarClock className="mr-1.5 size-4" /> Follow-ups
-            </Button>
-          </Link>
-          <Button onClick={() => setNewLeadOpen(true)}>
-            <Plus className="mr-1.5 size-4" /> New Lead
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">CRM</h1>
+        <p className="text-sm text-muted-foreground">
+          Sales pipeline — Meta, website, WhatsApp, and manual leads.
+          {isExecutive ? " Showing your assigned leads." : null}
+        </p>
+      </div>
+
+      {/* Action row — equal-width 3-up grid on phone (no more stacked
+          full-width buttons eating vertical space); compact inline row,
+          right-aligned, on tablet/laptop. Same markup, just re-flows. */}
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <Link href="/admin/crm/dashboard" className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <LayoutDashboard className="size-4" /> Dashboard
           </Button>
-        </div>
+        </Link>
+        <Link href="/admin/crm/follow-ups" className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <CalendarClock className="size-4" /> Follow-ups
+          </Button>
+        </Link>
+        <Button size="sm" className="w-full sm:w-auto" onClick={() => setNewLeadOpen(true)}>
+          <Plus className="size-4" /> New Lead
+        </Button>
       </div>
 
       {!isExecutive ? <SalespersonLeaderboard /> : null}
@@ -280,22 +291,7 @@ export default function CrmLeadsPage() {
             </SelectContent>
           </Select>
         ) : null}
-        <Button size="sm" variant={status === "all" ? "primary" : "outline"} onClick={() => setStatus("all")}>
-          All
-        </Button>
-        {CRM_LEAD_STATUSES.map((s) => (
-          <Button key={s} size="sm" variant={status === s ? "primary" : "outline"} onClick={() => setStatus(s)}>
-            {CRM_LEAD_STATUS_LABELS[s]}
-          </Button>
-        ))}
-        <Button
-          size="sm"
-          variant={noResponseOnly ? "primary" : "outline"}
-          onClick={() => setNoResponseOnly((v) => !v)}
-          className={noResponseOnly ? "" : "text-rose-600"}
-        >
-          <AlertTriangle className="mr-1 size-3.5" /> No Response &gt; 2 Days {noResponseCount > 0 ? `(${noResponseCount})` : ""}
-        </Button>
+        <StatusFilter value={statusFilter} onChange={setStatusFilter} noResponseCount={noResponseCount} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

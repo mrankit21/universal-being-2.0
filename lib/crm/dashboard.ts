@@ -45,6 +45,21 @@ export interface ExecutivePerformanceRow {
   conversionRate: number;
 }
 
+/** One row of "who got assigned what, and when" — the assignment activity
+ * feed on the dashboard. Sourced from `assignedAt` when the lead has been
+ * explicitly assigned; falls back to `createdAt` for leads that came in
+ * already tagged to someone (e.g. Meta auto-assignment) with no separate
+ * assignedAt write. */
+export interface AssignmentActivityRow {
+  id: string;
+  leadId: string;
+  name: string;
+  assignedTo: string;
+  source: string;
+  status: string;
+  at: string; // ISO timestamp — when the assignment happened
+}
+
 export interface DashboardData {
   metrics: DashboardMetrics;
   leadsPerDay: { date: string; count: number }[]; // last 14 days
@@ -52,6 +67,7 @@ export interface DashboardData {
   byCampaign: BreakdownRow[];
   byDestination: BreakdownRow[];
   byExecutive: ExecutivePerformanceRow[];
+  recentAssignments: AssignmentActivityRow[];
 }
 
 function startOfDay(d = new Date()): Date {
@@ -155,6 +171,20 @@ export async function getCrmDashboard(scopeFilter: Record<string, unknown> | nul
 
   const convertedCount = bookedLeads + tripCompleted;
 
+  const recentAssignments: AssignmentActivityRow[] = leads
+    .filter((l) => l.assignedTo)
+    .map((l) => ({
+      id: String(l._id),
+      leadId: l.leadId,
+      name: l.name,
+      assignedTo: l.assignedTo as string,
+      source: l.platform || l.source,
+      status: l.status,
+      at: l.assignedAt || new Date(l.createdAt).toISOString(),
+    }))
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, 15);
+
   return {
     metrics: {
       todaysLeads,
@@ -178,5 +208,6 @@ export async function getCrmDashboard(scopeFilter: Record<string, unknown> | nul
     byCampaign,
     byDestination: toSorted(destinationCounts),
     byExecutive,
+    recentAssignments,
   };
 }
