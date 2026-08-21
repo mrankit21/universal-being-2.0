@@ -1,24 +1,25 @@
 "use client";
 
 /**
- * Admin CRM — lead list: search, filters, basic status filtering (Phase
- * 1). One-click pipeline actions + Close Lead live on the lead detail
- * page (Phase 2, see StatusActionBar) — this page's job stays "find the
- * right lead fast".
- *
- * Deliberately a separate section from the pre-existing "Leads" page
- * (/admin/leads, Trip2Lead + PromoLead) — see the comment on
- * CrmLeadModel for why they're not merged yet.
+ * Admin CRM — lead list: search, filters, status filtering, and a Kanban
+ * board view (Phase 1 + assignment UX brought over from the old standalone
+ * Leads page, which this now fully replaces — see admin-nav-config.ts).
+ * One-click pipeline actions + Close Lead live on the lead detail page
+ * (Phase 2, see StatusActionBar) — this page's job stays "find the right
+ * lead fast, reassign it, or see the whole pipeline at a glance".
  */
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Search, Plus, AlertTriangle, CalendarClock, User, LayoutDashboard } from "lucide-react";
+import { Search, Plus, AlertTriangle, CalendarClock, User, LayoutDashboard, Kanban, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { NewLeadDialog } from "@/components/admin/crm/new-lead-dialog";
+import { CrmBoardView, type CrmBoardLead } from "@/components/admin/crm/board-view";
+import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
+import { LeadAssigneeSelect, type Salesperson } from "@/components/admin/lead-assignee-select";
 import {
   CRM_LEAD_STATUSES,
   CRM_LEAD_STATUS_LABELS,
@@ -72,6 +73,10 @@ export default function CrmLeadsPage() {
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
+  const [view, setView] = useState<"list" | "board">("list");
+  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -79,11 +84,22 @@ export default function CrmLeadsPage() {
       .then((json) => json.success && setMe(json.data));
   }, []);
 
+  const loadSalespeople = useCallback(() => {
+    fetch("/api/admin/salespeople")
+      .then((r) => r.json())
+      .then((json) => json.success && setSalespeople(json.data));
+  }, []);
+
+  useEffect(() => {
+    loadSalespeople();
+  }, [loadSalespeople]);
+
   // A Sales Executive's results are already scoped to their own leads
   // server-side (lib/crm/scope.ts) regardless of this toggle, so the
   // "My Leads" chip is only shown for roles that otherwise see everyone
   // — Sales Manager / Super Admin — as a convenience filter.
   const isExecutive = me?.role === "sales_executive";
+  const canReassign = me?.role !== "sales_executive";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,6 +122,45 @@ export default function CrmLeadsPage() {
   }, [load]);
 
   const noResponseCount = leads.filter((l) => l.noResponse).length;
+
+  async function handleAssign(lead: CrmLeadRow, name: string | null) {
+    setAssigningId(lead.id);
+    try {
+      const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedTo: name }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error ?? "Could not reassign lead.");
+        return;
+      }
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, assignedTo: name ?? undefined } : l)));
+    } finally {
+      setAssigningId(null);
+    }
+  }
+
+  async function handleMove(lead: CrmBoardLead, next: CrmLeadStatus) {
+    if (next === lead.status) return;
+    setMovingId(lead.id);
+    try {
+      const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        toast.error(json.error ?? "Could not move lead.");
+        return;
+      }
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status: next } : l)));
+    } finally {
+      setMovingId(null);
+    }
+  }
 
   const columns: Column<CrmLeadRow>[] = [
     {
@@ -132,10 +187,33 @@ export default function CrmLeadsPage() {
     },
     { header: "Destination", cell: (l) => <span className="text-muted-foreground">{l.destination ?? "—"}</span> },
     {
+      header: "Source",
+      cell: (l) => (
+        <span className="inline-flex items-center gap-1.5 text-xs">
+          <span className={`size-1.5 shrink-0 rounded-full ${SOURCE_DOT[l.source as CrmLeadSource] ?? "bg-muted-foreground"}`} />
+          {CRM_LEAD_SOURCE_LABELS[l.source as CrmLeadSource] ?? l.source}
+        </span>
+      ),
+    },
+    {
       header: "Status",
       cell: (l) => <Badge className={STATUS_BADGE[l.status]}>{CRM_LEAD_STATUS_LABELS[l.status]}</Badge>,
     },
-    { header: "Assigned to", cell: (l) => <span className={l.assignedTo ? "" : "text-muted-foreground"}>{l.assignedTo ?? "Unassigned"}</span> },
+    {
+      header: "Assigned to",
+      cell: (l) =>
+        canReassign ? (
+          <LeadAssigneeSelect
+            value={l.assignedTo}
+            onAssign={(name) => handleAssign(l, name)}
+            salespeople={salespeople}
+            onSalespeopleChange={loadSalespeople}
+            disabled={assigningId === l.id}
+          />
+        ) : (
+          <span className={l.assignedTo ? "" : "text-muted-foreground"}>{l.assignedTo ?? "Unassigned"}</span>
+        ),
+    },
     {
       header: "Follow-up",
       cell: (l) =>
@@ -178,6 +256,24 @@ export default function CrmLeadsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <div className="flex rounded-md border border-input p-0.5">
+            <Button
+              size="sm"
+              variant={view === "list" ? "primary" : "ghost"}
+              className="h-7 px-2"
+              onClick={() => setView("list")}
+            >
+              <List className="size-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant={view === "board" ? "primary" : "ghost"}
+              className="h-7 px-2"
+              onClick={() => setView("board")}
+            >
+              <Kanban className="size-3.5" />
+            </Button>
+          </div>
           <Link href="/admin/crm/dashboard">
             <Button variant="outline">
               <LayoutDashboard className="mr-1.5 size-4" /> Dashboard
@@ -229,12 +325,17 @@ export default function CrmLeadsPage() {
         </Button>
         {CRM_LEAD_SOURCES.map((s) => (
           <Button key={s} size="sm" variant={source === s ? "primary" : "outline"} onClick={() => setSource(s)}>
+            <span className={`mr-1.5 size-1.5 rounded-full ${SOURCE_DOT[s]}`} />
             {CRM_LEAD_SOURCE_LABELS[s]}
           </Button>
         ))}
       </div>
 
-      <DataTable columns={columns} rows={leads} loading={loading} rowKey={(l) => l.id} emptyMessage="No leads found." />
+      {view === "list" ? (
+        <DataTable columns={columns} rows={leads} loading={loading} rowKey={(l) => l.id} emptyMessage="No leads found." />
+      ) : (
+        <CrmBoardView leads={leads} movingId={movingId} onMove={handleMove} />
+      )}
 
       <NewLeadDialog
         open={newLeadOpen}
