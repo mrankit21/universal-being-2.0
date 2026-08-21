@@ -11,14 +11,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Search, Plus, AlertTriangle, CalendarClock, LayoutDashboard, Kanban, List } from "lucide-react";
+import { Search, Plus, AlertTriangle, CalendarClock, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { NewLeadDialog } from "@/components/admin/crm/new-lead-dialog";
-import { CrmBoardView, type CrmBoardLead } from "@/components/admin/crm/board-view";
 import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
 import { SalespersonLeaderboard } from "@/components/admin/crm/leaderboard-strip";
 import { LeadAssigneeSelect, type Salesperson } from "@/components/admin/lead-assignee-select";
@@ -76,10 +75,8 @@ export default function CrmLeadsPage() {
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
-  const [view, setView] = useState<"list" | "board">("list");
   const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
-  const [movingId, setMovingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -146,26 +143,6 @@ export default function CrmLeadsPage() {
       setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, assignedTo: name ?? undefined } : l)));
     } finally {
       setAssigningId(null);
-    }
-  }
-
-  async function handleMove(lead: CrmBoardLead, next: CrmLeadStatus) {
-    if (next === lead.status) return;
-    setMovingId(lead.id);
-    try {
-      const res = await fetch(`/api/admin/crm/leads/${lead.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      const json = await res.json();
-      if (!json.success) {
-        toast.error(json.error ?? "Could not move lead.");
-        return;
-      }
-      setLeads((prev) => prev.map((l) => (l.id === lead.id ? { ...l, status: next } : l)));
-    } finally {
-      setMovingId(null);
     }
   }
 
@@ -262,25 +239,7 @@ export default function CrmLeadsPage() {
             {isExecutive ? " Showing your assigned leads." : null}
           </p>
         </div>
-        <div className="flex gap-2">
-          <div className="flex rounded-md border border-input p-0.5">
-            <Button
-              size="sm"
-              variant={view === "list" ? "primary" : "ghost"}
-              className="h-8 gap-1.5 px-3"
-              onClick={() => setView("list")}
-            >
-              <List className="size-3.5" /> List
-            </Button>
-            <Button
-              size="sm"
-              variant={view === "board" ? "primary" : "ghost"}
-              className="h-8 gap-1.5 px-3"
-              onClick={() => setView("board")}
-            >
-              <Kanban className="size-3.5" /> Board
-            </Button>
-          </div>
+        <div className="flex flex-wrap gap-2">
           <Link href="/admin/crm/dashboard">
             <Button variant="outline">
               <LayoutDashboard className="mr-1.5 size-4" /> Dashboard
@@ -352,11 +311,7 @@ export default function CrmLeadsPage() {
         ))}
       </div>
 
-      {view === "list" ? (
-        <DataTable columns={columns} rows={leads} loading={loading} rowKey={(l) => l.id} emptyMessage="No leads found." />
-      ) : (
-        <CrmBoardView leads={leads} movingId={movingId} onMove={handleMove} />
-      )}
+      <DataTable columns={columns} rows={leads} loading={loading} rowKey={(l) => l.id} emptyMessage="No leads found." />
 
       <NewLeadDialog
         open={newLeadOpen}

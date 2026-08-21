@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Fraunces, Inter, Alex_Brush } from "next/font/google";
 
@@ -68,6 +68,23 @@ const alexBrush = Alex_Brush({
  * assets only when nothing has been uploaded yet, same DB-first/
  * static-fallback rule every other brand field already follows.
  */
+/**
+ * (2026-08 fix) No `viewport` was ever exported anywhere in the app, so
+ * Next.js never emitted a `<meta name="viewport">` tag. Mobile browsers
+ * then rendered every page — including /admin — at an assumed ~980px
+ * desktop width and auto-scaled it down to fit the screen. That's what was
+ * causing the admin panel to look permanently "zoomed out"/cropped on
+ * phones, and why taps (e.g. "Create User") landed on the wrong on-screen
+ * element after the browser's own pinch-zoom state drifted. `viewport`
+ * must be its own export (or `generateViewport`) — Next.js silently
+ * ignores a `viewport` key placed inside `Metadata`/`generateMetadata`.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getSiteBrand();
   const siteUrl = getSiteUrl();
