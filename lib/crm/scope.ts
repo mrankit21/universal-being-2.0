@@ -18,17 +18,32 @@
  * — the same free-text Salesperson name already used for assignment
  * throughout the CRM (see CrmLeadModel). There's no separate
  * User<->Salesperson link table yet; give a Sales Executive login the
- * exact same name as their Salesperson entry for this to work. A real
- * FK-style link is a reasonable follow-up if names ever drift out of
- * sync, but isn't needed for Phase 4's scope.
+ * same name as their Salesperson entry for this to work.
+ *
+ * The match itself is case-/whitespace-insensitive on purpose: the User
+ * account name (typed once, at account creation) and the Salesperson
+ * name (typed separately, whenever a lead gets assigned) are two
+ * independent free-text fields with nothing enforcing they're typed
+ * identically — "NIKHIL" the login vs "Nikhil" the assignee is a real
+ * mismatch that silently hid every lead from that Sales Executive. A
+ * case-insensitive, trimmed comparison closes that gap without needing
+ * a real FK-style User<->Salesperson link (still a reasonable follow-up
+ * if this ever needs to be stricter).
  */
 import type { SessionClaims } from "@/lib/auth/session";
+
+function normalizeName(name: string): string {
+  return name.trim().toLowerCase();
+}
 
 /** Returns a Mongo filter fragment to AND into any CrmLead query, or
  * `null` when the role has unrestricted visibility. */
 export function crmLeadScopeFilter(user: SessionClaims): Record<string, unknown> | null {
   if (user.role === "sales_executive") {
-    return { assignedTo: user.name };
+    // Case-insensitive exact match — regex anchored start-to-end so this
+    // stays an exact-name match, not a substring search.
+    const escaped = normalizeName(user.name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return { assignedTo: { $regex: `^${escaped}$`, $options: "i" } };
   }
   return null;
 }
@@ -37,5 +52,5 @@ export function crmLeadScopeFilter(user: SessionClaims): Record<string, unknown>
  * to `assignedTo` (undefined = unassigned). */
 export function canAccessLead(user: SessionClaims, assignedTo?: string): boolean {
   if (user.role !== "sales_executive") return true;
-  return assignedTo === user.name;
+  return !!assignedTo && normalizeName(assignedTo) === normalizeName(user.name);
 }

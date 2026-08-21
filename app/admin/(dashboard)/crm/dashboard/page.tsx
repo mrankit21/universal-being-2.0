@@ -37,6 +37,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CRM_LEAD_STATUS_LABELS, type CrmLeadStatus, type CrmLeadSource } from "@/lib/crm/constants";
 import { STATUS_DOT } from "@/components/admin/crm/status-badge";
 import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
+import { ExecutiveCard } from "@/components/admin/crm/executive-card";
+import type { ExecutiveSummaryCard } from "@/lib/crm/executive-performance";
 
 interface DashboardMetrics {
   todaysLeads: number;
@@ -251,6 +253,7 @@ function LeadsPerDayChart({ data }: { data: { date: string; count: number }[] })
 
 export default function CrmDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [executives, setExecutives] = useState<ExecutiveSummaryCard[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
 
@@ -262,6 +265,9 @@ export default function CrmDashboardPage() {
         else toast.error(json.error);
       })
       .finally(() => setLoading(false));
+    fetch("/api/admin/crm/dashboard/executives")
+      .then((r) => r.json())
+      .then((json) => json.success && setExecutives(json.data));
     fetch("/api/admin/me")
       .then((r) => r.json())
       .then((json) => json.success && setMe(json.data));
@@ -278,18 +284,25 @@ export default function CrmDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Link href="/admin/crm">
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-1.5 size-4" /> Back to CRM
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-semibold tracking-tight">{isExecutive ? "My Dashboard" : "CRM Dashboard"}</h1>
           <p className="text-sm text-muted-foreground">
             {isExecutive ? "Your leads, follow-ups, and performance." : "Business-wide leads, pipeline, and revenue."}
           </p>
         </div>
+        {isExecutive && me ? (
+          <Link href={`/admin/crm/dashboard/executive/${encodeURIComponent(me.name)}`}>
+            <Button variant="outline" size="sm">
+              Monthly activity & sales timing
+            </Button>
+          </Link>
+        ) : null}
       </div>
 
       {/* Metrics — three short lists instead of a dozen big tiles. Same
@@ -348,36 +361,18 @@ export default function CrmDashboardPage() {
         <BreakdownList title="Revenue by Campaign" rows={[...data.byCampaign].sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))} showRevenue />
       </div>
 
-      {!isExecutive ? (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Sales Executive Performance</CardTitle>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">Executive</th>
-                  <th className="py-2 pr-4 font-medium">Total Leads</th>
-                  <th className="py-2 pr-4 font-medium">Booked</th>
-                  <th className="py-2 pr-4 font-medium">Revenue</th>
-                  <th className="py-2 font-medium">Conversion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.byExecutive.map((e) => (
-                  <tr key={e.name} className="border-b last:border-0">
-                    <td className="py-2 pr-4 font-medium">{e.name}</td>
-                    <td className="py-2 pr-4">{e.totalLeads}</td>
-                    <td className="py-2 pr-4">{e.booked}</td>
-                    <td className="py-2 pr-4">{formatMoney(e.revenue)}</td>
-                    <td className="py-2">{e.conversionRate}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+      {!isExecutive && executives && executives.length > 0 ? (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground">Sales Executive Performance</h2>
+            <span className="text-xs text-muted-foreground">Tap a card for the full breakdown</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {executives.map((e, i) => (
+              <ExecutiveCard key={e.name} row={e} rank={i + 1} />
+            ))}
+          </div>
+        </div>
       ) : null}
     </div>
   );
