@@ -11,14 +11,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Search, Plus, AlertTriangle, CalendarClock, User, LayoutDashboard, Kanban, List } from "lucide-react";
+import { Search, Plus, AlertTriangle, CalendarClock, LayoutDashboard, Kanban, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { NewLeadDialog } from "@/components/admin/crm/new-lead-dialog";
 import { CrmBoardView, type CrmBoardLead } from "@/components/admin/crm/board-view";
 import { SOURCE_DOT } from "@/components/admin/crm/source-badge";
+import { SalespersonLeaderboard } from "@/components/admin/crm/leaderboard-strip";
 import { LeadAssigneeSelect, type Salesperson } from "@/components/admin/lead-assignee-select";
 import {
   CRM_LEAD_STATUSES,
@@ -70,7 +72,8 @@ export default function CrmLeadsPage() {
   const [status, setStatus] = useState<CrmLeadStatus | "all">("all");
   const [source, setSource] = useState<CrmLeadSource | "all">("all");
   const [noResponseOnly, setNoResponseOnly] = useState(false);
-  const [myLeadsOnly, setMyLeadsOnly] = useState(false);
+  // "all" | "unassigned" | "me" | a specific salesperson's name.
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [newLeadOpen, setNewLeadOpen] = useState(false);
   const [me, setMe] = useState<{ name: string; role: string } | null>(null);
   const [view, setView] = useState<"list" | "board">("list");
@@ -108,13 +111,17 @@ export default function CrmLeadsPage() {
     if (status !== "all") params.set("status", status);
     if (source !== "all") params.set("source", source);
     if (noResponseOnly) params.set("noResponse", "true");
-    if (myLeadsOnly && me && !isExecutive) params.set("assignedTo", me.name);
+    if (!isExecutive) {
+      if (assigneeFilter === "unassigned") params.set("assignedTo", "unassigned");
+      else if (assigneeFilter === "me" && me) params.set("assignedTo", me.name);
+      else if (assigneeFilter !== "all") params.set("assignedTo", assigneeFilter);
+    }
     const res = await fetch(`/api/admin/crm/leads?${params.toString()}`);
     const json = await res.json();
     if (json.success) setLeads(json.data);
     else toast.error(json.error);
     setLoading(false);
-  }, [q, status, source, noResponseOnly, myLeadsOnly, me, isExecutive]);
+  }, [q, status, source, noResponseOnly, assigneeFilter, me, isExecutive]);
 
   useEffect(() => {
     const t = setTimeout(load, 250); // debounce search typing
@@ -260,18 +267,18 @@ export default function CrmLeadsPage() {
             <Button
               size="sm"
               variant={view === "list" ? "primary" : "ghost"}
-              className="h-7 px-2"
+              className="h-8 gap-1.5 px-3"
               onClick={() => setView("list")}
             >
-              <List className="size-3.5" />
+              <List className="size-3.5" /> List
             </Button>
             <Button
               size="sm"
               variant={view === "board" ? "primary" : "ghost"}
-              className="h-7 px-2"
+              className="h-8 gap-1.5 px-3"
               onClick={() => setView("board")}
             >
-              <Kanban className="size-3.5" />
+              <Kanban className="size-3.5" /> Board
             </Button>
           </div>
           <Link href="/admin/crm/dashboard">
@@ -290,15 +297,29 @@ export default function CrmLeadsPage() {
         </div>
       </div>
 
+      {!isExecutive ? <SalespersonLeaderboard /> : null}
+
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full max-w-xs">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone, lead ID…" className="pl-8" />
         </div>
         {!isExecutive ? (
-          <Button size="sm" variant={myLeadsOnly ? "primary" : "outline"} onClick={() => setMyLeadsOnly((v) => !v)}>
-            <User className="mr-1 size-3.5" /> My Leads
-          </Button>
+          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+            <SelectTrigger className="h-9 w-44 text-sm">
+              <SelectValue placeholder="Assigned to" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All leads</SelectItem>
+              <SelectItem value="me">My Leads</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              {salespeople.map((p) => (
+                <SelectItem key={p._id} value={p.name}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         ) : null}
         <Button size="sm" variant={status === "all" ? "primary" : "outline"} onClick={() => setStatus("all")}>
           All

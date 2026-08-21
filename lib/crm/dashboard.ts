@@ -128,7 +128,10 @@ export async function getCrmDashboard(scopeFilter: Record<string, unknown> | nul
     e.revenue += l.amountPaid || 0;
     executiveStats.set(execKey, e);
 
-    const day = l.createdAt.slice(0, 10);
+    // l.createdAt is a real Date at runtime (Mongoose `timestamps: true`),
+    // not the string the TS interface claims — .toISOString() first so
+    // .slice(0, 10) doesn't crash on a Date.
+    const day = new Date(l.createdAt).toISOString().slice(0, 10);
     if (perDay.has(day)) perDay.set(day, (perDay.get(day) ?? 0) + 1);
   }
 
