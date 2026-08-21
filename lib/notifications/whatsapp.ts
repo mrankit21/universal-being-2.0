@@ -68,7 +68,7 @@ export interface WhatsAppDocumentMessage {
 async function uploadMediaToCloudApi(pdf: Buffer, filename: string, token: string, phoneNumberId: string): Promise<{ ok: true; mediaId: string } | { ok: false; error: string }> {
   const form = new FormData();
   form.append("messaging_product", "whatsapp");
-  form.append("file", new Blob([pdf], { type: "application/pdf" }), filename);
+  form.append("file", new Blob([new Uint8Array(pdf)], { type: "application/pdf" }), filename);
 
   const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/media`, {
     method: "POST",
