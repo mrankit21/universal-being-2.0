@@ -305,6 +305,20 @@ export default function CrmDashboardPage() {
         ) : null}
       </div>
 
+      {!isExecutive && executives && executives.length > 0 ? (
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground">Sales Executive Performance</h2>
+            <span className="text-xs text-muted-foreground">Tap a card for the full breakdown</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {executives.map((e, i) => (
+              <ExecutiveCard key={e.name} row={e} rank={i + 1} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* Metrics — three short lists instead of a dozen big tiles. Same
           numbers as before, grouped by what they're about. */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -360,20 +374,6 @@ export default function CrmDashboardPage() {
         <BreakdownList title="Leads by Campaign" rows={data.byCampaign} showRevenue />
         <BreakdownList title="Revenue by Campaign" rows={[...data.byCampaign].sort((a, b) => (b.revenue ?? 0) - (a.revenue ?? 0))} showRevenue />
       </div>
-
-      {!isExecutive && executives && executives.length > 0 ? (
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground">Sales Executive Performance</h2>
-            <span className="text-xs text-muted-foreground">Tap a card for the full breakdown</span>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {executives.map((e, i) => (
-              <ExecutiveCard key={e.name} row={e} rank={i + 1} />
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
