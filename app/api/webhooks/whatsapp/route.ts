@@ -33,6 +33,7 @@ import { connectToDatabase } from "@/lib/db/mongoose";
 import { verifyMetaSignature } from "@/lib/crm/meta";
 import { ingestExternalLead } from "@/lib/crm/ingest";
 import { findLeadByPhone, recordCustomerReply } from "@/lib/crm/reply";
+import { logWebhookEvent, markWebhookProcessed } from "@/lib/crm/webhook-log";
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
@@ -81,8 +82,17 @@ interface WhatsAppWebhookPayload {
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-hub-signature-256");
+  const signatureValid = verifyMetaSignature(rawBody, signature);
 
-  if (!verifyMetaSignature(rawBody, signature)) {
+  await connectToDatabase();
+
+  // Log the raw delivery FIRST — before signature check, before JSON
+  // parsing — same reasoning as the meta-leads webhook: whatever shows
+  // up gets a row, so nothing can vanish silently again.
+  const eventId = await logWebhookEvent("whatsapp", req, rawBody, signatureValid);
+
+  if (!signatureValid) {
+    await markWebhookProcessed(eventId, undefined, "Invalid signature");
     return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 400 });
   }
 
@@ -90,19 +100,21 @@ export async function POST(req: NextRequest) {
   try {
     body = JSON.parse(rawBody);
   } catch {
+    await markWebhookProcessed(eventId, undefined, "Invalid JSON");
     return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
   }
 
-  await connectToDatabase();
-
   const changes = (body.entry ?? []).flatMap((e) => e.changes ?? []).filter((c) => c.field === "messages");
   const results: { from: string; ok: boolean; action?: "replied" | "created" }[] = [];
+  let lastError: string | undefined;
+  let firstMessageId: string | undefined;
 
   for (const change of changes) {
     const messages = change.value?.messages ?? [];
     const contacts = change.value?.contacts ?? [];
 
     for (const msg of messages) {
+      firstMessageId = firstMessageId ?? msg.id;
       try {
         const contact = contacts.find((c) => c.wa_id === msg.from);
         const preview = msg.text?.body ?? `[${msg.type} message]`;
@@ -130,11 +142,14 @@ export async function POST(req: NextRequest) {
           createdTime: at,
         });
         results.push({ from: msg.from, ok: true, action: "created" });
-      } catch {
+      } catch (err) {
         results.push({ from: msg.from, ok: false });
+        lastError = err instanceof Error ? err.message : String(err);
       }
     }
   }
+
+  await markWebhookProcessed(eventId, firstMessageId, lastError);
 
   // Always 200 — WhatsApp/Meta retries on non-2xx.
   return NextResponse.json({ success: true, processed: results });

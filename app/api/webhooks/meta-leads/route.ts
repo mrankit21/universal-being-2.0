@@ -28,6 +28,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/mongoose";
 import { verifyMetaSignature, fetchMetaLeadDetail, mapMetaFieldData, metaObjectToSource, type MetaLeadgenChange } from "@/lib/crm/meta";
 import { ingestExternalLead } from "@/lib/crm/ingest";
+import { logWebhookEvent, markWebhookProcessed } from "@/lib/crm/webhook-log";
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
@@ -55,8 +56,18 @@ interface MetaWebhookPayload {
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-hub-signature-256");
+  const signatureValid = verifyMetaSignature(rawBody, signature);
 
-  if (!verifyMetaSignature(rawBody, signature)) {
+  await connectToDatabase();
+
+  // Log the raw delivery FIRST — before signature check, before JSON
+  // parsing — so a bad-signature or malformed delivery still leaves a
+  // row instead of vanishing with zero trace (this is what "leads come
+  // on WhatsApp but never show up in CRM" looked like from the outside).
+  const eventId = await logWebhookEvent("meta-leads", req, rawBody, signatureValid);
+
+  if (!signatureValid) {
+    await markWebhookProcessed(eventId, undefined, "Invalid signature");
     return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 400 });
   }
 
@@ -64,15 +75,15 @@ export async function POST(req: NextRequest) {
   try {
     body = JSON.parse(rawBody);
   } catch {
+    await markWebhookProcessed(eventId, undefined, "Invalid JSON");
     return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
   }
-
-  await connectToDatabase();
 
   const source = metaObjectToSource(body.object);
   const leadgenChanges = (body.entry ?? []).flatMap((e) => e.changes ?? []).filter((c) => c.field === "leadgen");
 
   const results: { leadgenId: string; ok: boolean; created?: boolean }[] = [];
+  let lastError: string | undefined;
 
   for (const change of leadgenChanges) {
     const { leadgen_id: leadgenId } = change.value;
@@ -80,22 +91,18 @@ export async function POST(req: NextRequest) {
       const detail = await fetchMetaLeadDetail(leadgenId);
       if (!detail) {
         results.push({ leadgenId, ok: false });
+        lastError = `fetchMetaLeadDetail returned null for ${leadgenId}`;
         continue;
       }
 
       const { name, phone, email } = mapMetaFieldData(detail.field_data);
-      if (!phone) {
-        // Some lead forms only collect email, not phone — the CRM's
-        // core flows (WhatsApp follow-up, tel: links) assume a phone
-        // number, so a phone-less lead still gets created but is easy
-        // to spot as incomplete in the admin list.
-        results.push({ leadgenId, ok: false });
-        continue;
-      }
-
+      // Some lead forms only collect email, not phone. We used to drop
+      // these entirely, which silently lost real leads — now it's
+      // created with an empty phone so it still shows up in the CRM
+      // (as "incomplete"), instead of disappearing.
       const { created } = await ingestExternalLead({
         name: name || "Meta Lead",
-        phone,
+        phone: phone || "",
         email,
         source,
         platform: source === "instagram" ? "Instagram Lead Ads" : "Facebook Lead Ads",
@@ -111,10 +118,14 @@ export async function POST(req: NextRequest) {
       });
 
       results.push({ leadgenId, ok: true, created });
-    } catch {
+    } catch (err) {
       results.push({ leadgenId, ok: false });
+      lastError = err instanceof Error ? err.message : String(err);
     }
   }
+
+  const dedupeKey = leadgenChanges[0]?.value.leadgen_id;
+  await markWebhookProcessed(eventId, dedupeKey, lastError);
 
   // Always 200 — Meta retries on non-2xx, and per-entry failures above
   // are already the terminal outcome for that entry (no fix a retry
