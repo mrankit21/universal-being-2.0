@@ -492,6 +492,62 @@
   color: #d4a75f;
 }
 
+/* ==========================================================================
+   ADMIN DASHBOARD — Instagram-style professional dark theme.
+   Scoped to a marker class on the admin shell root (see AdminLayout), same
+   override pattern as `.ub-luxury-section` above: only descendants get the
+   new palette, the public site's brass/stone identity is untouched. Admin
+   components already read exclusively from the shadcn semantic aliases
+   (bg-card, bg-primary, text-muted-foreground, etc. — verified, zero raw
+   --ub-brass/--ub-stone usage in app/admin or components/admin), so this
+   block is a complete re-skin with no component-level changes needed.
+   Palette: near-black surfaces + Instagram-blue accent (#0095F6). */
+.ub-admin-dark {
+  --background: #000000;
+  --foreground: #fafafa;
+
+  --card: #121212;
+  --card-foreground: #fafafa;
+
+  --popover: #1a1a1a;
+  --popover-foreground: #fafafa;
+
+  --primary: #0095f6;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1a1a1a;
+  --secondary-foreground: #fafafa;
+
+  --muted: #1a1a1a;
+  --muted-foreground: #a8a8a8;
+
+  --accent: #1e1e1e;
+  --accent-foreground: #fafafa;
+
+  --destructive: #ed4956;
+  --destructive-foreground: #ffffff;
+
+  --success: #2ecc71;
+  --warning: #f5a623;
+  --info: #0095f6;
+
+  --border: #262626;
+  --input: #262626;
+  --ring: #0095f6;
+
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* Active/hover nav item gets a soft blue glow instead of a flat fill —
+   closer to Instagram's own sidebar highlight than a solid block. */
+.ub-admin-dark .ub-admin-nav-active {
+  background-color: rgba(0, 149, 246, 0.12) !important;
+  color: #0095f6 !important;
+  box-shadow: inset 2px 0 0 0 #0095f6;
+}
+
 /* Hides the native scrollbar track on horizontally-swipeable strips
    (e.g. PackageIncludesStrip) while keeping the element scrollable. */
 .scrollbar-hide {

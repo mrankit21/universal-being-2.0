@@ -280,3 +280,73 @@ export async function notifyAdmin(subject: string, html: string) {
   if (!adminEmail) return;
   await sendEmail({ to: adminEmail, subject, html });
 }
+
+/**
+ * New-lead alert to the internal sales team — separate from every
+ * `notify*` function above, which all message the *customer*. This one
+ * fires the moment a lead is created (Meta Lead Ads, website form, etc.)
+ * so the team sees it on email + WhatsApp without needing the CRM open.
+ *
+ * `ADMIN_WHATSAPP_NUMBERS` is a comma-separated list of E.164 numbers
+ * (e.g. "+919876543210,+919812345678") — every number in the list gets
+ * the WhatsApp alert. `ADMIN_NOTIFICATION_EMAIL` (already used by
+ * `notifyAdmin` above) gets the email. Either can be left unset; this
+ * silently skips whichever channel has no destination configured, and —
+ * same as every other function in this file — never throws, so a failed
+ * alert never blocks lead creation itself.
+ *
+ * Native "FB notification" note: Meta already pushes its own native
+ * notification for every Lead Ads submission to the Page's Lead Center /
+ * notifications bell — there's no separate API call needed to replicate
+ * that; it happens automatically as long as the Lead Ads form is live on
+ * the Page, independent of this webhook.
+ */
+export async function notifyNewLead(lead: {
+  leadId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  source: string;
+  platform?: string;
+  campaign?: string;
+}) {
+  const subject = `New lead — ${lead.name} (${lead.platform || lead.source})`;
+  const summaryLines = [
+    `Name: ${lead.name}`,
+    `Phone: ${lead.phone || "—"}`,
+    lead.email ? `Email: ${lead.email}` : null,
+    `Source: ${lead.platform || lead.source}`,
+    lead.campaign ? `Campaign: ${lead.campaign}` : null,
+    `Lead ID: ${lead.leadId}`,
+  ].filter(Boolean) as string[];
+
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  const whatsappNumbers = (process.env.ADMIN_WHATSAPP_NUMBERS || "")
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  const emailHtml = emailLayout({
+    previewText: `New lead from ${lead.platform || lead.source}: ${lead.name}`,
+    eyebrow: "New lead",
+    heading: `New lead — ${esc(lead.name)}`,
+    bodyHtml: [
+      detailsCard([
+        { label: "Name", value: lead.name },
+        { label: "Phone", value: lead.phone || "—" },
+        ...(lead.email ? [{ label: "Email", value: lead.email }] : []),
+        { label: "Source", value: lead.platform || lead.source },
+        ...(lead.campaign ? [{ label: "Campaign", value: lead.campaign }] : []),
+        { label: "Lead ID", value: lead.leadId },
+      ]),
+      ctaButton("Open in CRM", absoluteUrl(`/admin/crm/${lead.leadId}`)),
+    ].join(""),
+  });
+
+  const whatsappBody = `New lead!\n${summaryLines.join("\n")}`;
+
+  await Promise.allSettled([
+    adminEmail ? sendEmail({ to: adminEmail, subject, html: emailHtml }) : Promise.resolve(),
+    ...whatsappNumbers.map((to) => sendWhatsApp({ to, body: whatsappBody })),
+  ]);
+}

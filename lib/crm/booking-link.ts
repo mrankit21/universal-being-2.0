@@ -33,7 +33,26 @@ import { CrmLeadModel } from "@/lib/db/models/crm-lead.model";
 import { ingestExternalLead } from "@/lib/crm/ingest";
 import { findLeadByPhone } from "@/lib/crm/reply";
 import { logActivity } from "@/lib/crm/activity";
+import { sendLeadConversionEvent } from "@/lib/meta/conversions-api";
 import { CRM_PIPELINE_STATUSES, type CrmLeadStatus } from "@/lib/crm/constants";
+
+/** Fire-and-forget Meta Conversions API call + activity log — shared by
+ * both branches below so a genuinely-paid booking always reports back to
+ * Meta exactly once, regardless of whether the lead already existed. */
+function reportBookingConversion(lead: { leadId: string; phone?: string; email?: string; amountPaid?: number }) {
+  sendLeadConversionEvent(lead)
+    .then((result) => {
+      if (result.ok) {
+        return logActivity({
+          leadId: lead.leadId,
+          type: "meta_conversion_sent",
+          message: "Sent booking conversion to Meta Conversions API",
+          actor: "System",
+        });
+      }
+    })
+    .catch((err) => console.error("[meta-capi] activity logging failed:", err));
+}
 
 /** Rank of a status in the forward pipeline — used so a booking/payment
  * event can only ever move a lead *forward*, never regress one that's
@@ -119,7 +138,7 @@ export async function linkLeadOnPaymentReceived(booking: BookingDocument): Promi
   const lead = byBooking ?? (await findLeadByPhone(booking.customerPhone));
 
   if (!lead) {
-    await ingestExternalLead({
+    const created = await ingestExternalLead({
       name: booking.customerName,
       phone: booking.customerPhone,
       email: booking.customerEmail,
@@ -132,6 +151,12 @@ export async function linkLeadOnPaymentReceived(booking: BookingDocument): Promi
       pickupVariantName: booking.pickupVariantName,
       amountPaid: booking.amountPaid,
       remainingAmount: booking.remainingAmount,
+    });
+    reportBookingConversion({
+      leadId: created.leadId,
+      phone: booking.customerPhone,
+      email: booking.customerEmail,
+      amountPaid: booking.amountPaid,
     });
     return;
   }
@@ -151,10 +176,18 @@ export async function linkLeadOnPaymentReceived(booking: BookingDocument): Promi
         },
       }
     );
+    reportBookingConversion({
+      leadId: lead.leadId,
+      phone: booking.customerPhone,
+      email: booking.customerEmail,
+      amountPaid: booking.amountPaid,
+    });
   } else {
     // Already booked (or further along) — payment amount can still
     // change (e.g. remaining balance settling later), so keep that in
-    // sync without touching status.
+    // sync without touching status. Meta conversion was already sent
+    // the first time this lead crossed into "booked", so it isn't
+    // re-sent here.
     await CrmLeadModel.updateOne(
       { _id: lead._id },
       { $set: { amountPaid: booking.amountPaid, remainingAmount: booking.remainingAmount } }

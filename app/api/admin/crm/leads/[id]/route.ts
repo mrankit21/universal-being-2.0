@@ -17,6 +17,7 @@ import { updateCrmLeadSchema } from "@/lib/validators/crm-lead.schema";
 import { logActivity, isNoResponse, followUpBucket } from "@/lib/crm/activity";
 import { canAccessLead } from "@/lib/crm/scope";
 import { CRM_LEAD_STATUS_LABELS } from "@/lib/crm/constants";
+import { sendLeadConversionEvent } from "@/lib/meta/conversions-api";
 import { ok, fail, handleApiError } from "@/lib/api-helpers/respond";
 import { requirePermission } from "@/lib/api-helpers/guard";
 
@@ -139,6 +140,35 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (Object.keys(unset).length) update.$unset = unset;
 
     const updated = await CrmLeadModel.findByIdAndUpdate(id, update, { new: true }).lean();
+
+    // Meta Conversions API — fire-and-forget, never blocks the lead
+    // update response. Only when this PATCH is what *caused* the move
+    // into "booked" (not on every subsequent edit to an already-booked
+    // lead), and only if it isn't already sent — the booking/payment
+    // webhook path (lib/crm/booking-link.ts) covers the more common
+    // case where a lead books straight through checkout; this covers a
+    // salesperson manually marking a lead "Booked" in the CRM (e.g. an
+    // offline/bank-transfer payment).
+    if (patch.status === "booked" && lead.status !== "booked" && updated) {
+      sendLeadConversionEvent({
+        leadId: updated.leadId,
+        phone: updated.phone,
+        email: updated.email,
+        amountPaid: updated.amountPaid,
+      })
+        .then((result) => {
+          if (result.ok) {
+            return logActivity({
+              leadId: updated.leadId,
+              type: "meta_conversion_sent",
+              message: "Sent booking conversion to Meta Conversions API",
+              actor: user.name,
+            });
+          }
+        })
+        .catch((err) => console.error("[meta-capi] activity logging failed:", err));
+    }
+
     return ok({ id: String(updated!._id), ...updated });
   } catch (err) {
     return handleApiError(err);

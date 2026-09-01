@@ -74,7 +74,11 @@ export function AdminMobileNav({ permissions }: { permissions: Permission[] }) {
           <Menu className="size-5" aria-hidden="true" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent>
+      {/* Drawer content is portaled to document.body (outside AdminLayout's
+          `.ub-admin-dark` wrapper), so the dark theme is re-applied here
+          directly — CSS custom properties from a class selector work
+          anywhere the class appears in the DOM, portal or not. */}
+      <DrawerContent className="ub-admin-dark border-none">
         <DrawerHeader>
           <DrawerTitle className="font-serif">
             Universal Being

@@ -20,7 +20,8 @@ export type CrmLeadActivityType =
   | "note_added"
   | "customer_replied"
   | "booking_linked"
-  | "payment_received";
+  | "payment_received"
+  | "meta_conversion_sent";
 
 export interface CrmLeadActivityDocument extends Document {
   leadId: string; // CrmLead.leadId, not the Mongo _id — stable across the UI
@@ -46,6 +47,7 @@ const CrmLeadActivitySchema = new Schema<CrmLeadActivityDocument>(
         "customer_replied",
         "booking_linked",
         "payment_received",
+        "meta_conversion_sent",
       ],
       required: true,
     },

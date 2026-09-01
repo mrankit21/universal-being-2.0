@@ -18,13 +18,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const permissions = permissionsFor(user.role);
 
   return (
-    <div className="flex min-h-screen bg-muted/20">
+    <div className="ub-admin-dark flex min-h-screen">
       <AdminSidebar permissions={permissions} />
       <div className="flex flex-1 flex-col">
         <AdminHeader userName={user.name || user.email} role={user.role} permissions={permissions} />
         <main className="flex-1 overflow-x-hidden p-4 sm:p-6">{children}</main>
       </div>
-      <Toaster />
+      {/* Sonner mounts its own portal to document.body, outside this div —
+          re-apply the theme class directly on it so admin toasts stay
+          dark/blue instead of falling back to the public site's palette. */}
+      <Toaster className="ub-admin-dark" />
     </div>
   );
 }

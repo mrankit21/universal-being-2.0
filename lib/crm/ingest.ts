@@ -12,6 +12,8 @@ import { generateLeadId } from "@/lib/crm/id";
 import { logActivity } from "@/lib/crm/activity";
 import { nextRoundRobinAssignee } from "@/lib/crm/round-robin";
 import type { CrmLeadSource } from "@/lib/crm/constants";
+import { notifyNewLead } from "@/lib/notifications/dispatch";
+import { appendLeadToSheet } from "@/lib/integrations/google-sheets";
 
 export interface ExternalLeadInput {
   name: string;
@@ -121,6 +123,32 @@ export async function ingestExternalLead(
   if (assignedTo) {
     await logActivity({ leadId, type: "assigned", message: `Auto-assigned to ${assignedTo} (round robin)`, actor: "System" });
   }
+
+  // Best-effort side channels — team alert (email + WhatsApp) and Google
+  // Sheets sync. Neither may ever block or fail lead creation itself, so
+  // both are fired-and-forgotten with their own internal error handling
+  // (same "log instead of crash" pattern the Conversions API hook uses).
+  void notifyNewLead({
+    leadId,
+    name: input.name || "Unknown",
+    phone: input.phone || "",
+    email: input.email,
+    source: input.source,
+    platform: input.platform,
+    campaign: input.campaign,
+  }).catch((err) => console.error(`[notifyNewLead] failed for ${leadId}:`, err));
+
+  void appendLeadToSheet({
+    leadId,
+    name: input.name || "Unknown",
+    phone: input.phone || "",
+    email: input.email,
+    source: input.source,
+    platform: input.platform,
+    campaign: input.campaign,
+    status: input.status || "new",
+    createdAt: now,
+  });
 
   return { id: String(lead._id), leadId, created: true };
 }
